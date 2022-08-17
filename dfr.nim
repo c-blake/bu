@@ -2,6 +2,8 @@ import os, posix, tables, sets, strformat, strutils, cligen, cligen/humanUt
 proc o(a: varargs[string, `$`]) = stdout.write(a)         #short aliases
 proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n")
 
+#TODO: These levels should user config'd, but best of all would be an option for
+#  a true-color HSV scale w/Hue tracking PercentFull & SV being LC_THEME-driven.
 var highlights = { "pct0"  : "purple",  # rainbow/spectrum order violet->red
                    "pct5"  : "blue",
                    "pct25" : "cyan",
