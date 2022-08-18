@@ -39,4 +39,4 @@ Naming Note
 
 "Estimated time of completion" is a more common term for this, but "etc" kinda
 collides with `"/etc"` & variants in a Zsh "autocd" kind of context, yes
-resolvable with trailing '/', but even so).  So, I went with etr.
+resolvable with trailing '/', but even so).  So, I went with "etr".
