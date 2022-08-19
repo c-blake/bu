@@ -8,6 +8,7 @@ bin         = @[
   "cbtm",
   "dfr",
   "etr",
+  "fage",
   "fsids",
   "jointr",
   "lncs",
