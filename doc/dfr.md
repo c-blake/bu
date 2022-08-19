@@ -40,8 +40,8 @@ Reasonable people can differ, but, at least for this kind of report, my view is
 that one fixed unit scale is more "human readable" than what GNU `df` calls
 `--human-readable`.  Often one does `dfr` just to see "Where is there space?"
 and so there is an implicit "human mind comparison" in play which is aided by
-a consistent scale (and indeed relates to utility of the "percentage" columns)
-rather than varying K/M/G/T units.
+a consistent scale rather than varying K/M/G/T units.  This even relates to
+utility of the "percentage" columns.
 
 You can also see that besides direct data space usage/availability, terminal
 space reclaimed by more centered units can be re-purposed to add i-node usage
