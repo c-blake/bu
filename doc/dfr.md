@@ -20,6 +20,9 @@ Print disk free stats for paths in user-specified units (GiB by default).
   -p, --plain   bool    false        do not colorize
 ```
 
+More Motivation
+---------------
+
 The default report is a bit nicer than usual `df` fare.  It looks like:
 ```
 Filesystem        Total     Used    Avail  Use% IUse% MntOn
