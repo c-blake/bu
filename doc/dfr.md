@@ -6,10 +6,9 @@ This tool mostly works like `df` as in `df <NOTHING>` gives a brief table while
 just a dumb `statfs(1)` formatting program you might enjoy.  A bit more detail:
 ```
   dfr [optional-params] [paths: string...]
+
 Print disk free stats for paths in user-specified units (GiB by default).
-    Add a `df`-like utility colorized by how full filesystems are.
-  -h, --help                         print this cligen-erated help
-  --help-syntax                      advanced: prepend,plurals,..
+
   -d=, --devs=  strings cgroup_root  devices to EXCLUDE
   -f=, --fs=    strings devtmpfs     FS types to EXCLUDE
   -u=, --unit=  float   1073741824.0 unit of measure
