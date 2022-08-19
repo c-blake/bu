@@ -1,16 +1,17 @@
-WARNING: Use at your own risk as with any tool that uses `xfs_db` | `debugfs`.
-No warranty, express or implied.
-
-I seem to be an end-point in caring about the full spectrum of file times.  I
-suspect few others will care about this tool, but one never knows.
+WARNING
+-------
+Use at your own risk as with any tool that uses `xfs_db` | `debugfs`.  No
+warranty, express or implied.
 
 Motivation
 ----------
 
-Hardware hosting filesystems can change.  It can be nice to save & restore
-ctime & btime rather than always wiping history.  No OS/FS-portable way exists.
-(settimeofday can do ctime with disruptive time storms.)  This utility fills the
-gap for XFS/ext4 on Linux.
+Hardware hosting filesystems can change.  It can be nice to save & restore ctime
+& btime rather than always wiping file life cycle history.
+
+No OS/FS-portable way exists.  (settimeofday can do ctime, but with
+system-disruptive time storms.)  This utility fills the gap for XFS/ext4 on
+Linux.
 
 Basic usage for an XFS on DEV mounted at MNT
 --------------------------------------------
