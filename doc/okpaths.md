@@ -1,3 +1,5 @@
+Basics
+------
 Usage:
 ```
 okpaths ENVAR [DELIM(:) [ITYPE{bcdpfls}(d) [PERMS{rwx}(x) [DEDUP{FL*}(F)]]]]
@@ -20,6 +22,8 @@ The i-node type abbreviation is the somewhat standard (ls -l):
   * l   Symbolic (L)ink
   * s   Unix domain (S)ocket
 
+Motivation
+----------
 This is useful in shell start-up scripts (like `~/.profile` or the like) where
 you might assemble a search path or man path or et cetera from a wide variety
 of "possible locations", but then want to trim the value down to realizable
