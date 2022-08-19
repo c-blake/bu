@@ -27,8 +27,6 @@ marketing speak like "DDR-N", but often very impactful on performance.
 Usage:
   lat [optional-params] 
 Time latency three ways. shuffle measures real latency.
-  -h, --help                   print this cligen-erated help
-  --help-syntax                advanced: prepend,plurals,..
   -k=, --kind=    Algo shuff   shuff: chase ran perm
                                ranElt: access ran elt
                                truRan: pre-read getrandom
