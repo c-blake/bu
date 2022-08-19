@@ -9,9 +9,9 @@ Motivation
 Hardware hosting filesystems can change.  It can be nice to save & restore ctime
 & btime rather than always wiping file life cycle history.
 
-No OS/FS-portable way exists.  (settimeofday can do ctime, but with
-system-disruptive time storms.)  This utility fills the gap for XFS/ext4 on
-Linux.
+There is no OS/FS-portable way to do this.  (settimeofday can do ctime, but with
+system-disruptive time storms.)  This utility fills the gap for XFS/ext4
+on Linux.
 
 Basic usage for an XFS on DEV mounted at MNT
 --------------------------------------------
