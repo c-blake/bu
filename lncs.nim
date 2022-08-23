@@ -11,9 +11,11 @@ when isMainModule:                    #Provide a useful CLI wrapper.
     ## Print hard link clusters within paths of maybe-chasing, maybe-recursive
     ## closure of the UNION of ``roots`` and optional ``dlm``-delimited input
     ## ``file`` (stdin if "-"|if "" & stdin not a tty).  Exit code is min(255,
-    ## num.clusters >= thresh).  Eg., ``find -print0|lncs -d\\0 -o\\0 -e\\0``
+    ## num.clusters >= thresh).  Eg., ``find -print0|lncs -d\\0 -o '' -e ''``
     ## makes a report reliably splittable on double-NUL then single-NUL for
     ## fully general path names while ``lncs -ls -n0 -r0 /`` echoes a summary.
+    let outDlm = if outDlm.len > 0: outDlm else: "\x00"
+    let endOut = if endOut.len > 0: endOut else: "\x00"
     var nPaths, nSet, nFile: int              #Track some statistics
     var tab = initTable[DevIno, seq[string]](512)
     let err = if quiet: nil else: stderr
