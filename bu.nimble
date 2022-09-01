@@ -10,9 +10,11 @@ bin         = @[
   "etr",
   "fage",
   "fsids",
+  "ft",
   "jointr",
   "lncs",
   "memlat",
+  "notIn",
   "okpaths",
   "ru",
   "stripe",
@@ -20,6 +22,7 @@ bin         = @[
   "tattr",
   "thermctl",
   "bu/eve",
+  "bu/colSort",
 ]
 
 # Dependencies
