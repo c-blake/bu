@@ -1,5 +1,5 @@
 import tables, algorithm, posix, cligen/[dents, osUt, posixUt, statx]
-type IdKind = enum user, group, both
+type IdKind = enum user, group, all="both"
 type Order  = enum id, count
 
 proc print*[Id](hdr: string, ids: Table[Id, int], nm: Table[Id, string],
@@ -13,13 +13,13 @@ proc print*[Id](hdr: string, ids: Table[Id, int], nm: Table[Id, string],
   for tup in sorted:
     echo tup[0], "\t", tup[1], "\t", nm.getOrDefault(tup[0], "MISSING")
 
-proc fsids*(roots: seq[string], kind=both, order=id,
+proc fsids*(roots: seq[string], kind=all, order=id,
             recurse=0, follow=false, xdev=false, eof0=false) =
   ## Print a histogram of uids and/or gids used by a file tree
   var uids: Table[Uid, int]
   var gids: Table[Gid, int]
-  let doU = kind in { user , both }
-  let doG = kind in { group, both }
+  let doU = kind in { user , all }
+  let doG = kind in { group, all }
   for root in (if roots.len > 0: roots else: @[ "." ]):
     forPath(root, recurse, true, follow, xdev, eof0, stderr,
             depth, path, nmAt, ino, dt, lst, dfd, dst, did):
