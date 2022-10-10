@@ -38,6 +38,38 @@ numbers](doc/stripe.md)
 
 [tattr - terminal attribute access (like cligen/humanUt)](doc/tattr.md)
 
+[notIn - Helper to manage semi-mirrored file trees](doc/notIn.md)
+
+[ft - file typer {i-node type, not file(1)/libmagic(3) type}](doc/ft.md)
+
+[fage - file age according to various timestamps/rules](doc/fage.md)
+
+[chom - Enforce group owner & segregated perms in file trees](doc/chom.md)
+
+[du - Slight improvement on GNU du](doc/du.md)
+
+[rr - Mostly a short alias for rm -rf but also faster](doc/rr.md)
+
+[dups - Fast finder of exact duplicate files](doc/dups.md)
+
+[only - file(1)/libmagic tool to emit files whose types match](doc/only.md)
+
+[fkindc - file(1)/libmagic tool to histogram file types](doc/fkindc.md)
+
+[dirq - Kind of its own system-building atom thing](doc/dirq.md)
+
+[dirt - Recursively set dir time stamp to oldest of members](doc/dirt.md)
+
+[newest - b-time supporting \`find -printf|sort|tail\`](doc/newest.md)
+
+[since - b-time supporting \`find -Xnewer\`](doc/since.md)
+
+[cols - extract just some columns from a text file/stream](doc/cols.md)
+
+[rp - A row processor program-generator maybe replacement for AWK](doc/rp.md)
+
+[crp - C row processor program-generator port of `rp`](doc/crp.md)
+
 Benchmarking Related Utilities
 ------------------------------
 

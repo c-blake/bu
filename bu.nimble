@@ -15,7 +15,7 @@ bin         = @[
   "jointr",     # join trace; helper to join "unfinished ..." with conclusion
   "stripe",     # Run commands in parallel, possibly with shell elision
   "tattr",      # Text Attribute helper using cligen/humanUt machinery
-  "notIn",      # Helper to manage parallel file trees
+  "notIn",      # Helper to manage semi-mirrored file trees
   "ft",         # file typer {i-node type, not file(1)/libmagic(3) type}
   "fage",       # file age according to various timestamps/rules
   "bu/colSort", # Sort *within* the columns of rows
