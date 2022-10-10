@@ -2,14 +2,6 @@ import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
 
 type TimePath = tuple[tm: int64, path: string]
 
-proc doStat(dfd: cint, path: string; nmAt: int, st: var Statx; Deref,
-            quiet: bool): bool {.inline.} =
-  if Deref:     # lstat if no deref requested or as fallback if stat fails.
-    if statxat(dfd, path[nmAt..^1].cstring, st, 0) == 0: return true
-    if lstatxat(dfd, path[nmAt..^1].cstring, st, 0) == 0: return true
-  elif lstatxat(dfd, path[nmAt..^1].cstring, st, 0) == 0: return true
-  if not quiet: stderr.write "newest: \"", path, "\" ", strerror(errno), '\n'
-
 proc printNewest*(n=1, time="m", recurse=1, chase=false, Deref=false,
                   kinds={fkFile}, quiet=false, xdev=false, outEnd="\n",
                   file="", delim='\n', eof0=false, paths: seq[string]) =
