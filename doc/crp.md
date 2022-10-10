@@ -6,10 +6,9 @@ This is a port of `rp.nim` to a Nim-written C code generator.  The point was
 `rp`, in awk 1-liner-like problem settings.  Side interest was speed of machine
 code generation with `tcc` and speed of execution of said fast-generated code.
 
-Consult [doc/rp.md](https://github.com/c-blake/bu/blob/main/doc/rp.md) for more
-pontificating on the idea space which would require few words if it were more
-commonly used.  Personally, I think C even aided with macros is a bit too noisy
-for the ergonomics to be great.
+Consult [doc/rp.md](rp.md) for more pontificating on the idea space which would
+require few words if it were more commonly used.  Personally, I think C even
+aided with macros is a bit too noisy for the ergonomics to be great.
 
 Usage
 -----
