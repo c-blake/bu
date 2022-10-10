@@ -3,7 +3,7 @@ Motivation
 
 People often want to know what kind of files are within some file tree.  This
 produces a nice little histogram of file(1)/libmagic(3) file types.  See the
-[only docs](doc/only.md) for more background.
+[only doc](only.md) for more background.
 
 Usage
 -----
