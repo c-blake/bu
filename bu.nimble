@@ -23,6 +23,19 @@ bin         = @[
   "thermctl",
   "bu/eve",
   "bu/colSort",
+  "chom",       # Enforce group owner & segregated perms in file trees
+  "du",         # Slight improvement on GNU du
+  "rr",         # Mostly a short alias for rm -rf but also faster
+  "dups",       # Fast finder of exact duplicate files
+  "only",       # file(1)/libmagic tool to emit files whose types match
+  "fkindc",     # file(1)/libmagic tool to histogram file types
+  "dirq",       # Kind of its own system-building atom thing
+  "dirt",       # Recursively set dir time stamp to oldest of members
+  "newest",     # b-time supporting `find -printf|sort|tail`
+  "since",      # b-time supporting `find -Xnewer`
+  "cols",       # extract just some columns from a text file/stream
+  "rp",         # A row processor program-generator
+  "crp",        # C row processor program-generator
 ]
 
 # Dependencies
