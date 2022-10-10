@@ -56,9 +56,10 @@ monitoring pre-dates Linux inotify.
 
 Related Work
 ------------
-`inotifywait` from [inotify-tools](inotify-tools/inotify-tools) does allow this,
-but a "command wrapper" use concept makes working with general filenames easier.
-Specifically, `dirq` simply populates the last `argv[]` slot with the filename
-received from the kernel & runs your program.  This eliminates both quoting &
-parsing concerns.  With `inotifywait` you would have to format things in a
-reliably parsable way & parse which is yet another convention to worry about.
+`inotifywait` of [inotify-tools](https://github.com/inotify-tools/inotify-tools)
+does allow this, but a "command wrapper" use concept makes working with general
+filenames easier.  Specifically, `dirq` simply populates the last `argv[]` slot
+with the filename received from the kernel & runs your program.  This eliminates
+both quoting & parsing concerns.  With `inotifywait` you would have to format
+things in a reliably parsable way & parse which is yet another convention to
+worry about.
