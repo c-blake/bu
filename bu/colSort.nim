@@ -1,4 +1,5 @@
 import std/algorithm, cligen/[mslice, osUt]
+when not declared(stdout): import std/syncio
 
 proc colSort*(fi, fo: File; iDlm="\t", oDlm='\t', skip=0) =
   let sep = initSep(iDlm)

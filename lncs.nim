@@ -1,4 +1,5 @@
 import std/[posix, tables, strutils], cligen, cligen/[osUt, posixUt, dents]
+when not declared(stderr): import std/syncio
 
 type LncsLog* = enum osErr, summary         ## A micro logging system
 type DevIno = tuple[dev: Dev; ino: uint64]

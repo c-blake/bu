@@ -1,4 +1,6 @@
 import os, posix, tables, sets, strformat, strutils, cligen, cligen/humanUt
+when not declared(stdout): import std/[syncio, formatfloat]
+
 proc o(a: varargs[string, `$`]) = stdout.write(a)         #short aliases
 proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n")
 

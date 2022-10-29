@@ -1,5 +1,6 @@
 import cligen, cligen/[textUt, mslice]  # printedLen Sep
 from strutils import nil #unqualifiedVisibility(strutils.align) breaks dispatch
+when not declared(stdout): import std/syncio
 
 proc pr(str: string; sWidth, width: int; algn, pad: string) {.inline.} =
   proc prPad(n: int, p=pad) {.inline.} =

@@ -1,4 +1,5 @@
 import strutils, parseutils, os, posix, cligen, bu/execstr
+when not declared(stderr): import std/syncio
 
 proc `$`(tv: Timeval): string =         # For Rusage.ru_utime, Rusage.ru_stime
   $clong(tv.tv_sec) & "." & intToStr(tv.tv_usec, 6)

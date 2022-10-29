@@ -1,4 +1,5 @@
 import std/[os, osproc, posix, strformat, strutils, re, times], cligen/osUt
+when not declared(File): import std/[syncio, formatfloat]
 
 proc log(o: File, t0: var DateTime, msg: string) {.raises: [].} =
  try:

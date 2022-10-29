@@ -1,4 +1,5 @@
 import std/[strutils, posix], cligen/[osUt, statx]
+when not declared(stdout): import std/syncio
 
 proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
   let m = Mode(st.stx_mode)

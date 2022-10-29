@@ -1,4 +1,5 @@
 import tables, algorithm, posix, cligen/[dents, osUt, posixUt, statx]
+when not declared(stderr): import std/syncio
 type IdKind = enum user, group, all="both"
 type Order  = enum id, count
 

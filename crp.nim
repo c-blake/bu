@@ -1,5 +1,6 @@
 import std/[strutils,os,hashes,sets],cligen/[osUt,mslice] #% exec* mdOpen split
 from cligen/parseopt3 import optionNormalize
+when not declared(stderr): import std/syncio
 
 proc toDef(fields, delim, genF: string): string =
   result.add "char const * const rpNmFields = \"" & fields & "\";\n"

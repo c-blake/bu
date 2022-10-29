@@ -1,4 +1,5 @@
 import posix, parseutils, strformat, os
+when not declared(stderr): import std/syncio
 
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex

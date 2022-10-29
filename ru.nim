@@ -1,4 +1,6 @@
 import std/[os, posix, strformat]       # Nim program to measure Resource Usage
+when not declared(stderr): import std/[syncio, formatfloat]
+
 # Many globals since `report` is sighandler to print even if session is killed.
 var pid: Pid                            # Process Id of kid we monitor
 var st: cint                            # Exit status of same kid

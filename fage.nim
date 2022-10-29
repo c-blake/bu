@@ -1,4 +1,5 @@
 import std/[strutils, times], cligen/statx, cligen
+when not declared(stdout): import std/syncio
 
 proc fage(Ref="", refTm='v', fileTm='v', self=false, verb=0, paths:seq[string])=
   ## Print max resolution age (`fileTime(Ref|self,rT) - fileTime(path,fT)`)

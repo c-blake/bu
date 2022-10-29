@@ -1,4 +1,5 @@
 import times, strformat, osproc, strutils, os, cligen
+when not declared(readFile): import std/[syncio, formatfloat]
 
 type ETR* = tuple[done, rate, left: float; etc: DateTime]
 

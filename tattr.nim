@@ -1,4 +1,5 @@
 import os, cligen/humanUt, cligen
+when not declared(stdout): import std/syncio
 
 proc tattr(attrs: seq[string]) =
   ## Emit to stdout an escape string activating text colors/styles, honoring

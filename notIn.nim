@@ -1,4 +1,5 @@
 import std/[sets, os, strutils], cligen/osUt
+when not declared(stdin): import std/syncio
 
 proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
               roots: seq[string]) =

@@ -1,4 +1,5 @@
 import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
+when not declared(stderr): import std/syncio
 
 type TimePath = tuple[tm: int64, path: string]
 
