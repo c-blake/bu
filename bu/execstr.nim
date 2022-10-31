@@ -1,5 +1,5 @@
-import posix, parseutils, strformat, os
 when not declared(stderr): import std/syncio
+import posix, parseutils, strformat, os
 
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex
@@ -143,7 +143,6 @@ proc execStr*(cmd: string): cint =
   argv.deallocCStringArray # execvp fail; Release argv spc {likely about to die}
 
 when isMainModule:                      # This is for testing against syntax
-  import os
   for token in tokens(paramStr(1)): echo token
   discard execStr(paramStr(1))
 ## Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
