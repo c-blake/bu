@@ -122,13 +122,13 @@ proc CLI(run="/bin/sh", secs=0.0, before=false, after=false, nums=false,
     name = posArgs                      #   successive vals of
     sub  = posArgs                      #   $STRIPE_SLOT,_SUB
   try:
-    quit(stripe(bg_setup(run, sub), slot, name, sub, secs, verb))
+    quit(min(127, stripe(bg_setup(run, sub), slot, name, sub, secs, verb)))
   except IOError:
     stderr.write "No file descrip 0/stdin | stdout/err output space issue.\n"
-    quit(sumSt)
+    quit(min(127, sumSt))
 
 when isMainModule:
-  proc ctrlC() {.noconv.} = quit(sumSt)
+  proc ctrlC() {.noconv.} = quit(min(127, sumSt)) # Could be 2-128 dep on which consistency we want
   setControlCHook(ctrlC)
 
   proc sigu12(signo: cint) {.noconv.} =

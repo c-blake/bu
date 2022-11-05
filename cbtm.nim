@@ -50,7 +50,7 @@ proc save*(file="", delim='\n', output="/dev/stdout", quiet=false,
     do: discard
     do: discard
     do: recFailDefault("cbtm save", path)
-  return min(nErr, 255)
+  return min(127, nErr)
 
 proc print*(input="/dev/stdin", delim="\t") =
   ## Print metadata stored in input in a human-readable format.
