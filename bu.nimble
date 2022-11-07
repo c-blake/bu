@@ -32,6 +32,9 @@ bin         = @[
   "cols",       # extract just some columns from a text file/stream
   "rp",         # A row processor program-generator
   "crp",        # C row processor program-generator
+  "ww",         # Dynamic programming based word wrapper
+  "cfold",      # Context folding (like csplit but wrap lines)
+  "unfold",     # An oft neglected inverse-to-wrapping process
   "memlat",     # Memory latency benchmark
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done

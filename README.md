@@ -70,6 +70,12 @@ numbers](doc/stripe.md)
 
 [crp - C row processor program-generator port of `rp`](doc/crp.md)
 
+[ww - Dynamic programming based word wrapper](doc/ww.md)
+
+[cfold - Context folding (like csplit but wrap lines)](doc/cfold.md)
+
+[unfold - an oft neglected inverse-to-wrapping process](doc/unfold.md)
+
 Benchmarking Related Utilities
 ------------------------------
 
