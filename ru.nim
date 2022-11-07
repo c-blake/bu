@@ -1,6 +1,11 @@
 import std/[os, posix, strformat]       # Nim program to measure Resource Usage
 when not declared(stderr): import std/[syncio, formatfloat]
 
+import std/[macros, strutils]           # Some formats want no leading spaces
+macro strp(sVars: varargs[untyped]): untyped =
+  result = newStmtList()                # Assume new-scope for the let's
+  for sV in sVars: result.add(quote do: (let `sV` = `sV`.strip))
+
 # Many globals since `report` is sighandler to print even if session is killed.
 var pid: Pid                            # Process Id of kid we monitor
 var st: cint                            # Exit status of same kid
@@ -106,6 +111,7 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
     msn = if pad: &"{r msgsnd:>10} sent"   else: &"{r msgsnd} sent"
     mrc = if pad: &"{r msgrcv:>9} rcvd"    else: &"{r msgrcv} rcvd"
   if fWrap:     # 3 layout modes: rows (wrapped), table, columns (unwrapped)
+    strp sTm,sUs,sSy,sUt,sRS,sIn,sOu,mjF,mnF,swp,vsw,isw,isr,ixr,idr,nsg,msn,mrc
     if fTm  : s.add &"{sTm}\n{sUs}\n{sSy}\n{sUt}\n{sRS}\n"
     if fIO  : s.add &"{sIn}\n{sOu}\n{mjF}\n{mnF}\n{swp}\n"
     if fSwSh: s.add &"{vsw}\n{isw}\n{isr}\n{ixr}\n{idr}\n"
@@ -116,6 +122,7 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
     if fSwSh: s.add &"{e0}SwSh{e1} {vsw}  {isw}  {isr}  {ixr}   {idr}\n"
     if fComm: s.add &"{e0}Comm{e1} {nsg}  {msn}  {mrc}\n"
   else:
+    strp sTm,sUs,sSy,sUt,sRS,sIn,sOu,mjF,mnF,swp,vsw,isw,isr,ixr,idr,nsg,msn,mrc
     if fTm  : s.add &"{sTm} {sUs} {sSy} {sUt} {sRS}"     ; gap = " "
     if fIO  : s.add &"{gap}{sIn} {sOu} {mjF} {mnF} {swp}"; gap = " "
     if fSwSh: s.add &"{gap}{vsw} {isw} {isr} {ixr} {idr}"; gap = " "
