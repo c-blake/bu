@@ -10,7 +10,7 @@ $c -static -Os $t/true.c -o $t/true && rm $t/true.c || exit 3
 
 tm() { # Now measure dispatch overhead
     (for i in {1..20}; do $@ < $t/w; done) |&
-      sort -g | head -n5 | mnsd -t,     # NOTE: mnsd.nim is in adix/util
+      sort -g | head -n5 | cstats -t,   # NOTE: cstats.nim is in adix/util
 }
 (tm env -i PATH=$PATH ru -hut stripe 1  # stripe 1 w/1 envar
  tm ru -hut stripe 1                    # stripe 1 w/~50 envars
