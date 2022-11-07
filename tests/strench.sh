@@ -72,8 +72,8 @@ tm() { # Now measure dispatch overhead
 # about shell startup "rc" files, etc.  While fast, dash is ~3..5x slower than
 # execstr.  It is mostly nice to know "what features cost what" in this area.
 #
-# But, this mini-report has grown too long already.  I wrote it mostly to show
-# easy to re-apply sort -g|head|mnsd ideas for reproducible timings after I saw
+# But, this mini-report has grown too long already. I wrote it mostly to show an
+# easy to re-apply sort -g|head|cstats idea for reproducible timings after I saw
 # Yet Another Probably Very Irreproducible Timing Table (YAPVITT!), but this is
 # far from the story's end.  bu/eve (I am not 100% satisfied w/it) is another
 # attempt at reliable timing numbers in the face of system noise, but needs more
