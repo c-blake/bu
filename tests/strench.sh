@@ -18,7 +18,6 @@ tm() { # Now measure dispatch overhead
  tm ru -hut parallel -j1)|              # parallel -j1
     align                               # make table easier to read
 
-# You'll want a wide terminal window for below. Sorry. Manually cleaned up some.
 # i7-6700k w/HT off taskset 0x3 chrt -r 99 full meltdown-spectre mitigations
 # wall                 usr                sys                %                mxRS         /first
 # 0.041408 +- 0.000070 0.03259 +- 0.00048 0.01003 +- 0.00050 102.94  +- 0.20  2424  +- 20  1
@@ -36,14 +35,14 @@ tm() { # Now measure dispatch overhead
 # (0.02523-0.022668)/49e3*1e9 =~ 52 ns/envar
 #
 # External facts: Run-to-run deltas have means within 0.2-4 sigma of each other.
-# For example `paste` two together (WITH manually computed ratio column above
-# included) & pipe to awk '{print ($2-$18)/($4**2+$20**2)**.5}', I got 0.670551
-# -1.87678 2.26593 -0.263955: quite decent considering system noise has a heavy
-# tail with slow convergence to Normal.  (align -1 can provide columns for awk).
-# Hence mean,sdev(best 5 of 20 trials) leads to locally reproduced estimates of
-# both time & errors.  You should do things like this on your own systems before
-# believing timing numbers (for this *AND OTHER* measurements). If you get >4sig
-# run-to-run inconsistency, fix CPU freqs via BIOS|OS, do chrt, taskset, etc.
+# Eg. paste run1 run2|grep -v wall|awk '{print ($1-$16)/($3**2+$18**2)**.5}' got
+# me 0.670551 -1.87678 2.26593 -0.263955: quite decent considering system noise
+# has a heavy tail with slow convergence to Normal. (align -1 provides columns
+# for awk).  Hence mean,sdev(best 5 of 20 trials) leads to locally reproduced
+# estimates of both time & errors.  You should do things like this on your own
+# systems before believing timing numbers (for this *AND OTHER* measurements).
+# If you get >5sig run-to-run inconsistency, fix CPU freqs via BIOS|OS, do chrt,
+# taskset, kill/suspend web browsers/other background activity, etc.
 #
 # Some stylized observations from the above:
 #   - GNU parallel uses 73x more time overhead on a modern CPU
