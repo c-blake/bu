@@ -1,4 +1,5 @@
 import cligen/osUt, re, cligen          # cligen is early for `HelpError`
+when not declared(stdin): import std/syncio
 
 proc unfold(sep="\t", n=0, before="", after="", ignore=false, extended=false) =
   ## Join blocks of stdin lines into one line sent to stdout.
