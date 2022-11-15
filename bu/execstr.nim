@@ -90,7 +90,7 @@ proc execStr*(cmd: string): cint =
   var args: seq[string]
   template fallbackToSh() =
     let ccmd = cstring(cmd)
-    binsh[2] = ccmd[0].unsafeAddr
+    binsh[2] = cast[cstring](ccmd[0])
     if execvp("/bin/sh", binsh) != 0:
       stderr.write &"execvp: \"/bin/sh\": {strerror(errno)}\n"
     return      # Do not binsh.deallocCStringArray Retain ready-to-go status.
