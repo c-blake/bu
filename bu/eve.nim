@@ -1,4 +1,4 @@
-import math, sugar, algorithm, stats, random, cligen/strUt; randomize()
+import math, sugar, algorithm, stats, random, cligen/strUt
 
 proc eMax(x: seq[float], k: int): (float, float) =
   let top = x[^k .. ^1]
@@ -112,7 +112,7 @@ proc eve*(batch=30, n=false, qmax=0.5, amax=20, m=5, sig=0.05, low=2.0,
     sigSig  = ev.standardDeviationS
   echo fmtUncertain(em.mean, ev.mean, e0= -2..5), " with trials=", trials
 
-when isMainModule: import cligen; dispatch eve, help = {
+when isMainModule: randomize(); import cligen; dispatch eve, help={
   "batch"  : "block size for min/max passes",
   "n"      : "estimate minimum, not maximum",
   "qmax"   : "max quantile used for average over `k`",
@@ -122,5 +122,4 @@ when isMainModule: import cligen; dispatch eve, help = {
   "low"    : "positive transformed lower bound",
   "geom"   : "geometric (v. location) [low,inf) cast; >0!",
   "verbose": "operate verbosely",
-  "vals"   : "values"
-}
+  "vals"   : "values"}
