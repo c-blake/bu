@@ -36,6 +36,7 @@ bin         = @[
   "ww",         # Dynamic programming based word wrapper
   "cfold",      # Context folding (like csplit but wrap lines)
   "unfold",     # An oft neglected inverse-to-wrapping process
+  "funnel",     # A reliable, record boundary respecting "FIFO funnel"
   "memlat",     # Memory latency benchmark
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
