@@ -8,7 +8,8 @@ bin         = @[
   "fsids",      # file system user & group id histogram
   "cbtm",       # Back up & restore new Linux b-time stamps (creation/birth)
   "thermctl",   # Thermal Control for before CPU makers thermally throttled
-  "lncs",       # Links mapper for hard-links.
+  "lncs",       # Links mapper for hard-links
+  "pid2",       # Wrap Linux process PID table to first past target
   "okpaths",    # Helper to validate PATH-like variables by probing the system
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
