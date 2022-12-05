@@ -114,7 +114,7 @@ possibility for `funnel`.  Second, this is a 0 match test.  Linus' name is not
 misspelled this way in his big project.  Third, mean of the best 3/10[^1] are
 reproduced run-to-run to within its stderrs[^2].  E.g., the first wall time pair
 is 0.72 sigma apart, and all are within 5 sigma.[^3] While other things can (and
-maybe should) be done, we use the min of the 2 trials next.
+maybe should) be done[^4], we use the min of the 2 trials next.
 
 Interpreting in more detail, here `rg` is 312790/306492 =~ 1.02X slower.  Since
 I found no way to disable `rg` dir scans/.., it is more fair to subtract an `rg
@@ -148,9 +148,14 @@ perfect" here is a bit elusive, but "not awful" is not so hard to get.
 compare runs/assess said reproduction.  For errors small enough that [classic
 error propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty)
 holds, `sig(A-B)=(sigA**2+sigB**2)**.5`, for example.  "Numbers of sigma" refer
-to `|A-B|/sig(A-B)`, an informal two-sided Student T test for zero-hood.
+to `|A-B|/sig(A-B)`, an informal two-sided Student T test for zero-hood.  In a
+Nim setting, https://github.com/SciNim/Measuremancer also has more details.
 
 [^3]: A common workaround for hostile, unknown heavy tails in particle physics
 is to use 5 rather than 3 sigma as a "strong" threshold.  This actually may be
 too optimistic for "computer system timing noise", especially depending on
 background activity like web browsers/..where I occasionally see 10+ sigma.
+
+
+[^4]: E.g. using a global min over all 20 runs, possibly adjusted & with error
+estimates.
