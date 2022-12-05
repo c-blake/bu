@@ -126,7 +126,7 @@ that ~35% total time work is regrettable in more than benchmarking { though,
 yes, only some users might use such a feature }.  TLDR: with low overhead
 parallel dispatch, GNU `grep` can be "about as fast" as `rg`, depending.  `rg`
 has many other nice features builtin, of course { but could (maybe) profitably
-grow a `--files-from-file` }.
+grow a `--files-from` option }.
 
 Related Work
 ------------
