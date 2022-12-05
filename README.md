@@ -22,6 +22,8 @@ System Administration on Unix/POSIX/Linux
 
 [lncs - analyze a file tree for hard link structure](doc/lncs.md)
 
+[pid2 - Wrap Linux process PID table to first past target](doc/pid2.md)
+
 Miscellaneous Shell Utilities
 -----------------------------
 
@@ -75,6 +77,8 @@ numbers](doc/stripe.md)
 [cfold - Context folding (like csplit but wrap lines)](doc/cfold.md)
 
 [unfold - an oft neglected inverse-to-wrapping process](doc/unfold.md)
+
+[funnel - A reliable, record boundary respecting "FIFO funnel](doc/funnel.md)
 
 Benchmarking Related Utilities
 ------------------------------
