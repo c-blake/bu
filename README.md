@@ -24,6 +24,8 @@ System Administration on Unix/POSIX/Linux
 
 [pid2 - Wrap Linux process PID table to first past target](doc/pid2.md)
 
+[sr - System Request Key - rapidly act on Linux systems](doc/sr.md)
+
 Miscellaneous Shell Utilities
 -----------------------------
 

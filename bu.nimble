@@ -10,6 +10,7 @@ bin         = @[
   "thermctl",   # Thermal Control for before CPU makers thermally throttled
   "lncs",       # Links mapper for hard-links
   "pid2",       # Wrap Linux process PID table to first past target
+  "sr",         # System Request Key - rapidly act on Linux systems
   "okpaths",    # Helper to validate PATH-like variables by probing the system
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
