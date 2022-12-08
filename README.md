@@ -80,10 +80,14 @@ numbers](doc/stripe.md)
 
 [funnel - A reliable, record boundary respecting "FIFO funnel](doc/funnel.md)
 
+[wsz - Report terminal size in cells, pixels, and cell size](doc/wsz.md)
+
 Benchmarking Related Utilities
 ------------------------------
 
 [memlat - measure memory latency at various size scales](doc/memlat.md)
+
+[fread - Like `cat` but just read data (no writes)](doc/fread.md)
 
 [ru - resource usage of a monitored program](doc/ru.md)
 

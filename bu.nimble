@@ -37,7 +37,9 @@ bin         = @[
   "cfold",      # Context folding (like csplit but wrap lines)
   "unfold",     # An oft neglected inverse-to-wrapping process
   "funnel",     # A reliable, record boundary respecting "FIFO funnel"
+  "wsz",        # Report terminal size in cells, pixels, and cell size
   "memlat",     # Memory latency benchmark
+  "fread",      # Like `cat` but just read data (no writes)
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "bu/eve",     # Extreme Value Estimator; Estimate "true" min/max from a sample
