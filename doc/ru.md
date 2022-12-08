@@ -4,7 +4,7 @@ OSes have provided better.  When faced with the question "What is CPU?", perhaps
 the getrusage/wait4 answer of `ru` can be a first step.
 
 ```
-Usage:
+Usage: (***NOT*** a cligen utility)
 
   ru [-whatiscpu] <prog> [prog args...]
 

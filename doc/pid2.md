@@ -1,6 +1,6 @@
 Basics
 ------
-Usage:
+Usage: (***NOT*** a cligen utility)
 ```
 pid2 [integer(300)]
 ```
