@@ -84,6 +84,8 @@ numbers](doc/stripe.md)
 
 [wsz - Report terminal size in cells, pixels, and cell size](doc/wsz.md)
 
+[saft - SAve&Restore File Times across a command operating on them](doc/saft.md)
+
 Benchmarking Related Utilities
 ------------------------------
 

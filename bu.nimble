@@ -39,6 +39,7 @@ bin         = @[
   "unfold",     # An oft neglected inverse-to-wrapping process
   "funnel",     # A reliable, record boundary respecting "FIFO funnel"
   "wsz",        # Report terminal size in cells, pixels, and cell size
+  "saft",       # SAve&Restore File Times across a command operating on them
   "memlat",     # Memory latency benchmark
   "fread",      # Like `cat` but just read data (no writes)
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
