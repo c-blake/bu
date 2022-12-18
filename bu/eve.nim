@@ -30,8 +30,8 @@ proc eMaxCB(vals: var seq[float], qmax=0.5, amax=20, m=5): float =
   vals.sort
   var ves: seq[(float, float)]
   for k in 2 ..< min(int(qmax * vals.len.float + 0.5), amax):
-    try   : ves.add eMax(vals, k)
-    except: discard
+    try                  : ves.add eMax(vals, k)
+    except CatchableError: discard
   ves.aveSmallest2nd(m)
 
 proc eve1(vals: seq[float], n=false, qmax=0.5, amax=20, m=5, low=2.0, geom=true,

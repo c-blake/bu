@@ -6,7 +6,7 @@ proc log(o: File, t0: var DateTime, msg: string) {.raises: [].} =
   let t1 = now(); let diff = t1 - t0; t0 = t1
   o.write t1.format("yyyy/MM/dd-HH:mm:ss,ffffff")#'.' notin times.FormatLiterals
   o.write ": ", msg, " after ", diff.inSeconds, " seconds\n"; o.flushFile
- except: discard
+ except Ce: discard
 
 iterator pidStates(excl: seq[string]): (Pid, string) = # yield non-excl (pid,st)
   try:      # Process list is dynamic => time-of-walk/time-of-parse|act errors
@@ -22,7 +22,7 @@ iterator pidStates(excl: seq[string]): (Pid, string) = # yield non-excl (pid,st)
             let eoState = statB.find(' ', start=eoCmd+2)
             if eoState != -1:
               yield (pid, statB[eoCmd+2 ..< eoState])
-  except: discard
+  except Ce: discard
 
 proc stop(excl: seq[string]) {.raises: [].} =
   for (pid, state) in pidStates(excl):
@@ -46,7 +46,7 @@ proc thermctl*(qry="auto", ival=1.0, match=".", excl = @["thermctl"], log="",
   var qry   = qry                           # Default&massage qry&match params
   var match = match
   if qry == "auto":
-    if "Intel" in (try: execCmdEx("uname -p")[0] except: ""): # Nim for $()
+    if "Intel" in (try: execCmdEx("uname -p")[0] except Ce: ""): # Nim for $()
       qry = "turbostat -s CPU,CoreTmp -qi$1"; match = "^-"; excl.add "turbostat"
     else:
       qry = "cpuTemp $1"; match = "."; excl.add "cpuTemp"; excl.add "sensors"
@@ -57,8 +57,8 @@ proc thermctl*(qry="auto", ival=1.0, match=".", excl = @["thermctl"], log="",
   for line in popenr(qry % $ival).lines:    # WANT to die if raises IOError here
     if line.contains(rx):                   # Only whole CPU records not /Core
       var cpuTemp = 0.0
-      try   : cpuTemp = parseFloat(line.split()[^1])
-      except: stderr.write "could not parse cpuTemp in: ", line, "\n"; continue
+      try      : cpuTemp = parseFloat(line.split()[^1])
+      except Ce: stderr.write "could not parse cpuTemp in: ",line,"\n"; continue
       if cooling and cpuTemp <= temp.a:
         o.log t0, &"cpuTemp {cpuTemp} C; Resuming"
         cont excl

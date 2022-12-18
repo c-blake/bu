@@ -23,7 +23,7 @@ proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
         let pat = path[root.len+1..^1]
         if (invert and pat in pats) or pat notin pats:
           stdout.write path, term
-    except:
+    except Ce:
       erru "could not recurse into ",root,"\n"
 
 when isMainModule:

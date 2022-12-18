@@ -107,7 +107,7 @@ proc dfr(devs = @[ "cgroup_root" ], fs = @[ "devtmpfs" ], unit = 1073741824.0,
     var rp: string                      #fully symlink-resolved path
     try:
       rp = expandFilename(path)         #POSIX realpath
-    except:
+    except CatchableError:
       er "dfr: expandFilename(\"", path, "\"): ", osErrorMsg(osLastError())
       continue
     let mp = matchPrefix(rp)
