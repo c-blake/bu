@@ -128,8 +128,8 @@ proc CLI(run="/bin/sh", secs=0.0, before=false, after=false, nums=false,
     quit(min(127, sumSt))
 
 when isMainModule:
-  proc ctrlC() {.noconv.} = quit(min(127, sumSt)) # Could be 2-128 dep on which consistency we want
-  setControlCHook(ctrlC)
+  proc ctrlC() {.noconv.} = quit(min(127, sumSt)) # Could be 2-128 dep on which
+  setControlCHook(ctrlC)                          #..consistency we want.
 
   proc sigu12(signo: cint) {.noconv.} =
     if   signo == SIGUSR1: inc(dSlot)   # SIGUSR1 increases N

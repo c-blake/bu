@@ -92,8 +92,8 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
       sRS = if fH: &"{F(r maxrss)/1024.0:.3f} mxRM" else: &"{r maxrss} mxRS"
   if fIO: # Divide by 2048 to get MiB from 512 Byte blocks
     if pad:
-      sIn = if fH: &"{F(r inblock)/2048:>13.6f} inMB" else: &"{r inblock:>13} inBl"
-      sOu = if fH: &"{F(r oublock)/2048:>10.6f} ouMB" else: &"{r oublock:>10} ouBl"
+      sIn=if fH: &"{F(r inblock)/2048:>13.6f} inMB"else: &"{r inblock:>13} inBl"
+      sOu=if fH: &"{F(r oublock)/2048:>10.6f} ouMB"else: &"{r oublock:>10} ouBl"
     else:
       sIn = if fH: &"{F(r inblock)/2048:.6f} inMB" else: &"{r inblock} inBl"
       sOu = if fH: &"{F(r oublock)/2048:.6f} ouMB" else: &"{r oublock} ouBl"

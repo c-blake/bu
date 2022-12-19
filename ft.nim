@@ -46,7 +46,8 @@ proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
       if not result: return
       flip = false
 
-proc ft*(file="", delim='\n', term='\n', pattern="$1", expr="e", paths: seq[string]) =
+proc ft*(file="", delim='\n', term='\n', pattern="$1", expr="e",
+         paths: seq[string]) =
   ## Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
   ## that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
   ## also read stdin as in `find -type f|ft -ew`.  (Yes, could cobble together
