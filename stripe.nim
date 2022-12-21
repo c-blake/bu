@@ -1,3 +1,4 @@
+{.push hint[Performance]: off.}         # No warn about token copy in bu/execstr
 import strutils, parseutils, os, posix, cligen, bu/execstr
 when not declared(stderr): import std/syncio
 

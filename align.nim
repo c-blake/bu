@@ -70,7 +70,7 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
   var aligns = alignSpecs               #Pad align specs to max columns seen, M
   if aligns.len == 0: aligns.add("-")   #Default empty alignSpecs => @["-"]
   while aligns.len < M:
-    aligns.add(aligns[^1])
+    aligns.add(aligns[^1][0..^1]) #COPY
 
   var wPr = w                           #PASS2: WIDTHS FOR TEXT TO BE PRINTED
   if HeadersOnly: zeroMem(addr wPr[0], wPr.len * sizeof wPr[0])
