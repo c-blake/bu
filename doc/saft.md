@@ -16,7 +16,7 @@ Usage
   saft [optional-params] [--] `cmd` opts/args.. [--]
 
 Runs cmd on a set of files with save & restore [amc]time of said files.
-NOTE: cinode on many files causes "time storms".
+NOTE: cInode on many files causes "time storms".
 
 Options:
   -f=, --files= strings {}    paths to files to preserve the file times of

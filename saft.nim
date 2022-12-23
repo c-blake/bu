@@ -26,12 +26,12 @@ proc ctimeNsAt*(dirfd: cint; path: cstring; st: Stat; flags: cint): bool =
     erru "saft:clock_settime: ",eStr,'\n'
     return true
 
-proc saft(files: seq[string] = @[], access=false, modify=true, cinode=false,
+proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
           link=false, verb=false, cmd: seq[string]): int =
   ## Runs `cmd` on a set of files with save & restore [amc]time of said files.
   ## E.g.: `saft -fA -fB -- sed -si s/,2018/,2018,2019/g --` can add a copyright
   ## year in files A,B without causing file time-based rebuilds.  NOTE:
-  ## `cinode` on many files causes "time storms".
+  ## `cInode` on many files causes "time storms".
   if files.len<1: raise newException(HelpError, "Need >= 1 file; Full ${HELP}")
   if cmd.len < 1: raise newException(HelpError, "Need Some Cmd; Full ${HELP}")
   let flags = if link: AT_SYMLINK_NOFOLLOW else: 0.cint
@@ -72,7 +72,7 @@ proc saft(files: seq[string] = @[], access=false, modify=true, cinode=false,
         erru "saft:utimesat: \"",file,"\": ",eStr,'\n'
     elif verb and (access or modify):
       erru wnt,"==",had,"\n"
-    if cinode and st.st_ctim != sts[i].st_ctim and not failedSet:
+    if cInode and st.st_ctim != sts[i].st_ctim and not failedSet:
       if verb: erru &"ctimeNsAt(\"{file}\", {sts[i].st_ctim}, {flagSt})\n"
       failedSet = ctimeNsAt(AT_FDCWD, path, sts[i], flags)
 
