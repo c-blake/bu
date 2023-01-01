@@ -28,29 +28,31 @@ noise aspects violate base assumptions of, well, most applied statistics.
 
 Solutions
 =========
-All is not lost, though.  While statistical strategies to do better (like
-[eve](eve.md)) or MLEs for "sampling cast" Weibull distributions exist, a low
-sophistication way to estimate reproducibly Eq.1's `t0`, in spite of noise
-hostility, is a simple sample minimum.  This filters out all but the minimum
-noise - better behaved than the average noise.  However, this gives no estimate
-of estimator error.  That error estimate matters since one needs an infinite
-number of trials to get the true minimum.  We instead want to economize on our
-repetitions.  Once so economized, you need to know what the penalty was in
-"compared-to-what scenarios" like benchmarking.
+All is not lost.  While statistical strategies to do better (like [eve](eve.md))
+or MLEs for "sampling cast" Weibull distributions exist, a low sophistication
+way to estimate reproducibly Eq.1's `t0`, in spite of noise hostility, is a
+simple sample minimum.  This filters out all but the minimum noise - better
+behaved than the average noise.
+
+However, this gives no estimate of estimator error.  That error estimate matters
+since one needs an **infinite** number of trials to get the true minimum.  We
+instead want to economize on our repetitions.  Once so economized, you need to
+know what the penalty was in "compared-to-what scenarios" like benchmarking.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
-the mean,stderr(mean) for the best *several* times out of many runs.  Instead of
-filtering out 90% of the noise (for say 10 runs), you can filter out only 70%
+the mean,stderr(mean) for the best **several** times out of many runs.  Instead
+of filtering out 90% of the noise (for say 10 runs), you can filter out only 70%
 & average the 3 least order stats to get a weak estimate of the 15th percentile.
+
 This clearly only upper bounds `t0`, but it is as close as that 15th percentile
 is representative which is to say - probably close.  Clustering variation of
 min-side order stats also only vaguely correlates with error on the estimator of
 `t0`.  Other ideas (like the difference between the 2 smallest times) are surely
-possible, but stderr(mean(best) seems workable in practice. Empirical Evaluation
+possible, but stderr(mean(best) seems workable in practice. [Empirical Evaluation](#empirical-evaluation-of-t0-error-estimates)
 has more detail.
 
-On top of this layers a natural extension to gauge if your benchmark gives
-stable times in the min-tail in the first place.  The extension is to simply do
+On top of this layers a natural extension to gauge *if your benchmark gives
+stable times in the min-tail in the first place*.  The extension is to simply do
 two back-to-back trials of the base procedure & verify the quantile-means are
 within some number of standard deviations of each other.  If so, then you have
 some evidence for thinking the distribution of the two samples is the same (at
@@ -58,6 +60,10 @@ least near the min).  If *not*, you should take action to correct this before
 concluding much (even on an isolated test machine) such as `taskset`, `chrt`,
 fixing CPU frequency dynamically in-OS, or even rebooting into a BIOS with a
 fixed freq CPU (or your OS's equivalent of these Linux interventions).
+
+`tim` wraps all these ideas up into a simple command-line invocation where you
+just pass some valid command (probably not outputting anything to terminals).
+It even prints out a nice error message when your times are too unstable.
 
 Usage
 =====
