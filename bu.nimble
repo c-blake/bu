@@ -26,6 +26,7 @@ bin         = @[
   "fread",      # Like `cat` but just read data (no writes)
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
+  "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (e.g. *true* min time of an infinite
 
   "align",      # Align text with better ergonomics than BSD `column`
