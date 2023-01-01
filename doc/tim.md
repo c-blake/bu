@@ -1,0 +1,134 @@
+Background
+==========
+Often one has some program/operation of interest that takes 1..500 milliseconds.
+One may want to time it to use as a benchmark.  In practical settings, all you
+can really measure is:
+
+(1) `observed_time = t0 + noise`
+
+`t0` is what you want because `noise` (more or less by definition) does not
+generalize/reproduce to other days/weeks/noise environments.
+
+In almost all deployment environments with the exception of hard real-time OSes
+and/or truly dedicated hardware, OS schedulers make `noise` from Eq.1 both time
+varying ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
+[heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
+imperfect control over competing activity.  For example, if you have a spinning
+rust Winchester disk and something waits on it or if some other competing action
+evicts relevant L2/L3 cache entries.  This is true even on mostly idle machines,
+though obviously much worse on heavily loaded machines and the size of `noise`
+scale compared to `t0` can vary considerably.
+
+Both of these statistical properties make both value & error estimates of flat
+averages mislead.  The mean is likely dragged way up.  Errors in means explode.
+Neither converge as [Central Limit
+Theorem](https://en.wikipedia.org/wiki/Central_limit_theorem)-based reasoning
+might lead you to suspect without testing.  Non-stationary and non-independent
+noise aspects violate base assumptions of, well, most applied statistics.
+
+Solutions
+=========
+All is not lost, though.  While statistical strategies to do better (like
+[eve](eve.md)) or MLEs for "sampling cast" Weibull distributions exist, a low
+sophistication way to estimate reproducibly Eq.1's `t0`, in spite of noise
+hostility, is a simple sample minimum.  This filters out all but the minimum
+noise - better behaved than the average noise.  However, this gives no estimate
+of estimator error.  That error estimate matters since one needs an infinite
+number of trials to get the true minimum.  We instead want to economize on our
+repetitions.  Once so economized, you need to know what the penalty was in
+"compared-to-what scenarios" like benchmarking.
+
+A low art way to estimate the error on the sample min `t0` estimate is to find
+the mean,stderr(mean) for the best *several* times out of many runs.  Instead of
+filtering out 90% of the noise (for say 10 runs), you can filter out only 70%
+& average the 3 least order stats to get a weak estimate of the 15th percentile.
+This clearly only upper bounds `t0`, but it is as close as that 15th percentile
+is representative which is to say - probably close.  Clustering variation of
+min-side order stats also only vaguely correlates with error on the estimator of
+`t0`.  Other ideas (like the difference between the 2 smallest times) are surely
+possible, but stderr(mean(best) seems workable in practice. Empirical Evaluation
+has more detail.
+
+On top of this layers a natural extension to gauge if your benchmark gives
+stable times in the min-tail in the first place.  The extension is to simply do
+two back-to-back trials of the base procedure & verify the quantile-means are
+within some number of standard deviations of each other.  If so, then you have
+some evidence for thinking the distribution of the two samples is the same (at
+least near the min).  If *not*, you should take action to correct this before
+concluding much (even on an isolated test machine) such as `taskset`, `chrt`,
+fixing CPU frequency dynamically in-OS, or even rebooting into a BIOS with a
+fixed freq CPU (or your OS's equivalent of these Linux interventions).
+
+Usage
+=====
+```
+  tim [optional-params] [cmds: string...]
+
+Run shell commands (maybe w/escape/quoting) 2R times.  Finds mean,stderr of
+the best runs twice and, if stable at sigma-level, merge results (reporting
+mean,stderr of the best of all runs).
+
+  -b=, --best=  int    3   number of best times to average
+  -r=, --runs=  int    10  number of outer trials
+  -s=, --sigma= float  7.0 max distance to declare stability
+  -w=, --write= string ""  also write times to this file
+```
+
+An Example, Measuring Shell Overhead
+====================================
+POSIX shells have a standard built-in command `:` which only expands its
+arguments.  So, at least on Linux, one can do this:
+
+```sh
+$ tim : :
+(2.9548 +- 0.0096)e-04  :
+(3.192 +- 0.038)e-04    :
+```
+to time two commands.  In this case they are the same, both `:`, and the
+values are 6 standard errors apart.  (My /bin/sh -> dash, not bash and both
+attention to start-up time optimization and static linking make dash about
+3..4X faster than bash.  Automatically measuring & subtracting shell overhead
+or optionally minimizing it with `bu/execstr.nim` are possible future work.)
+
+Empirical Evaluation of `t0` "error" estimates
+==============================================
+The above example can be generalized to measure how coherent the estimate &
+errors are with your interpretations.  The `--sigma` option abbreviated `-s`
+can be used to get `tim` to emit a little report which includes the standard
+error propagated sigma distance.  That can just be extracted with simple text
+manipulation tools.  To get 1000 samples of the distribution of sigma under
+noise variation, for example, you can just:
+```sh
+args=$(printf '%1000s\n' | sed 's/ /: /g')
+eval tim -s0 $args|grep apart|awk '{print $2}'|sort -g>/t/a
+# plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
+```
+produces for me (under `taskset 0xF chrt 99` on an otherwise idle AlderLake CPU
+with the GoldenCove cores running Linux 6.1.1) percentiles:
+
+    p   | sigma
+    ----|------
+    .01 | 0.146
+    .05 | 0.286
+    .50 | 1.641
+    .95 | 7.22
+    .99 | 24.25
+
+Even with best 3/10, we see *substantial* (>5%) sampling in the heavy 7+ sigma
+tail.  Nevertheless, "units" of sigma derived from the standard deviation of the
+mean of the best 3 are not so far off from a classical Gaussian, perhaps under
+2X until >80th percentile.  Had we not done the standard deviation of the mean
+adjustment of sqrt(3)=1.73, these would be brought in a little, but the shape is
+still wildly non-Gaussian in the tails regardless.
+
+A graph on your own system can perhaps show how bad this may be in your own test
+environment, but it is again, non-stationary in reality.  To whatever level of
+stationarity is possessed, both shape & scale of this distribution likely also
+vary with time scale of the measured program.  So, trying to measure it/memorize
+it seems hard.  Playing with --best and --run to reign in the tail at various
+scales seems more likely to be productive of better measurements.
+
+In light of all this, this best n of m idea twice is only a "something is better
+than nothing" thing.  It at least has a snowball's chance of being reproducible
+somewhat reliably (which is more than can be said of most reports I have seen of
+sub-second timings).
