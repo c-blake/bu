@@ -49,7 +49,7 @@ is representative which is to say - probably close.  Clustering variation of
 min-side order stats also only **vaguely correlates with error** on the
 estimator of `t0`.  Other ideas (like the difference between the 2 smallest
 times) are surely possible, but sdev(best) seems workable in practice.  Just
-"err" in scare quotes will refer to this To refer to vagueness of a best choice.
+"err" in scare quotes will refer to this to indicate best choice vagueness.
 [Empirical Evaluation](#empirical-evaluation-of-t0-error-estimates) has details.
 
 On top of this layers a natural extension to gauge **if your benchmark gives
