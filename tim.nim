@@ -1,5 +1,5 @@
 when not declared(addfloat): import std/[syncio, formatfloat]
-import std/[os, times, algorithm, stats, math, strformat], cligen/strUt
+import std/[os, times, algorithm, stats, math, strformat], cligen, cligen/strUt
 
 proc run(cmd: string, runs=10): seq[float] =
   for trial in 1..runs:
@@ -13,7 +13,8 @@ proc tim(best=3, runs=10, sigma=7.5, write="", cmds: seq[string]) =
   ## Run shell commands (maybe w/escape/quoting) 2*R times.  Finds mean,"err"
   ## of the `best` `runs` twice and, if stable at `sigma`-level, merge results
   ## (reporting mean,"err" of the `best` of all runs).  `doc/tim.md` says more.
-  if runs < best: quit "runs >= best must hold", 1
+  if runs<best: raise newException(HelpError, "Need runs >= best; Full ${HELP}")
+  if cmds.len==0: raise newException(HelpError, "Need cmds; Full ${HELP}")
   let f = if write.len > 0: open(write, fmWrite) else: nil
   for cmd in cmds:
     var s1, s2, s: RunningStat
@@ -37,7 +38,7 @@ OS|BIOS) may stabilize timing as can suspend/quit of competing work/browsers."""
       for t in r1: f.write $t,'\n'
       for t in r2: f.write $t,'\n'
 
-when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch tim,help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "best" : "number of best times to average",
   "runs" : "number of outer trials",
   "sigma": "max distance to declare stability",
