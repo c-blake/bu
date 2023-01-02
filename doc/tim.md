@@ -109,19 +109,11 @@ eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
 # plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
 produces for me (under `taskset 0xF chrt 99` on an otherwise idle AlderLake CPU
-with the GoldenCove cores running Linux 6.1.1) percentiles:
-
-    p   | sigma | |unitGauss|
-    ----|-------|------------
-    .05 | 0.129 | 0.065
-    .50 | 0.829 | 0.688
-    .95 | 3.034 | 1.9
-    .99 | 5.084 | 2.70
-
-Even with best 3/10, we see **substantial (>5%) sampling in the heavy** 7+ sigma
-tail.  Nevertheless, "units" of sigma are not so far off from Gaussian noise
-expectations.  The shape is wildly non-Normal in the high sigma tail regardless
-as shown here[^1]: ![tim Actual](timActual.png)
+with the GoldenCove cores running Linux 6.1.1)[^1]:
+![tim EDF plot](tim.png)
+"As a unit", the error is not so far from Gaussian expectations below 2 sigma,
+but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
+sigma tail.
 
 A graph of your own test environments can perhaps show how bad this may be for
 you, but it is, again, non-stationary in reality.  To whatever level of
