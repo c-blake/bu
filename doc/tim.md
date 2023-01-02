@@ -40,23 +40,23 @@ instead want to economize on our repetitions.  Once so economized, you need to
 know what the penalty was in "compared-to-what scenarios" like benchmarking.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
-the mean,stderr(mean) for the best **several** times out of many runs.  Instead
-of filtering out 90% of the noise (for say 10 runs), you can filter out only 70%
-& average the 3 least order stats to get a weak estimate of the 15th percentile.
+the mean,sdev for the best **several** times out of many runs.  Instead of
+filtering out 90% of the noise (for say 10 runs), you can filter out only 70% &
+average the 3 least order stats to get a weak estimate of the 15th percentile.
 
 This clearly only **upper bounds** `t0`, but it's as close as a 15th percentile
 is representative which is to say - probably close.  Clustering variation of
 min-side order stats also only **vaguely correlates with error** on the
 estimator of `t0`.  Other ideas (like the difference between the 2 smallest
-times) are surely possible, but stderr(mean(best) seems workable in practice.
-[Empirical Evaluation](#empirical-evaluation-of-t0-error-estimates) has more
-detail.
+times) are surely possible, but sdev(best) seems workable in practice.  Just
+"err" in scare quotes will refer to this To refer to vagueness of a best choice.
+[Empirical Evaluation](#empirical-evaluation-of-t0-error-estimates) has details.
 
 On top of this layers a natural extension to gauge **if your benchmark gives
 stable times in the min-tail in the first place**.  The extension is to simply
-do two back-to-back trials of the base procedure & verify the quantile-means are
+do 2 back-to-back trials of the base procedure & verify the quantile-means are
 within some number of standard deviations of each other.  **If so**, then you
-have some evidence for thinking the distribution of the two samples is the same
+have some evidence for thinking the distribution of the 2 samples is the same
 (at least near the min).  **If not**, you should take action to correct this
 before concluding much (even on an isolated test machine) such as `taskset`,
 `chrt`, fixing CPU frequency dynamically in-OS, or even rebooting into a BIOS
@@ -71,9 +71,9 @@ Usage
 ```
   tim [optional-params] [cmds: string...]
 
-Run shell commands (maybe w/escape/quoting) 2R times.  Finds mean,stderr of
+Run shell commands (maybe w/escape/quoting) 2R times.  Finds mean,"err" of
 the best runs twice and, if stable at sigma-level, merge results (reporting
-mean,stderr of the best of all runs).
+mean,"err" of the best of all runs).
 
   -b=, --best=  int    3   number of best times to average
   -r=, --runs=  int    10  number of outer trials
@@ -87,15 +87,14 @@ POSIX shells have a standard built-in command `:` which only expands its
 arguments.  So, at least on Linux, one can do this:
 ```sh
 $ tim : :
-(2.9548 +- 0.0096)e-04  :
-(3.192 +- 0.038)e-04    :
+(3.53 +- 0.15)e-04      :
+(3.70 +- 0.10)e-04      :
 ```
 to time two commands.  In this case, they are the same, both `:`.  (It could
-have instead been `tim 'this way' 'that way'`.)  The values are 6 standard
-errors apart.  (My /bin/sh -> dash, not bash & statically linked dash is easily
-3..4X faster than bash for this.  Automatically measuring & subtracting shell
-overhead or optionally minimizing it with `bu/execstr.nim` are possible future
-work.)
+have instead been `tim 'this way' 'that way'`.)  The values are 0.94 "err"s
+apart.  (My /bin/sh -> dash, not bash & statically linked dash is easily 3..4X
+faster than bash for this.  Automatically measuring & subtracting shell overhead
+or optionally minimizing it with `bu/execstr.nim` are possible future work.)
 
 Empirical Evaluation of "error" estimates
 =========================================
@@ -112,28 +111,28 @@ eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
 produces for me (under `taskset 0xF chrt 99` on an otherwise idle AlderLake CPU
 with the GoldenCove cores running Linux 6.1.1) percentiles:
 
-    p   | sigma
-    ----|------
-    .01 | 0.146
-    .05 | 0.286
-    .50 | 1.641
-    .95 | 7.22
-    .99 | 24.25
+    p   | sigma | |unitGauss|
+    ----|-------|------------
+    .05 | 0.129 | 0.065
+    .50 | 0.829 | 0.688
+    .95 | 3.034 | 1.9
+    .99 | 5.084 | 2.70
 
 Even with best 3/10, we see **substantial (>5%) sampling in the heavy** 7+ sigma
-tail.  Nevertheless, "units" of sigma derived from the standard deviation of the
-mean of the best 3 are not so far off from a classical Gaussian, perhaps under
-2X until >80th percentile.  The shape is still wildly non-Gaussian in the tails
-regardless.
+tail.  Nevertheless, "units" of sigma are not so far off from Gaussian noise
+expectations.  The shape is wildly non-Normal in the high sigma tail regardless
+as shown here[^1]: ![tim Actual](timActual.png)
 
-A graph on your own system can perhaps show how bad this may be in your own test
-environment, but it is again, non-stationary in reality.  To whatever level of
-stationarity is possessed, both shape & scale of this distribution likely also
-vary with time scale of the measured program.  So, trying to measure/memorize it
-is hard.  **Playing with `--best` & `--run` to reign in the tail** at various
+A graph of your own test environments can perhaps show how bad this may be for
+you, but it is, again, non-stationary in reality.  To whatever level of
+stationarity occurs, both shape & scale of this distribution likely also vary
+with time scale of the measured program.  So, trying to measure/memorize it is
+hard.  **Playing with `--best` & `--run` to reign in the tail** at various
 scales seems more likely to be productive of better measurements.
 
 In light of all this, this best n of m idea twice is only a "something is better
 than nothing" thing.  It at least has a snowball's chance of being reproducible
 somewhat reliably (which is more than can be said of most reports I have seen of
 sub-second timings).
+
+[^1]: |unitGauss| came from just taking absolute values of 1000 unit normals.
