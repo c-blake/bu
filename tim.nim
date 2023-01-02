@@ -37,7 +37,7 @@ OS|BIOS) may stabilize timing as can suspend/quit of competing work/browsers."""
       for t in r1: f.write $t,'\n'
       for t in r2: f.write $t,'\n'
 
-when isMainModule: import cligen; dispatch tim, help={
+when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch tim,help={
   "best" : "number of best times to average",
   "runs" : "number of outer trials",
   "sigma": "max distance to declare stability",
