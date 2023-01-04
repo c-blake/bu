@@ -18,8 +18,8 @@ proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
   of 'u': (m and 0o4000) != 0           # its set-user-ID bit is set
   of 'g': (m and 0o2000) != 0           # is set-group-ID
   of 'k': (m and 0o1000) != 0           # has its sticky bit set
-  of 'O': st.stx_uid == euid            # is Owned by the effective user ID
-  of 'G': st.stx_gid == egid            # is owned by effective Group ID
+  of 'O': st.stx_uid == euid.uint32     # is Owned by the effective user ID
+  of 'G': st.stx_gid == egid.uint32     # is owned by effective Group ID
   of 'r': (m and 0o4) != 0              # user can read; Q: Add access(2) way?
   of 'w': (m and 0o2) != 0              # user can write
   of 'x': (m and 0o1) != 0              # user can execute | traverse
@@ -34,8 +34,8 @@ proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
 proc maybeFlip(flip, val: bool): bool = (if flip: not val else: val)
 
 proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
-  var st: Statx                 # Re-purpose stx_blksize as an lstatx-Ok code
-  st.stx_blksize = if lstatx(path, st) == 0: 1u32 else: 0u32
+  var st: Statx                 # Re-purpose stx_blksize as an lstat-Ok code
+  st.stx_blksize = if lstat(path, st) == 0: 1u32 else: 0u32
   var flip = false
   result = true
   for ch in expr:
