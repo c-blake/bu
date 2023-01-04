@@ -16,7 +16,8 @@ template nextPid =
   of  0: quit 0                       # kid => die
   else : discard waitpid(pid, xSt, 0) # parent=>wait
 
-import cligen/osUt; setAffinity([1.cint]) # AlderLake 14X faster
+when defined(linux):
+  import cligen/osUt;setAffinity([1.cint]) # Alder 14X faster
 
 while pid > tgt and last < pid: nextPid() # Get (last>=pid)
 while pid < tgt: nextPid()                # 1st free past tgt
