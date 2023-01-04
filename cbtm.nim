@@ -15,10 +15,10 @@ when not declared(File): import std/[syncio, objectdollar]
 
 proc wr(outp: File, lSt: Statx, path: string) =
   let path = (if path.startsWith("./"): path[2..^1] else: path)
-  discard outp.uriteBuffer(lSt.addr, lSt.sizeof)
+  discard outp.uriteBuffer(lSt.unsafeAddr, lSt.sizeof)
   let nPath = path.len.cushort
-  discard outp.uriteBuffer(nPath.addr, nPath.sizeof)
-  discard outp.uriteBuffer(path[0].addr, nPath + 1)
+  discard outp.uriteBuffer(nPath.unsafeAddr, nPath.sizeof)
+  discard outp.uriteBuffer(path[0].unsafeAddr, nPath + 1)
 
 proc rd(inp: File): (Statx, string) =
   var nPath: cushort
