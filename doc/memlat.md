@@ -16,7 +16,7 @@ have a (small, probably not CPU-portable) edge.
 The `--kind=ranElt` and `=truRan` tests here basically emulate hash lookups
 while the `--kind=shuff` emulates cold cache memory loads (but branch predictors
 are still hot cache) or a load pattern more like hopping a long linked list or
-a very deep tree.
+a very deep tree.  (`truRan` only works on Linux right now.)
 
 This utility (in shuffle mode) is actually not so bad a way to measure memory
 systems against each other at various data scales.  I see a great deal of
