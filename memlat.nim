@@ -1,4 +1,5 @@
 import random, times, strutils, stats, cligen
+when defined(release): randomize()
 
 when defined(mt):
   import mersenne               # Test against a diff PRNG
