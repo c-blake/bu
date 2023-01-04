@@ -1,5 +1,6 @@
 when not declared(stderr): import std/syncio
 import posix, parseutils, strformat, os
+include cligen/unsafeAddr
 
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex

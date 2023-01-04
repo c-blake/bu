@@ -1,4 +1,5 @@
 when not declared(stderr): import std/syncio
+include cligen/unsafeAddr
 import cligen, cligen/[osUt, posixUt], std/[posix, strformat]
 
 template eStr: untyped = $strerror(errno)       # Error string for last errno

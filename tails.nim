@@ -1,5 +1,6 @@
-from cligen/osUt import getDelims, uriteBuffer, ureadBuffer, c_getdelim
 when not declared(stdout): import std/syncio
+include cligen/unsafeAddr
+from cligen/osUt import getDelims, uriteBuffer, ureadBuffer, c_getdelim
 proc free(pointr: cstring) {.importc, header: "<stdlib.h>".}
 
 proc wrec(cs: cstring, n: int, eor: char): bool {.inline.} = # NOTE n-1
