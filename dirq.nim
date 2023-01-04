@@ -1,12 +1,16 @@
-import posix/inotify, std/posix, cligen, cligen/[sysUt, posixUt]
+when not defined(linux):
+  echo """This is a Linux-only program although ports to other OSes like
+FreeBSD kqueue are possible, likely with translation of abstractions."""
+else:
+ import posix/inotify, std/posix, cligen, cligen/[sysUt, posixUt]
 
-type Event* = enum
+ type Event* = enum
   inAccess    ="access"   , inAttrib ="attrib"    , inModify    ="modify"      ,
   inOpen      ="open"     , inCloseWr="closeWrite", inCloseNoWr ="closeNoWrite",
   inMovedFrom ="movedFrom", inMovedTo="movedTo"   , inMoveSelf  ="moveSelf"    ,
   inCreate    ="create"   , inDelete ="delete"    , inDeleteSelf="deleteSelf"
 
-proc mask(es: set[Event]): uint32 =
+ proc mask(es: set[Event]): uint32 =
   template `|=`(r, f) = r = r or f
   for e in es:
     case e
@@ -23,7 +27,7 @@ proc mask(es: set[Event]): uint32 =
     of inDelete    : result |= IN_DELETE    
     of inDeleteSelf: result |= IN_DELETE_SELF
 
-iterator dqueue*(dir: string; events={inMovedTo, inCloseWr}):
+ iterator dqueue*(dir: string; events={inMovedTo, inCloseWr}):
     tuple[name: ptr char; len: int] =
   ## Set up event watches on dir & forever yield NUL-terminated (ptr char,len).
   if chdir(dir) == -1:
@@ -38,7 +42,7 @@ iterator dqueue*(dir: string; events={inMovedTo, inCloseWr}):
     for ev in inotify_events(evs[0].addr, n):
       yield (ev[].name.addr, int(ev[].len))
 
-when isMainModule:
+ when isMainModule:
   proc dirq(events={inMovedTo, inCloseWr}; dir="."; wait=false;
             cmdPrefix: seq[string]): int =
     ## chdir(*dir*) & wait for events to occur on it.  For each delivered event,
