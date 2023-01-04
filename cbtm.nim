@@ -79,7 +79,7 @@ proc filter*(input="/dev/stdin", output="/dev/stdout", root="", quiet=false,
   for (lSt, path) in inp.recs:
     var diff: set[Match]
     let tgt = root & path
-    if lstatx(tgt.cstring, tSt) != 0: diff.incl mNm
+    if lstat(tgt.cstring, tSt) != 0: diff.incl mNm
     if mSz   in match and  tSt.stx_size  != lSt.stx_size : diff.incl mSz
     if mOwn  in match and (tSt.stx_uid   != lSt.stx_uid or
                            tSt.stx_gid   != lSt.stx_gid) : diff.incl mOwn
