@@ -1,28 +1,29 @@
 import std/[posix,re,strutils,tables],cligen,cligen/[osUt,mslice,magic,procpool]
 when not declared(stderr): import std/syncio
 
-type Excl = enum compress,tar,soft,apptype,elf,text,cdf,tokens,encoding,ascii
-const e2Flag = {  # CSV & json missing; Maybe cligen/magic needs updating?
+when haveMagic:
+ type Excl = enum compress,tar,soft,apptype,elf,text,cdf,tokens,encoding,ascii
+ const e2Flag = {  # CSV & json missing; Maybe cligen/magic needs updating?
   apptype : MAGIC_NO_CHECK_APPTYPE , ascii   : MAGIC_NO_CHECK_ASCII   ,
   encoding: MAGIC_NO_CHECK_ENCODING, tokens  : MAGIC_NO_CHECK_TOKENS  ,
   cdf     : MAGIC_NO_CHECK_CDF     , compress: MAGIC_NO_CHECK_COMPRESS,
   elf     : MAGIC_NO_CHECK_ELF     , soft    : MAGIC_NO_CHECK_SOFT    ,
   tar     : MAGIC_NO_CHECK_TAR     , text    : MAGIC_NO_CHECK_TEXT    }.toTable
 
-var gPats: seq[Regex]
-var gFlags = cint(0)
-var gAll, gNo: bool                           # Support Boolean AND/OR/NOT
+ var gPats: seq[Regex]
+ var gFlags = cint(0)
+ var gAll, gNo: bool                           # Support Boolean AND/OR/NOT
 
-proc any(fileType: string): bool {.inline.} = # Support Boolean OR
+ proc any(fileType: string): bool {.inline.} = # Support Boolean OR
   for pat in gPats:
     if fileType.find(pat) != -1: return true
 
-proc all(fileType: string): bool {.inline.} = # Support Boolean AND
+ proc all(fileType: string): bool {.inline.} = # Support Boolean AND
   for pat in gPats:
     if fileType.find(pat) == -1: return false
   result = true
 
-proc classifyAndMatch(r, w: cint) = # Reply with same path as input if matches
+ proc classifyAndMatch(r, w: cint) = # Reply with same path as input if matches
   var m = magic_open(gFlags)
   if m == nil or magic_load(m, nil) != 0:
     stderr.write "cannot load magic DB: %s\x0A", m.magic_error, "\n"
@@ -40,17 +41,17 @@ proc classifyAndMatch(r, w: cint) = # Reply with same path as input if matches
       if gNo: (if not any(fileType): o.urite path, '\0')
       else  : (if     any(fileType): o.urite path, '\0')
 
-proc print(eor: char, s: MSlice) {.inline.} =
+ proc print(eor: char, s: MSlice) {.inline.} =
   let eos = cast[uint](s.mem) + cast[uint](s.len)   # Hijack end of string here.
   cast[ptr char](eos)[] = eor                       # It won't be used again.
   discard stdout.uriteBuffer(s.mem, s.len + 1)
 
-iterator getNoPfx(stream: File, dlm: char='\n', pfx="./"): string =
+ iterator getNoPfx(stream: File, dlm: char='\n', pfx="./"): string =
   # `find x y -print0` prefixes results with "[xy]/" which can annoy if x=".".
   for path in stream.getDelim(dlm):
     yield (if path.startsWith(pfx): path[pfx.len..^1] else: path)
 
-proc only*(gen="find $1 -print0", dlr1=".", trim="./", eor='\n',
+ proc only*(gen="find $1 -print0", dlr1=".", trim="./", eor='\n',
            all=false, no=false, insens=false, excl: set[Excl]={},
            jobs=0, patterns: seq[string]) =
   ## Use ``gen`` and ``dlr1`` to generate paths, maybe skip ``trim`` and then
@@ -74,7 +75,7 @@ proc only*(gen="find $1 -print0", dlr1=".", trim="./", eor='\n',
   pp.eval0term(inp.getNoPfx('\0', trim), eor.print)
   discard inp.pclose
 
-when isMainModule:
+ when isMainModule:
   dispatch(only, help={ "gen"   : "generator cmd with dlr1 -> $1",
                         "dlr1"  : "$1 for gen fmt; Eg. *\". -type f\"*",
                         "trim"  : "output pfx to trim (when present)",
@@ -85,3 +86,4 @@ when isMainModule:
                         "excl"  : "tests to exclude like `file(1)`",
                         "jobs"  : "use this many kids (0=auto)" },
            short = {"excl": 'x'})
+else: quit "libmagic from file was not found when this program was built.", 1
