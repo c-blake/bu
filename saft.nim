@@ -39,11 +39,11 @@ proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
 
   var sts = newSeq[Stat](files.len)             # 1) Collect before-tms&build cL
   var cL = cast[cstringArray](alloc0((files.len + cmd.len + 1)*cstring.sizeof))
-  for i in 0 ..< cmd.len: cL[i] = cast[cstring](cmd[i][0].addr)
+  for i in 0 ..< cmd.len: cL[i] = cast[cstring](cmd[i][0].unsafeAddr)
   for i, file in files:
     if fstatat(AT_FDCWD, file.cstring, sts[i], flags) != 0:
       erru "saft:fstatat:Bef: \"",file,"\": ",eStr,'\n'
-    cL[cmd.len + i] = cast[cstring](files[i][0].addr)
+    cL[cmd.len + i] = cast[cstring](files[i][0].unsafeAddr)
 
   let pid = vfork()                             # 2) Run the program on inputs
   case pid
