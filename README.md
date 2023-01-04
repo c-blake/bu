@@ -7,7 +7,8 @@ nascent attempts or atoms of Big Things like map-reduce in shell or extreme
 value estimation for benchmark time cleaning.  All are tools I use in one way or
 another with some regularity which I thought others might find useful.  There is
 a general vibe similar to [util-linux](https://en.wikipedia.org/wiki/Util-linux)
-or [moreutils](https://www.putorius.net/moreutils.html).
+or [moreutils](https://www.putorius.net/moreutils.html).  A great many are Unix
+only tools, but some may be more cross-platform.
 
 File Typology (What/Whether)
 ----------------------------
