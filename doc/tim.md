@@ -1,38 +1,44 @@
 Background
 ==========
 Often one has some program/operation of interest that takes 1..500 milliseconds.
-One may want to time it to use as a benchmark.  In practical settings, all you
-can really measure is:
+One may want to time it to use as a benchmark.  While computers are conceptually
+deterministic, in practical settings on general purpose OSes[^1] asynchronously
+interacting with physical devices, all you can really measure is:
 
 (1) `observed_time = t0 + noise`
 
 `t0` is what you want because `noise` (more or less by definition) does not
-generalize/reproduce to other minutes/days/noise environments.
+generalize/reproduce to other minutes/days/noise environments.  Even with no
+time-sharing, various coupled interactions[^2] degrade determinism of timing -
+especially at certain human timescales deemed acceptable by OS designers (under
+some load assumptions).  So, a random model for `noise` makes sense (though
+noise could have a very structured distribution, depending).
 
-In almost all deployment environments with the exception of hard real-time OSes
-and/or truly dedicated hardware, OS schedulers make `noise` from Eq.1 both time
-varying ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
+This seems like a "statistics to the rescue" scenario, but caution is warranted.
+In most deployments, `noise` from Eq.1 is both time varying
+([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
 [heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
-**imperfect control over competing activity**. For example, if you have spinning
-rust Winchester disks & something waits on or if some other competing action
-evicts relevant L2/L3 cache entries.  This is true even on mostly idle machines,
-though obviously much worse on heavily loaded machines and the size of `noise`
-scale compared to `t0` can vary considerably.
-
-Both of these statistical properties make both value & error estimates of **flat
-averages mislead**.  The mean is likely dragged way up. Errors in means explode.
-Neither converge as [Central Limit
-Theorem](https://en.wikipedia.org/wiki/Central_limit_theorem)-based reasoning
-might lead you to suspect without testing.  Non-stationary and non-independent
-noise aspects violate base assumptions of, well, most applied statistics.
+varying load and **imperfect control over competing activity**.  Both
+statistical properties make both value & error estimates of **flat averages
+mislead**.  The mean is likely dragged way up. Errors in means explode.  Neither
+converge as you might think from [Limit
+Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Non-stationary,
+non-independent noise violates base assumptions of most applied statistics.
 
 Solutions
 =========
-All is not lost.  While statistical strategies to do better (like [eve](eve.md)
-or MLEs for "sampling cast" Weibull distributions) exist, a low sophistication
-way to estimate reproducibly Eq.1's `t0`, in spite of noise hostility, is a
-simple sample minimum.  This **filters out all but the minimum noise** - better
-behaved than the average noise.
+The scale of `noise` compared to `t0` can vary considerably.  A popular approach
+is to avoid sub-second times entirely, making benchmarks many seconds long to
+suppress `noise`.  Sometimes people "scale up" naively[^3] to get hard to
+interpret and/or misleading results.  Since it is also not always clear how much
+scaling up is "enough" anyway or what the residual noise scale is, this can
+really magnify waiting time for results via many samples of a long benchmark.
+
+Maybe we can do better.  While statistical strategies (like [eve](eve.md) or
+MLEs for "sampling cast" Weibull distributions) exist, a low sophistication way
+to estimate reproducibly Eq.1's `t0`, in spite of noise hostility, is a simple
+sample minimum which is what `tim` is about.  This **filters out all but the
+minimum noise** - better behaved than average noise.
 
 However, this gives no estimate of estimator error.  That error estimate matters
 since one needs an **infinite** number of trials to get the true minimum.  We
@@ -64,7 +70,7 @@ with a fixed freq CPU (or your OS's equivalent of these Linux interventions).
 
 `tim` wraps all these ideas up into a simple command-line invocation where you
 just pass some valid command (probably not outputting anything to terminals).
-It even prints out a nice error message when your times are too unstable.
+It even prints out a nice error message when times are too unstable.
 
 Usage
 =====
@@ -108,8 +114,8 @@ c=$(printf '%1000s\n' | sed 's/ /: /g')
 eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
 # plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
-produces for me (under `taskset 0xF chrt 99` on an otherwise idle AlderLake CPU
-with the GoldenCove cores running Linux 6.1.1)[^1]:
+produces for me (under `taskset 0xF chrt 99` on an otherwise "idle" AlderLake
+CPU with the GoldenCove cores running Linux 6.1.1)[^4]:
 ![tim EDF plot](tim.png)
 "As a unit", the error is not so far from Gaussian expectations below 2 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
@@ -129,4 +135,21 @@ than nothing" thing.  It at least has a snowball's chance of being reproducible
 somewhat reliably (which is more than can be said of most reports I have seen of
 sub-second timings).
 
-[^1]: |unitGauss| came from just taking absolute values of 1000 unit normals.
+[^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
+how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
+like security vulnerabilities play out.
+
+[^2]: Spinning platter disks & handling even ambient broadcast network packets
+or other competing action can evict your cache entries on unrelated work.  This
+is true even on "mostly idle" machines, though much worse on heavily loaded
+machines/networks/etc.  Basically, there is not really such a thing as an "truly
+idle" general purpose system..merely "approximately idle".
+
+[^3]: [Ben Hoyt's King James Bible ***concatenated ten
+times***](https://benhoyt.com/writings/count-words/), for example, means that
+branch prediction and so possibly memory prefetching begins to work perfectly
+after just 10% of his benchmark.  Beyond this, hash table sizes become
+non-reflective of natural language vocabulary scaling.  How much this degrades
+prog.lang comparisons is hard to say.  It's better to avoid it than guess at it.
+
+[^4]: |unitGauss| came from just taking absolute values of 1000 unit normals.
