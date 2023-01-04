@@ -28,8 +28,8 @@ non-independent noise violates base assumptions of most applied statistics.
 Solutions
 =========
 The scale of `noise` compared to `t0` can vary considerably.  A popular approach
-is to avoid sub-second times entirely, making benchmarks many seconds long to
-suppress `noise`.  Sometimes people "scale up" naively[^3] to get hard to
+is to avoid sub-second times entirely, making benchmarks **many seconds long**
+to suppress `noise`.  Sometimes people "scale up" naively[^3] to get hard to
 interpret and/or misleading results.  Since it is also not always clear how much
 scaling up is "enough" anyway or what the residual noise scale is, this can
 really magnify waiting time for results via many samples of a long benchmark.
