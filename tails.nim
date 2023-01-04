@@ -3,7 +3,7 @@ when not declared(stdout): import std/syncio
 proc free(pointr: cstring) {.importc, header: "<stdlib.h>".}
 
 proc wrec(cs: cstring, n: int, eor: char): bool {.inline.} = # NOTE n-1
-  stdout.uriteBuffer(cs, n-1) < n-1 or stdout.uriteBuffer(eor.addr, 1) < 1
+  stdout.uriteBuffer(cs, n-1) < n-1 or stdout.uriteBuffer(eor.unsafeAddr, 1) < 1
 
 proc bumpMod(j: var int; m: int): int {.inline.} = # circ.buffer helper
   j.inc; if j >= m: j = 0
