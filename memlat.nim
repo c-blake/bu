@@ -29,16 +29,19 @@ proc prepShuffle(x: var seq[int], n: int) =
 proc runShuffle(x: seq[int], nAcc: int): int =
   for i in 1..nAcc: result = x[result]
 
-proc getrandom(a: pointer, n: uint64, f: cuint): csize_t
-  {.header: "sys/random.h".}    # /dev/urandom on Linux
+when defined(linux):
+  proc getrandom(a: pointer, n: uint64, f: cuint): csize_t
+    {.header: "sys/random.h".}  # /dev/urandom on Linux
 
 var tru: seq[uint]
 proc prepTrueRan(x: var seq[int], n: int) =
-  let mask = uint(x.len - 1)    # Only pow2 lens work!
-  for i in 0..<n: x[i]=rand(9)  # 9 keeps sums short
-  tru.setLen n
-  discard getrandom(tru[0].addr, n.uint64 shl 3, 0.cuint)
-  for i in 0..<n: tru[i] = tru[i] and mask
+  when defined(linux):
+    let mask = uint(x.len - 1)  # Only pow2 lens work!
+    for i in 0..<n:x[i]=rand(9) # 9 keeps sums short
+    tru.setLen n
+    discard getrandom(tru[0].addr, n.uint64 shl 3, 0.cuint)
+    for i in 0..<n: tru[i] = tru[i] and mask
+  else: quit "true random is Linux-only", 1
 
 proc runTrue(x: seq[int], nAcc: int): int =
   for i in 1..nAcc: result += x[tru[i]]
