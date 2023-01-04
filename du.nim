@@ -1,6 +1,7 @@
+when not declared(stdout): import std/syncio
+include cligen/unsafeAddr
 import std/[sets, parseutils, posix, re],
        cligen, cligen/[dents, statx, osUt, posixUt, humanUt]
-when not declared(stdout): import std/syncio
 
 proc parseSize(size: string): int64 =
   var sz: int

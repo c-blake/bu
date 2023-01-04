@@ -1,6 +1,7 @@
+when not declared(stderr): import std/syncio
+include cligen/unsafeAddr
 import std/[os, posix, strutils, sets, tables, hashes, sha1, algorithm],
   cligen/[procpool,mfile,mslice,fileUt,strUt, osUt,posixUt,sysUt, dents,statx]
-when not declared(stderr): import std/syncio
 
 type Lg* = enum osErr, summ                     #A tiny logging system
 var dupsLog* = { osErr }

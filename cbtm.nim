@@ -11,6 +11,7 @@
 ## **WARNING: Use at your own risk.  No warranty, express or implied.**
 
 import std/[strutils, re, sugar], cligen/[dents, statx, osUt, posixUt]
+include cligen/unsafeAddr
 when not declared(File): import std/[syncio, objectdollar]
 
 proc wr(outp: File, lSt: Statx, path: string) =

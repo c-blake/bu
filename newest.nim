@@ -1,5 +1,6 @@
-import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
 when not declared(stderr): import std/syncio
+include cligen/unsafeAddr
+import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
 
 type TimePath = tuple[tm: int64, path: string]
 

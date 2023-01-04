@@ -1,5 +1,6 @@
-import std/[posix, sets, strutils], cligen, cligen/[osUt, posixUt, dents, statx]
 when not declared(stderr): import std/syncio
+include cligen/unsafeAddr
+import std/[posix, sets, strutils], cligen, cligen/[osUt, posixUt, dents, statx]
 
 proc since*(refPath: string, refTime="", time="m", recurse=1, chase=false,
             Deref=false, kinds={fkFile}, quiet=false, xdev=false, file="",
