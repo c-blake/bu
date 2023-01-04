@@ -138,7 +138,7 @@ parseArg(if nOpt>0: $argv[1] else: getEnv("RU", "hit"))
 if fPlain: e0 = ""; e1 = ""
 measureOverhead()
 for sn in [SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGBUS, SIGFPE, SIGSEGV, SIGPIPE,
-           SIGALRM, SIGTERM, SIGURG, SIGXCPU, SIGXFSZ, SIGPOLL, SIGSYS]:
+           SIGALRM, SIGTERM, SIGURG, SIGXCPU, SIGXFSZ, SIGSYS]:
   signal(sn, report)                    # Install report() for most signals
 if argc > 1 + nOpt:                     # Measure the program ...
   if (pid = vfork(); pid != 0):         # If vfork fails, -1 => so will wait4
