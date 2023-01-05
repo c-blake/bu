@@ -127,7 +127,7 @@ you, but it is, again, non-stationary/competing work dependent.  Whatever level
 of stationarity occurs, shape & scale of the distribution likely also vary with
 time scale of the measured program.  So, trying to measure/memorize it is hard.
 **Playing with `--best` & `--run` to rein in the tail** at various scales seems
-more likely to be productive of better measurements.  `tim` does support
+more likely to be productive of better measurements.[^9]  `tim` does support
 `~/.config/tim` for setting defaults if you find some you like.
 
 In light of all this, this best n of m idea twice is only a "something is better
@@ -178,3 +178,6 @@ dispatch overhead or want 3.21x faster "ratios".
 [^8]: I use "sigma" here loosely as a general scale parameter, not the scale of
 a Gaussian/Normal distribution.  Particle physics has "5 sigma" rules of thumb
 to declare new science in a similar vein.  5 seems too small for this context.
+
+[^9]: and playing with `err = avg(abs(t - tMin))` definitions seems a path to
+more reproducible error estimates.
