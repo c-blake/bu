@@ -31,7 +31,8 @@ A 0-tech approach is to declare differences less than 2..10X "uninteresting".
 While not invalid, practical difficulties remain.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
 deltas can be composed of improvement with many smaller stages which then still
-need a solution.
+need a solution.  Truly cold-cache times often have far bigger deltas than some
+proposed range, leading to multiple runs to compare hot-cache results anyway.
 
 The scale of `noise` compared to `t0` can vary considerably.  A popular approach
 is to avoid sub-second times entirely, making benchmarks **many seconds long**
