@@ -176,5 +176,5 @@ dispatch overhead or want 3.21x faster "ratios".
 [^7]: |N(0,1)| came from just taking absolute values of 1000 unit normals.
 
 [^8]: I use "sigma" here loosely as a general scale parameter, not the scale of
-a Gaussian/Normal distribution.  Particle physics often does near similar with
-rules about needing "5 sigma" to declare new science.
+a Gaussian/Normal distribution.  Particle physics has "5 sigma" rules of thumb
+to declare new science in a similar vein.  5 seems too small for this context.
