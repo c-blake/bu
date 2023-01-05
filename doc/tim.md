@@ -118,7 +118,7 @@ CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
 "As a unit", the error is not so far from Gaussian expectations below 2 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
 sigma tail.  As evident from this plot, selecting a default `--sigma` to decide
-"reproducible" can be..challenging.  This same challenge **spills over** into
+"reproducible" can be.. challenging.  This same challenge **spills over** into
 any better-worse comparisons since differences big enough to be significant may
 need to be many "sigma" apart.[^8]
 
