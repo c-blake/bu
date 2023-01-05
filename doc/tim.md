@@ -118,22 +118,22 @@ CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
 "As a unit", the error is not so far from Gaussian expectations below 2 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
 sigma tail.  As evident from this plot, selecting a default `--sigma` to decide
-"reproducible" can be..challenging.  This same challenge spills over into any
-better-worse comparisons since differences big enough to be significant may need
-to be many "sigma" apart.[^8]
+"reproducible" can be..challenging.  This same challenge **spills over** into
+any better-worse comparisons since differences big enough to be significant may
+need to be many "sigma" apart.[^8]
 
 A plot of your own test environments can perhaps show how bad this may be for
 you, but it is, again, non-stationary in reality.  To whatever level of
 stationarity occurs, both shape & scale of this distribution likely also vary
 with time scale of the measured program.  So, trying to measure/memorize it is
-hard.  **Playing with `--best` & `--run` to reign in the tail** at various
+hard.  **Playing with `--best` & `--run` to rein in the tail** at various
 scales seems more likely to be productive of better measurements.  `tim` does
 support `~/.config/tim` for setting defaults if you find some you like.
 
 In light of all this, this best n of m idea twice is only a "something is better
-than nothing" thing.  It at least has a snowball's chance of being reproducible
-somewhat reliably (which is more than can be said of most reports I have seen of
-sub-second timings).
+than nothing" thing.  It at least has a snowball's chance of reproducibility
+(which is more than can be said of most reports I have seen of sub-second
+timings).
 
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
