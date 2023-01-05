@@ -64,9 +64,14 @@ do 2 back-to-back trials of the base procedure & verify the quantile-means are
 within some number of standard deviations of each other.  **If so**, then you
 have some evidence for thinking the distribution of the 2 samples is the same
 (at least near the min).  **If not**, you should take action to correct this
-before concluding much (even on an isolated test machine) such as `taskset`,
-`chrt`, fixing CPU frequency dynamically in-OS, or even rebooting into a BIOS
-with a fixed freq CPU (or your OS's equivalent of these Linux interventions).
+before concluding much (even on an isolated test machine).
+
+There are many such actions..1) Shutting down browsers 2) Going single-user 3)
+`taskset`/`chrt`, 4) fixing CPU frequency dynamically in-OS 5) Rebooting into a
+BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
+6) `isolcpus` to avoid timer interrupts entirely, 7) Cache-Allocation Technology
+extensions to reserve L3, and on & on. (`tim` hopes that simpler ideas can
+prevent all that effort most of the time without corrupting benchmark design.)
 
 `tim` wraps all these ideas up into a simple command-line invocation where you
 just pass some valid command (probably not outputting anything to terminals).
