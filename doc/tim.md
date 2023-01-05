@@ -46,7 +46,7 @@ instead want to economize on our repetitions.  Once so economized, you need to
 know what the penalty was in "compared-to-what scenarios" like benchmarking.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
-the mean,sdev for the best **several** times out of many runs.  Instead of
+the mean,sdev for the **BEST SEVERAL TIMES OUT OF MANY RUNS**.[^4]  Instead of
 filtering out 90% of the noise (for say 10 runs), you can filter out only 70% &
 average the 3 least order stats to get a weak estimate of the 15th percentile.
 
@@ -113,12 +113,14 @@ eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
 # plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
 produces for me (under `taskset 0xF chrt 99` on an otherwise "idle" AlderLake
-CPU with the GoldenCove cores running Linux 6.1.1)[^6]:
+CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
 ![tim EDF plot](tim.png)
 "As a unit", the error is not so far from Gaussian expectations below 2 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
 sigma tail.  As evident from this plot, selecting a default `--sigma` to decide
-"reproducible" can be..challenging.
+"reproducible" can be..challenging.  This same challenge spills over into any
+better-worse comparisons since differences big enough to be significant may need
+to be many "sigma" apart.[^8]
 
 A plot of your own test environments can perhaps show how bad this may be for
 you, but it is, again, non-stationary in reality.  To whatever level of
