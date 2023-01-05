@@ -97,8 +97,8 @@ $ tim : :          # OR, e.g., tim 'this way' 'that way'
 (3.53 +- 0.15)e-04      :   #NOTE: seconds - so 0.353 ms
 (3.70 +- 0.10)e-04      :
 ```
-to time "null" commands twice.[^4]  In this case, we expect times in seconds to
-be "the same" and they are.[^5]
+to time "null" commands twice.[^5]  In this case, we expect times in seconds to
+be "the same" and they are.[^6]
 
 Empirical Evaluation of "error" estimates
 =========================================
@@ -145,18 +145,27 @@ is true even on "mostly idle" machines, though much worse on heavily loaded
 machines/networks/etc.  Basically, there is not really such a thing as an "truly
 idle" general purpose system..merely "approximately idle".
 
-[^3]: [Ben Hoyt's King James Bible ***concatenated ten
-times***](https://benhoyt.com/writings/count-words/), for example, means that
-branch prediction and so possibly memory prefetching begins to work perfectly
-after just 10% of his benchmark.  Beyond this, hash table sizes become
-non-reflective of natural language vocabulary scaling.  How much this degrades
-prog.lang comparisons is hard to say.  It's better to avoid it than guess at it.
+[^3]: For example, [Ben Hoyt's King James Bible ***concatenated ten
+times***](https://benhoyt.com/writings/count-words/) means that branch
+prediction and so possibly memory prefetching begins to work perfectly after
+just 10% of his benchmark.  Beyond this, hash table sizes become non-reflective
+of natural language vocabulary scaling.  How much this degrades his prog.lang
+comparisons is hard to say, but it's better to avoid it than guess at it.
 
-[^4]: My /bin/sh -> dash, not bash.  Statically linked dash is easily 3..4X
-faster than bash for this.  Automatically measuring & subtracting shell overhead
-or optionally minimizing it with `bu/execstr.nim` are possible future work.
+[^4] The distribution of the sample minimum (noise) itself is the N-th power of
+the base hostile distribution.  This makes, e.g., median(min(nTimes)) the
+[`0.5^n`](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
+quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
+quite variable on most systems!  The "`tim` estimate" is just an asymmetric or
+semi-[truncated mean](https://en.wikipedia.org/wiki/Truncated_mean) with params
+under user-control.  (It may be best to report the min, using the min-tail only
+for error estimates.)
 
-[^5]: The values are (3.7-3.53)/(.15^2+.1^2)^.5 = 0.94 "err"s apart by standard
+[^5]: My /bin/sh -> dash, not bash.  Statically linked dash is 3..4X faster than
+bash for this.  Automatically measuring & subtracting shell overhead/optionally
+minimizing it with `bu/execstr.nim` are possible future work.
+
+[^6]: The values are (3.7-3.53)/(.15^2+.1^2)^.5 = 0.94 "err"s apart by standard
 [error propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty)
 which uses "smallness" of errors and Taylor series.  The Nim package
 [Measuremancer](https://github.com/SciNim/Measuremancer) or the Python package
@@ -164,4 +173,8 @@ which uses "smallness" of errors and Taylor series.  The Nim package
 calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
-[^6]: |unitGauss| came from just taking absolute values of 1000 unit normals.
+[^7]: |unitGauss| came from just taking absolute values of 1000 unit normals.
+
+[^8]: I use "sigma" here loosely as a general scale parameter, not the scale of
+a Gaussian/Normal distribution.  Particle physics often does near similar with
+rules about needing "5 sigma" to declare new science.
