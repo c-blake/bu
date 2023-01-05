@@ -152,7 +152,7 @@ just 10% of his benchmark.  Beyond this, hash table sizes become non-reflective
 of natural language vocabulary scaling.  How much this degrades his prog.lang
 comparisons is hard to say, but it's better to avoid it than guess at it.
 
-[^4] The distribution of the sample minimum (noise) itself is the N-th power of
+[^4]: The distribution of the sample minimum (noise) itself is the N-th power of
 the base hostile distribution.  This makes, e.g., median(min(nTimes)) the
 [0.5^n](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
 quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
