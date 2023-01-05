@@ -7,7 +7,7 @@ interacting with physical devices, all you can really measure is:
 
 (1) `observed_time = t0 + noise`
 
-`t0` is what you want because `noise` (more or less by definition) does not
+**`t0` is what you want** because `noise` (more or less by definition) does not
 generalize/reproduce to other minutes/days/noise environments.  Even with no
 time-sharing, various coupled interactions[^2] degrade determinism of timing -
 especially at certain human timescales deemed acceptable by OS designers (under
@@ -19,9 +19,9 @@ In most deployments, `noise` from Eq.1 is both time varying
 ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
 [heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
 varying load and **imperfect control over competing activity**.  Both
-statistical properties make both value & error estimates of **flat averages
-mislead**.  The mean is likely dragged way up. Errors in means explode.  Neither
-converge as you might think from [Limit
+statistical properties make both value & error estimates of **flat averages that
+include ALL OF `noise` mislead**.  The mean is likely dragged way up.  Errors in
+the means explode.  Neither converge as you might think from [Limit
 Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Non-stationary,
 non-independent noise violates base assumptions of most applied statistics.
 
