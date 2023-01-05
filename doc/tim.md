@@ -173,7 +173,7 @@ which uses "smallness" of errors and Taylor series.  The Nim package
 calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
-[^7]: |unitGauss| came from just taking absolute values of 1000 unit normals.
+[^7]: |N(0,1)| came from just taking absolute values of 1000 unit normals.
 
 [^8]: I use "sigma" here loosely as a general scale parameter, not the scale of
 a Gaussian/Normal distribution.  Particle physics often does near similar with
