@@ -117,14 +117,14 @@ CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
 ![tim EDF plot](tim.png)
 "As a unit", the error is not so far from Gaussian expectations below 1.5 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
-sigma tail.  As evident from this plot, selecting a default `--sigma` to decide
+sigma tail.  As evident from this plot, selecting `--sigma` to decide
 "reproducible" can be.. challenging.  This same challenge **spills over** into
 any better-worse comparisons since differences big enough to be significant may
 need to be many "sigma" apart.[^8]
 
 A plot of your own test environments can perhaps show how bad this may be for
-you, but it is, again, non-stationary in reality.  Whatever level of
-stationarity occurs, shape & scale of the distribution likely also vary with
+you, but it is, again, non-stationary/competing work dependent.  Whatever level
+of stationarity occurs, shape & scale of the distribution likely also vary with
 time scale of the measured program.  So, trying to measure/memorize it is hard.
 **Playing with `--best` & `--run` to rein in the tail** at various scales seems
 more likely to be productive of better measurements.  `tim` does support
