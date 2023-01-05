@@ -69,7 +69,7 @@ before concluding much (even on an isolated test machine).
 There are many such actions..1) Shutting down browsers 2) Going single-user 3)
 `taskset`/`chrt`, 4) fixing CPU frequency dynamically in-OS 5) Rebooting into a
 BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
-6) `isolcpus` to avoid timer interrupts entirely, 7) Cache-Allocation Technology
+6) `isolcpus` to avoid timer interrupts entirely, 7) Cache Allocation Technology
 extensions to reserve L3, and on & on. (`tim` hopes that simpler ideas can
 prevent all that effort most of the time without corrupting benchmark design.)
 
