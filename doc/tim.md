@@ -27,7 +27,7 @@ non-independent noise violates base assumptions of most applied statistics.
 
 Solutions
 =========
-A 0-tech approach is to declare differences less than 2..10X "uninteresting".
+A **0-tech** approach is to declare differences less than 2-10X "uninteresting".
 While not invalid, **practical difficulties** remain.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
 deltas can be composed of improvement with many smaller stages which then still
@@ -124,22 +124,26 @@ c=$(printf '%1000s\n' | sed 's/ /: /g')
 eval tim -d0 $c|grep apart|awk '{print $2}'|sort -g>/tmp/a
 # plot '/tmp/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
-produces for me (under `taskset 0xF chrt 99` on an otherwise "idle" AlderLake
-CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
+produces for me (normal = under `taskset 0xE chrt 99` on an otherwise "idle"
+i7-6700k CPU running Linux 6.1.1 with X11, a no-tabs browser, a few terminals,
+the network stack and so on running, but zero load)[^7]:
 ![tim EDF plot](tim.png)
-"As a unit", the dist is not so far from Gaussian sigma expectations below 1.5,
-but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
-sigma area.  From this plot, selecting `--dist` to decide "reproducible" can
-be.. challenging.  This challenge **spills over** into any better-worse
-comparisons since deltas big enough to be significant may need to be many
-"sigma" apart.[^8]
+For reference, abs(N(0,1)) and a rebooted BIOS-fixed frequency single-user also
+taskset/chrt'd plot are also included.  As a "unit", `dist` is close (in
+complementary probability) to Gaussian at <1.5, but the divergence gets bad past
+2 Gauss sigmas (with 2X or 3X errors depending on special boot mode or not).  By
+3 sigma rare events happen **over 50X** more often than Gaussian.[^8]  Even with
+best 3/10, **tails are very heavy**.  Even selecting `--dist` to decide
+"reproducible" can be.. challenging.  This **challenge spills over** into any
+better-worse comparisons since deltas big enough to be significant may need to
+be many "sigma" apart.[^9]
 
 A plot of your own test environments can perhaps show how bad this may be for
 you, but it is, again, non-stationary/competing work dependent.  Whatever level
 of stationarity occurs, shape & scale of the distribution likely also vary with
 time scale of the measured program.  So, trying to measure/memorize it is hard.
 **Playing with `--best` & `--run` to rein in the tail** at various scales seems
-more likely to be productive of better measurements.[^9]  `tim` does support
+more likely to be productive of better measurements.[^10]  `tim` does support
 `~/.config/tim` for setting defaults if you find some you like.
 
 In light of all this, this best n of m idea twice is only a "something is better
@@ -187,9 +191,13 @@ dispatch overhead or want 3.21x faster "ratios".
 
 [^7]: |N(0,1)| came from just taking absolute values of 1000 unit normals.
 
-[^8]: I use "sigma" here loosely as a general scale parameter, not the scale of
+[^8]: For that graph, at 4 the special mode is also 1.1% vs 2.4% for normal.
+So, special boots *can* help (by 2.2X even), but the tail remains quite heavy.
+The max distance is 8.0 for the special boot mode and 14.5 for the normal mode.
+
+[^9]: I use "sigma" here loosely as a general scale parameter, not the scale of
 a Gaussian/Normal distribution.  Particle physics has "5 sigma" rules of thumb
 to declare new science in a similar vein.  5 seems too small for this context.
 
-[^9]: and playing with `err = avg(abs(t - tMin))` definitions seems a path to
+[^10]: Playing with `err = avg(abs(t - tMin))` definitions also seems a path to
 more reproducible error estimates.
