@@ -147,9 +147,7 @@ more likely to be productive of better measurements.[^10]  `tim` does support
 `~/.config/tim` for setting defaults if you find some you like.
 
 In light of all this, this best n of m idea twice is only a "something is better
-than nothing" thing.  It at least has a snowball's chance of reproducibility
-(which is more than can be said of most reports I have seen of sub-second
-timings).
+than nothing" thing.
 
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
