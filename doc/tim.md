@@ -28,7 +28,7 @@ non-independent noise violates base assumptions of most applied statistics.
 Solutions
 =========
 A 0-tech approach is to declare differences less than 2..10X "uninteresting".
-While not invalid, practical difficulties remain.  You cannot always control
+While not invalid, **practical difficulties** remain.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
 deltas can be composed of improvement with many smaller stages which then still
 need a solution.  Truly cold-cache times often have far bigger deltas than some
@@ -39,7 +39,7 @@ is to avoid sub-second times entirely, making benchmarks **many seconds long**
 to suppress `noise`.  Sometimes people "scale up" naively[^3] to get hard to
 interpret and/or misleading results.  Since it is also not always clear how much
 scaling up is "enough" anyway or what the residual noise scale is, this can
-really magnify waiting time for results via many samples of a long benchmark.
+**compound** waiting time for results via several samples of a long benchmark.
 
 Maybe we can do better.  While statistical strategies (like [eve](eve.md) or
 MLEs for "sampling cast" Weibull distributions) exist, a low sophistication way
