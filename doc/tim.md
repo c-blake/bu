@@ -154,7 +154,7 @@ comparisons is hard to say, but it's better to avoid it than guess at it.
 
 [^4] The distribution of the sample minimum (noise) itself is the N-th power of
 the base hostile distribution.  This makes, e.g., median(min(nTimes)) the
-[`0.5^n`](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
+[0.5^n](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
 quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
 quite variable on most systems!  The "`tim` estimate" is just an asymmetric or
 semi-[truncated mean](https://en.wikipedia.org/wiki/Truncated_mean) with params
