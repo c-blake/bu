@@ -87,20 +87,18 @@ mean,"err" of the best of all runs).
   -w=, --write= string ""  also write times to this file
 ```
 
-An Example, Measuring Shell Overhead
+Example: Measuring Dispatch Overhead
 ====================================
-POSIX shells have a standard built-in command `:` which only expands its
-arguments.  So, at least on Linux, one can do this:
+Internally, `tim` uses system(3) which passes each `cmd` as a string to a shell.
+POSIX shells have a built-in command `:` which only expands its arguments.  So,
+at least on Unix-like, one can do this:
 ```sh
-$ tim : :
-(3.53 +- 0.15)e-04      :
+$ tim : :          # OR, e.g., tim 'this way' 'that way'
+(3.53 +- 0.15)e-04      :   #NOTE: seconds - so 0.353 ms
 (3.70 +- 0.10)e-04      :
 ```
-to time two commands.  In this case, they are the same, both `:`.  (It could
-have instead been `tim 'this way' 'that way'`.)  The values are 0.94 "err"s
-apart.  (My /bin/sh -> dash, not bash & statically linked dash is easily 3..4X
-faster than bash for this.  Automatically measuring & subtracting shell overhead
-or optionally minimizing it with `bu/execstr.nim` are possible future work.)
+to time "null" commands twice.[^4]  In this case, we expect times in seconds to
+be "the same" and they are.[^5]
 
 Empirical Evaluation of "error" estimates
 =========================================
@@ -115,7 +113,7 @@ eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
 # plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
 produces for me (under `taskset 0xF chrt 99` on an otherwise "idle" AlderLake
-CPU with the GoldenCove cores running Linux 6.1.1)[^4]:
+CPU with the GoldenCove cores running Linux 6.1.1)[^6]:
 ![tim EDF plot](tim.png)
 "As a unit", the error is not so far from Gaussian expectations below 2 sigma,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
@@ -152,4 +150,16 @@ after just 10% of his benchmark.  Beyond this, hash table sizes become
 non-reflective of natural language vocabulary scaling.  How much this degrades
 prog.lang comparisons is hard to say.  It's better to avoid it than guess at it.
 
-[^4]: |unitGauss| came from just taking absolute values of 1000 unit normals.
+[^4]: My /bin/sh -> dash, not bash.  Statically linked dash is easily 3..4X
+faster than bash for this.  Automatically measuring & subtracting shell overhead
+or optionally minimizing it with `bu/execstr.nim` are possible future work.
+
+[^5]: The values are (3.7-3.53)/(.15^2+.1^2)^.5 = 0.94 "err"s apart by standard
+[error propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty)
+which uses "smallness" of errors and Taylor series.  The Nim package
+[Measuremancer](https://github.com/SciNim/Measuremancer) or the Python package
+[uncertainties](https://pypi.org/project/uncertainties/) can make such
+calculations more automatic, especially if you are, say, subtracting uncertain
+dispatch overhead or want 3.21x faster "ratios".
+
+[^6]: |unitGauss| came from just taking absolute values of 1000 unit normals.
