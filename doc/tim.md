@@ -80,22 +80,22 @@ BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
 extensions to reserve L3, and on & on. (`tim` hopes that simpler ideas can
 prevent all that effort most of the time without corrupting benchmark design.)
 
-`tim` wraps all these ideas up into a simple command-line invocation where you
-just pass some valid command (probably not outputting anything to terminals).
-It even prints out a nice error message when times are too unstable.
+`tim` wraps these ideas up into a simple library & command-line wrapper.  You
+just pass some expression/command to be timed (probably not outputting anything
+to terminals).  It prints out an informative error when times are too unstable.
 
 Usage
 =====
 ```
   tim [optional-params] [cmds: string...]
 
-Run shell commands (maybe w/escape/quoting) 2R times.  Finds mean,"err" of
-the best runs twice and, if stable at sigma-level, merge results (reporting
-mean,"err" of the best of all runs).
+Run shell cmds (maybe w/escape|quoting) 2n times.  Finds mean,"err" of the
+best twice and, if stable at level dist, merge results for a final time & error
+estimate.
 
+  -n=, --n=     int    10  number of outer trials; 1/2 total
   -b=, --best=  int    3   number of best times to average
-  -r=, --runs=  int    10  number of outer trials
-  -s=, --sigma= float  7.0 max distance to declare stability
+  -d=, --dist=  float  7.5 max distance to decide stable samples
   -w=, --write= string ""  also write times to this file
 ```
 
@@ -115,24 +115,24 @@ be "the same" and they are.[^6]
 Empirical Evaluation of "error" estimates
 =========================================
 The above example can be generalized to **measure** how coherent the estimate &
-errors are with your interpretations.  You can re-purpose `--sigma` to get `tim`
-to emit a little report which includes the sigma distance.  That can just be
-extracted with simple text manipulation tools.  To get 1000 samples of the
-distribution of sigma under noise variation, for example, you can just:
+errors are with your interpretations.  You can re-purpose `--dist` to get `tim`
+to emit a little report which includes distances.  That can just be extracted
+with simple text manipulation.  To get 1000 samples of the distribution of dist
+under noise variation, for example, you can just:
 ```sh
 c=$(printf '%1000s\n' | sed 's/ /: /g')
-eval tim -s0 $c|grep apart|awk '{print $2}'|sort -g>/t/a
-# plot '/t/a' u 1:0 w step  # gnuplot datum idx vs. val
+eval tim -d0 $c|grep apart|awk '{print $2}'|sort -g>/tmp/a
+# plot '/tmp/a' u 1:0 w step  # gnuplot datum idx vs. val
 ```
 produces for me (under `taskset 0xF chrt 99` on an otherwise "idle" AlderLake
 CPU with the GoldenCove cores running Linux 6.1.1)[^7]:
 ![tim EDF plot](tim.png)
-"As a unit", the error is not so far from Gaussian expectations below 1.5 sigma,
+"As a unit", the dist is not so far from Gaussian sigma expectations below 1.5,
 but even with best 3/10, we see **substantial (>5%) sampling in the heavy** 4+
-sigma tail.  As evident from this plot, selecting `--sigma` to decide
-"reproducible" can be.. challenging.  This challenge **spills over** into any
-better-worse comparisons since differences big enough to be significant may need
-to be many "sigma" apart.[^8]
+sigma area.  From this plot, selecting `--dist` to decide "reproducible" can
+be.. challenging.  This challenge **spills over** into any better-worse
+comparisons since deltas big enough to be significant may need to be many
+"sigma" apart.[^8]
 
 A plot of your own test environments can perhaps show how bad this may be for
 you, but it is, again, non-stationary/competing work dependent.  Whatever level
