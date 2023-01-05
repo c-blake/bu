@@ -165,7 +165,7 @@ for error estimates.)
 bash for this.  Automatically measuring & subtracting shell overhead/optionally
 minimizing it with `bu/execstr.nim` are possible future work.
 
-[^6]: The values are (3.7-3.53)/(.15^2+.1^2)^.5 = 0.94 "err"s apart by standard
+[^6]: The values are (3.7 - 3.53)/(.15^2 + .1^2)^.5 = 0.94 "err"s apart by basic
 [error propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty)
 which uses "smallness" of errors and Taylor series.  The Nim package
 [Measuremancer](https://github.com/SciNim/Measuremancer) or the Python package
