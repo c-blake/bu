@@ -24,12 +24,12 @@ template eMin*(n=10, best=3, dist=7.5, sample1): untyped =
   ## This template takes as its final parameter any block of Nim code that
   ## produces a single `float`, probably a delta time.  `doc/tim.md` explains
   ## while `bu/tim.nim` is a fully worked example to time programs reliably.
-  var result: MinEst
+  var result: MinEst                    # STAGE 1: assess sampling coherence
   measureSortSummarize(result.r1, result.s1, sample1)
   measureSortSummarize(result.r2, result.s2, sample1)
   result.apart = distance(result.s1, result.s2, result.r1, result.r2)
-  if result.apart < dist:               # Stable sampling distro.
-    result.r = result.r1 & result.r2    # Merge all data to refine estimate
+  if result.apart < dist:               # STAGE 2: Merge data to refine estim
+    result.r = result.r1 & result.r2
     result.r.sort
     result.s.push result.r[0..<best]
     (result.est, result.err) = stage2(result.s, result.r)
