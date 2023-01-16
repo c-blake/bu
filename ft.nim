@@ -47,22 +47,26 @@ proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
       flip = false
 
 proc ft*(file="", delim='\n', term='\n', pattern="$1", expr="e",
-         paths: seq[string]) =
+         paths: seq[string]): int =
   ## Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
   ## that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
   ## also read stdin as in `find -type f|ft -ew`.  (Yes, could cobble together
   ## with GNU `find -files0-from` less tersely & with more quoting concerns.)
+  ## Maybe counter-intuitively, exit with status = match count (0=NONE).
   let (euid, egid) = (geteuid(), getegid())     # only do this *once*
   let it = both(paths, fileStrings(file, delim))
+  var st = 0
   for path in it():
     if isType(path, expr, euid, egid):
       stdout.write pattern % [path], term
+      inc st
+  st
 
 when isMainModule: import cligen; dispatch ft, help={
   "file"   : "optional input ( `\"-\"` | !tty = ``stdin`` )",
   "delim"  : "input file delimiter; `\\\\0` -> NUL",
   "term"   : "output path terminator",
-  "pattern": "emit some \\$1-using pattern",
+  "pattern": "emit a \\$1-using pattern; E.g. \"match:\\$1\"",
   "expr"  :"""Concatenated extended one-letter test(1) codes
     e  (e)xists in any way
     b  is (b)lock special

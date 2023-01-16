@@ -1,29 +1,30 @@
 Motivation
 ----------
 
-The "usability idea" is to leverage user memory of `test` flags by staying as
+The "usability idea" is to leverage user recall of `test` flags by staying as
 close as reasonable to that set.  The only real difference is that `ft` {for
-f)ile t)ype} uses `h` to mean a h)ard link not an alias for -L.  Yes, there
-are more verbose ways to do this with `man 1 find` and shell `for` loops and
-more terse ways to do it with Zsh extended globbing (`man 1 zshexpn`).
+f)ile t)ype} uses `h` to mean a h)ard link not an alias for -L.
+
+Yes, there are more verbose ways to do this with `man 1 find` and shell `for`
+loops and more terse ways to do it with Zsh extended globbing (`man 1 zshexpn`).
 
 I suspect most people are more comfortable with a shell loop that would also be
 portable, but OTOH, it really is a very small program.
 
 Usage
 -----
-
 ```
   ft [optional-params] [paths: string...]
-Batch (in both predicates & targets) test / [ .
-Emit subset of paths that pass expr.
-E.g.: $(ft -eL *) =~ Zsh extended glob *(@).
-Can also read stdin as in find -type f|ft -ew.
+Batch (in both predicates & targets) test / [ .  Emit subset of paths that pass
+expr.  E.g.: $(ft -eL *) =~ Zsh extended glob *(@).  Can also read stdin as in
+find -type f|ft -ew.  (Yes, could cobble together with GNU find -files0-from
+less tersely & with more quoting concerns.) Maybe counter-intuitively, exit with
+status = match count (0=NONE).
 
   -f=, --file=    string ""   optional input ( "-" | !tty = stdin )
   -d=, --delim=   char   '\n' input file delimiter; \0 -> NUL
   -t=, --term=    char   '\n' output path terminator
-  -p=, --pattern= string "$1" emit some $1-using pattern
+  -p=, --pattern= string "$1" emit a $1-using pattern; E.g. "match:$1"
   -e=, --expr=    string "e"  Concatenated extended one-letter test(1) codes
                                   e  (e)xists in any way
                                   b  is (b)lock special
