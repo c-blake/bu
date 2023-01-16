@@ -46,7 +46,7 @@ proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
       if not result: return
       flip = false
 
-proc ft*(file="", delim='\n', term='\n', pattern="$1", expr="e",
+proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, expr="e",
          paths: seq[string]): int =
   ## Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
   ## that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
@@ -58,7 +58,7 @@ proc ft*(file="", delim='\n', term='\n', pattern="$1", expr="e",
   var st = 0
   for path in it():
     if isType(path, expr, euid, egid):
-      stdout.write pattern % [path], term
+      if not quiet: stdout.write pattern % [path], term
       inc st
   st
 
@@ -67,6 +67,7 @@ when isMainModule: import cligen; dispatch ft, help={
   "delim"  : "input file delimiter; `\\\\0` -> NUL",
   "term"   : "output path terminator",
   "pattern": "emit a \\$1-using pattern; E.g. \"match:\\$1\"",
+  "quiet"  : "Do not emit; Just count as exit status",
   "expr"  :"""Concatenated extended one-letter test(1) codes
     e  (e)xists in any way
     b  is (b)lock special
@@ -75,7 +76,7 @@ when isMainModule: import cligen; dispatch ft, help={
     f  is a regular (f)ile
    l|L is a symbolic (l)ink; NOTE: h differs!
     p  is a named (p)ipe {aka FIFO}
-    S  is a (S)ocket; CASE differs from ls/find
+    S  is a (S)ocket;CASE differs from ls/find
     s  has a (s)ize greater than zero
     h  is a (h)ard link; Link count > 1
     N  (N)ew; modify time > access time
@@ -86,6 +87,6 @@ when isMainModule: import cligen; dispatch ft, help={
     G  is owned by effective (G)roup ID
   r|R|A user|World|Group can (r)ead
   w|W|I user|World|Group can (w)rite
-  x|X|E user|World|Group can e(x)ecute|traverse
+  x|X|E user|World|Group can e(x)ecute|travers
 In all cases a file must exist for 'true'
 Codes are logically ANDed; '^' prefix => NOT"""}
