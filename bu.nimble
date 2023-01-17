@@ -50,6 +50,7 @@ bin         = @[
   "wsz",        # Report terminal size in cells, pixels, and cell size
 
   "okpaths",    # Validate/trim PATH-like vars by probing the system
+  "nrel",       # Edit .nimble version, commit, tag, push & maybe release
   "dirq",       # Kind of its own system-building atom thing
   "funnel",     # A reliable, record boundary respecting "FIFO funnel
   "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
