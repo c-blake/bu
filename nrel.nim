@@ -54,7 +54,8 @@ proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
   if stage == commit: quit()
   if execShellCmd("git tag "&newV) != 0: quit "error adding "&newV&" tag", 6
   if stage == tag: quit()
-  if execShellCmd("git push") != 0: quit "error pushing to main GH branch", 7
+  if execShellCmd("git push --tags") != 0:
+    quit "error pushing to main GH branch", 7
   if stage == push: quit()
   if execShellCmd("gh release create \"" & newV & "\" -t \""&title&"\" -F \"" &
                   notes & "\"") != 0:
