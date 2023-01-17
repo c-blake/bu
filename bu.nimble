@@ -27,7 +27,7 @@ bin         = @[
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "tim",        # Sanity checking benchmark timer using only basic statistics
-  "bu/eve",     # Extreme Value Estimator (e.g. *true* min time of an infinite
+  "bu/eve",     # Extreme Value Estimator (*true* min time of infinite sample)
 
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
