@@ -45,7 +45,7 @@ proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
   ## Bump version in `.nimble`, commit, tag & push using just `nim`, this prog,
   ## & `git`.  Final optional stage uses github-cli release create prog.
   if stage == release and title.len == 0 or notes.len == 0:
-    quit "Need ", 1
+    quit "Need non-empty `title` and `notes` for release stage", 1
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
   let newV = nimbleUp(vsn, bump)
   if stage == nimble: quit()
