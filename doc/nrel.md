@@ -11,12 +11,12 @@ Usage
 Bump version in .nimble, commit, tag & push using just nim, this prog, & git.
 Final optional stage uses github-cli release create prog.
 
-  -t=, --title= string NEED  Release title
-  -n=, --notes= string NEED  Path to release notes markdown
   -v=, --vsn=   string ""    New version; "": auto bump
   -b=, --bump=  VSlot  patch Version slot to bump: Major, minor, patch
   -m=, --msg=   string ""    .nimble commit; "": Bump versions pre-release
-  -s=, --stage= Stage  tag   nimble, commit, tag, push, release
+  -s=, --stage= Stage  push  nimble, commit, tag, push, release
+  -t=, --title= string ""    Release title
+  -n=, --notes= string ""    Path to release notes markdown
 ```
 
 Examples

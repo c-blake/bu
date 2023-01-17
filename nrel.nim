@@ -25,15 +25,15 @@ proc newVsn(curV: string, bump=patch): string =
 proc nimbleUp(vsn: string, bump=patch): string =
   let nbPath = nimblePath()
   let (_, pknm, _) = nbPath.splitFile
-  if nbPath.len == 0: quit "could not find nimble file", 1
+  if nbPath.len == 0: quit "could not find nimble file", 2
   let nb = if nbPath.len > 0: nbPath.readFile else: ""
   let (dvF, dvPath) = createTempFile("dumpVsn", ".nims")
   dvF.write nb, "\necho version\n"      #  For full generality, add `echo`
   dvF.close                             #..to end of .nimble & then nim e
   let (curV, xs) = execCmdEx("nim e " & dvPath)
-  if xs != 0: quit "could not find nim or run nim e " & dvPath, 2
+  if xs != 0: quit "could not find nim or run nim e " & dvPath, 3
   try: removeFile dvPath
-  except CatchableError: quit "could not clean-up " & dvPath, 3
+  except CatchableError: quit "could not clean-up " & dvPath, 4
   result = if vsn.len == 0: curV.newVsn(bump) else: vsn
   echo "Moving ", pknm, " from version ", curV.strip, " to ", result
   let newNb = nb.replace("\"" & curV.strip & "\"", "\"" & result & "\"")
@@ -41,26 +41,29 @@ proc nimbleUp(vsn: string, bump=patch): string =
   f.write newNb                         #..autoupdate `requires` to each latest.
   f.close
 
-proc nrel(title:string, notes:string, vsn="", bump=patch, msg="", stage=tag) =
+proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
   ## Bump version in `.nimble`, commit, tag & push using just `nim`, this prog,
   ## & `git`.  Final optional stage uses github-cli release create prog.
+  if stage == release and title.len == 0 or notes.len == 0:
+    quit "Need ", 1
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
   let newV = nimbleUp(vsn, bump)
   if stage == nimble: quit()
   if execShellCmd("git commit -am \"" & msg & "\"") != 0:
-    quit "error committing version bump", 4
+    quit "error committing version bump", 5
   if stage == commit: quit()
-  if execShellCmd("git tag "&newV) != 0: quit "error adding "&newV&" tag", 5
+  if execShellCmd("git tag "&newV) != 0: quit "error adding "&newV&" tag", 6
   if stage == tag: quit()
-  if execShellCmd("git push") != 0: quit "error pushing to main GH branch", 6
+  if execShellCmd("git push") != 0: quit "error pushing to main GH branch", 7
   if stage == push: quit()
-  if execShellCmd("gh-release-create -t \""&title&"\" -F \""&notes&"\"") != 0:
-    quit "error running gh-release-create", 7
+  if execShellCmd("gh release create \"" & newV & "\" -t \""&title&"\" -F \"" &
+                  notes & "\"") != 0:
+    quit "Error running gh release create; Manually do it on github", 8
 
 when isMainModule: import cligen; dispatch nrel, help={
-  "title": "Release title",
-  "notes": "Path to release notes markdown",
   "vsn"  : "New version; \"\": auto bump",
   "bump" : "Version slot to bump: Major, minor, patch",
   "msg"  : ".nimble commit; \"\": Bump versions pre-release",
-  "stage": "nimble, commit, tag, push, release"}
+  "stage": "nimble, commit, tag, push, release",
+  "title": "Release title",
+  "notes": "Path to release notes markdown"}
