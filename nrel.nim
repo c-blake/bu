@@ -49,7 +49,7 @@ proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
   let newV = nimbleUp(vsn, bump)
   if stage == nimble: quit()
-  if execShellCmd("git commit -am \"" & msg & "\"") != 0:
+  if execShellCmd("git commit -am \'" & msg & "\'") != 0:
     quit "error committing version bump", 5
   if stage == commit: quit()
   if execShellCmd("git tag "&newV) != 0: quit "error adding "&newV&" tag", 6
@@ -57,8 +57,8 @@ proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
   if execShellCmd("git push; git push --tags") != 0:
     quit "error pushing to main GH branch", 7
   if stage == push: quit()
-  if execShellCmd("gh release create \"" & newV & "\" -t \""&title&"\" -F \"" &
-                  notes & "\"") != 0:
+  if execShellCmd("gh release create \'" & newV & "\' -t '"&title&"' -F '" &
+                  notes & "'") != 0:
     quit "Error running gh release create; Manually do it on github", 8
 
 when isMainModule: import cligen; dispatch nrel, help={
