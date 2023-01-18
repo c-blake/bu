@@ -21,8 +21,8 @@ for shf in countup(0, paramCount()-1, 5):
     elif mode.S_ISDIR : 'd'
     elif mode.S_ISFIFO: 'p'
     elif mode.S_ISREG : 'f'
-    elif mode.S_ISLNK : 'l'
-    elif mode.S_ISSOCK: 's'
+    elif (when not defined(windows): mode.S_ISLNK  else: false): 'l'
+    elif (when not defined(windows): mode.S_ISSOCK else: false): 's'
     else: '.'
 
   proc perm(perms: string): cint =
