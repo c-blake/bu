@@ -22,7 +22,7 @@ proc newVsn(curV: string, bump=patch): string =
   else:
     raise newException(ValueError, "non-tripartite version")
 
-proc nimbleUp(vsn: string, bump=patch): string =
+proc nimbleUp(vsn: string, bump=patch, dryRun=false): string =
   let nbPath = nimblePath()
   let (_, pknm, _) = nbPath.splitFile
   if nbPath.len == 0: quit "could not find nimble file", 2
@@ -35,36 +35,40 @@ proc nimbleUp(vsn: string, bump=patch): string =
   try: removeFile dvPath
   except CatchableError: quit "could not clean-up " & dvPath, 4
   result = if vsn.len == 0: curV.newVsn(bump) else: vsn
-  echo "Moving ", pknm, " from version ", curV.strip, " to ", result
-  let newNb = nb.replace("\"" & curV.strip & "\"", "\"" & result & "\"")
-  let f = open(nbPath, fmWrite)         # Could add an optional `reqs` stage to
-  f.write newNb                         #..autoupdate `requires` to each latest.
-  f.close
+  echo "Edit ", pknm, ".nimble version from ", curV.strip, " to ", result
+  if not dryRun:
+    let newNb = nb.replace("\"" & curV.strip & "\"", "\"" & result & "\"")
+    let f = open(nbPath, fmWrite)       # Could add an optional `reqs` stage to
+    f.write newNb                       #..autoupdate `requires` to each latest.
+    f.close
 
-proc nrel(vsn="", bump=patch, msg="", stage=push, title="", notes="") =
+proc run(cmd, failMsg: string; failCode: int, dryRun=false) =
+  if dryRun: echo cmd
+  elif execShellCmd(cmd) != 0: quit failMsg, failCode
+
+proc nrel(vsn="", bump=patch, msg="", stage=push, title="", rNotes="",
+          dryRun=false) =
   ## Bump version in `.nimble`, commit, tag & push using just `nim`, this prog
   ## & `git`.  Final optional stage uses github-cli release create prog.
-  if stage == release and (title.len == 0 or notes.len == 0):
-    quit "Need non-empty `title` and `notes` for release stage", 1
+  if stage == release and (title.len == 0 or rNotes.len == 0):
+    quit "Need non-empty `title` and `rNotes` for release stage", 1
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
-  let newV = nimbleUp(vsn, bump)
+  let newV = nimbleUp(vsn, bump, dryRun)
   if stage == nimble: quit()
-  if execShellCmd("git commit -am \'" & msg & "\'") != 0:
-    quit "error committing version bump", 5
+  run "git commit -am \'" & msg & "\'", "error committing version bump",5,dryRun
   if stage == commit: quit()
-  if execShellCmd("git tag "&newV) != 0: quit "error adding "&newV&" tag", 6
+  run "git tag " & newV, "error adding " & newV & " tag", 6, dryRun
   if stage == tag: quit()
-  if execShellCmd("git push; git push --tags") != 0:
-    quit "error pushing to main GH branch", 7
+  run "git push; git push --tags", "error pushing to main GH branch", 7, dryRun
   if stage == push: quit()
-  if execShellCmd("gh release create \'" & newV & "\' -t '"&title&"' -F '" &
-                  notes & "'") != 0:
-    quit "Error running gh release create; Manually do it on github", 8
+  run "gh release create \'"&newV&"\' -t '"&title&"' -F '"&rNotes&"'",
+      "Error running gh release create; Manually do it on github", 8, dryRun
 
 when isMainModule: import cligen; dispatch nrel, help={
-  "vsn"  : "New version; \"\": auto bump",
-  "bump" : "Version slot to bump: Major, minor, patch",
-  "msg"  : ".nimble commit; \"\": Bump versions pre-release",
-  "stage": "nimble, commit, tag, push, release",
-  "title": "Release title",
-  "notes": "Path to release notes markdown"}
+  "vsn"   : "New version; \"\": auto bump",
+  "bump"  : "Version slot to bump: Major, minor, patch",
+  "msg"   : ".nimble commit; \"\": Bump versions pre-release",
+  "stage" : "nimble, commit, tag, push, release",
+  "title" : "Release title",
+  "rNotes": "Path to release notes markdown",
+  "dryRun": "Do not act; Print what would happen"}, short={"dryRun": 'n'}
