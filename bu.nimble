@@ -57,4 +57,4 @@ bin         = @[
 ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.5.36"
+requires "nim >= 1.6.0", "cligen >= 1.5.39"
