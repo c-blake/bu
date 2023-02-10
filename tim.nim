@@ -24,8 +24,8 @@ proc tim(n=10, best=3, dist=7.5, write="", cmds: seq[string]) =
       let sa = &"{e.apart:.2f}"                       # Informative failure
       echo &"UNSTABLE; Mean,\"err\"(Best {best} of {n}) stage 1's:\n\t",
         fmtUncertain(e.est1,e.err1),"\n\t",fmtUncertain(e.est2,e.err2),"\n",&"""
-are {sa} err apart.  taskset, chrt, fixing CPU freqs (either in OS|BIOS) may
-stabilize time sampling as can suspend/quit of competing work/browsers."""
+are {sa} err apart for {cmd}.  taskset, chrt, fixing CPU freqs (in OS|BIOS) may
+stabilize time sampling as can suspend/quit of competing work (eg. browsers)."""
     if not f.isNil:                                   # Optionally log for..
       for t in e.r1: f.write $t,'\n'                  #..further analysis.
       for t in e.r2: f.write $t,'\n'
