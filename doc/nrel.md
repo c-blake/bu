@@ -8,8 +8,8 @@ Usage
 -----
 ```
   nrel [NEED,optional-params]
-Bump version in .nimble, commit, tag & push using just nim, this prog, & git.
-Final optional stage uses github-cli release create prog.
+Bump version in .nimble, commit, tag & push using just nim, this prog & git.
+Final optional stage uses github-cli's gh release creation.
 
   -v=, --vsn=   string ""    New version; "": auto bump
   -b=, --bump=  VSlot  patch Version slot to bump: Major, minor, patch

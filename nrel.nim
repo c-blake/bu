@@ -49,7 +49,7 @@ proc run(cmd, failMsg: string; failCode: int, dryRun=false) =
 proc nrel(vsn="", bump=patch, msg="", stage=push, title="", rNotes="",
           dryRun=false) =
   ## Bump version in `.nimble`, commit, tag & push using just `nim`, this prog
-  ## & `git`.  Final optional stage uses github-cli release create prog.
+  ## & `git`.  Final optional stage uses github-cli's ``gh release`` creation.
   if stage == release and (title.len == 0 or rNotes.len == 0):
     quit "Need non-empty `title` and `rNotes` for release stage", 1
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
