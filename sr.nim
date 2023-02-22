@@ -35,7 +35,7 @@ for i, c in paramStr(1):
       var buf = [c, '\n']
       if write(fd, buf[0].addr, 2) != 2:
         quit "write()!=2: " & $errno.strerror, 4
-#     close(fd) # Nim BUG: Uncomment & get unresolvable err@ "quit use, 1"
+      discard close(fd) # Nim bug: No discard => err@wrong lineNo
     else:
       quit "open "&SRQ&": " & $errno.strerror, 3
   else:
