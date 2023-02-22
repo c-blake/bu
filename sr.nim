@@ -1,6 +1,6 @@
-import std/[os, posix]
+import std/[os, posix, strutils]
 const SRQ = "/proc/sysrq-trigger"
-const use = """Usage (as root!): sr <CODE> where CODE is:
+const use = """Usage (as root!): sr <CODE>[<CODE>..] [DELAY(ms)] where CODE is:
   b  immediately reboot without syncing or unmounting
   c  crash system by NULL pointer deref, leave crashdump if configured
   e  send SIGTERM to all processes, except for init
@@ -28,13 +28,17 @@ if paramCount() < 1 or paramStr(1).len < 1 or paramStr(1) == "h":
   quit use, 0
 if geteuid() != 0:
   quit "only root can use "&SRQ&"\n", 2
-let c = paramStr(1)[0]
-if c in {'b','c', 'e','f', 'i'..'u', 'w'..'z', '0'..'9'}:
-  if (let fd = open(SRQ, O_WRONLY); fd >= 0):
-    var buf = [c, '\n']
-    if write(fd, buf[0].addr, 2) != 2:
-      quit "write()!=2: " & $errno.strerror, 4
+let delay = if paramCount() > 1: parseInt(paramStr(2)) else: 250
+for i, c in paramStr(1):
+  if c in {'b','c', 'e','f', 'i'..'u', 'w'..'z', '0'..'9'}:
+    if (let fd = open(SRQ, O_WRONLY); fd >= 0):
+      var buf = [c, '\n']
+      if write(fd, buf[0].addr, 2) != 2:
+        quit "write()!=2: " & $errno.strerror, 4
+#     close(fd) # Nim BUG: Uncomment & get unresolvable err@ "quit use, 1"
+    else:
+      quit "open "&SRQ&": " & $errno.strerror, 3
   else:
-    quit "open "&SRQ&": " & $errno.strerror, 3
-else:
-  quit use, 1
+    quit use, 1
+  if i + 1 < paramStr(1).len:
+    sleep delay
