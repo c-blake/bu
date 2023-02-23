@@ -1,12 +1,12 @@
 when defined(windows):
-  import std/winlean
+  import std/[winlean, times]
   let sin = getStdHandle(STD_INPUT_HANDLE)
   proc read(fd: Handle, buf: pointer, len: int): int =
     let len = min(int32.high.int, len).int32
     var nRd: cint
     if readFile(fd, buf, len, nRd.addr, nil) == 0: -1 else: int(nRd)
 else:
-  import posix; let sin = 0
+  import std/[posix, times]
 
 proc fread*(bsz=65536, limit=0u64, verb=false, paths: seq[string]) =
   ## This is like `cat`, but just discards data.  Empty `paths` => just read
@@ -22,6 +22,7 @@ proc fread*(bsz=65536, limit=0u64, verb=false, paths: seq[string]) =
   var buf = newString(bsz)
   var n = 0u64
   let mx = if limit != 0: limit else: uint64.high
+  let t0 = if verb: epochTime() else: 0
   when defined(windows):
     if paths.len == 0:
         while n < mx and (let k = read(sin, buf[0].addr, bsz); k > 0): inc n, k
@@ -39,7 +40,9 @@ proc fread*(bsz=65536, limit=0u64, verb=false, paths: seq[string]) =
         while n < mx and (let k = read(fd, buf[0].addr, bsz); k > 0): inc n, k
       if fd >= 0 and fd.close < 0:
         break
-  if verb: echo "fread ", n, " bytes"
+  if verb:
+    let dt = epochTime() - t0
+    echo "fread ", n, " bytes in ", dt, " sec = ", n.float/dt/1e9, " GiB/s"
 
 when isMainModule: import cligen; dispatch fread, help={
   "bsz": "buffer size for IO", "limit": "max bytes to read; 0=>unlimited",
