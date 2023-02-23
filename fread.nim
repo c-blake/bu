@@ -8,7 +8,7 @@ when defined(windows):
 else:
   import posix; let sin = 0
 
-proc fread*(bsz=16384, limit=0u64, verb=false, paths: seq[string]) =
+proc fread*(bsz=65536, limit=0u64, verb=false, paths: seq[string]) =
   ## This is like `cat`, but just discards data.  Empty `paths` => just read
   ## from stdin.  That can be useful to ensure data is in an OS buffer cache
   ## or try to evict other data (more portably than /proc/sys/vm/drop_caches)
