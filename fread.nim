@@ -42,7 +42,7 @@ proc fread*(bsz=65536, limit=0u64, verb=false, paths: seq[string]) =
         break
   if verb:
     let dt = epochTime() - t0
-    echo "fread ", n, " bytes in ", dt, " sec = ", n.float/dt/1e9, " GiB/s"
+    echo "fread ", n, " bytes in ", dt, " sec = ", n.float/dt/1e9, " GB/s"
 
 when isMainModule: import cligen; dispatch fread, help={
   "bsz": "buffer size for IO", "limit": "max bytes to read; 0=>unlimited",
