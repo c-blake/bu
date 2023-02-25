@@ -92,7 +92,7 @@ proc matchPrefix(path: string): string =
       result = e.mntPt
   if result.len == 0: result = "/"
 
-proc dfr(devs = @[ "cgroup_root" ], fs = @[ "devtmpfs" ], unit = 1073741824.0,
+proc dfr(devs = @["cgroup_root"], fs = @["devtmpfs"], unit=float(1 shl 30),
          pseudo=false, avail=0.0, Dups=false, colors: seq[string] = @[],
          color: seq[string] = @[], plain=false, paths: seq[string]): int =
   ## Print disk free stats for paths in user-specified units (GiB by default).
@@ -129,7 +129,7 @@ include cligen/mergeCfgEnv
 dispatch dfr, short = {"pseudo": 's', "color": 'c'},
          help = {"devs"  : "devices to EXCLUDE",
                  "fs"    : "FS types to EXCLUDE",
-                 "unit"  : "unit of measure",
+                 "unit"  : "unit of measure in bytes",
                  "pseudo": "list pseudo FSes",
                  "avail" : "exit N if this % is unavailable on N args",
                  "colors": "color aliases; Syntax: name = ATTR1 ATTR2..",
