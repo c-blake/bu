@@ -77,9 +77,11 @@ proc outputRow(mp: string, sf: Statvfs, unit: float, plain=false, avl=0.0): int=
   if avl == 0.0 or 100.0 * (1.0 - used / float(sf.f_blocks)) > avl: 0 else: 1
 
 proc filter(devs: seq[string], fs: seq[string]): seq[string] =
+  devLenMx = len("Filesystem")          # Shrink devLenMx based on filtration
   for e in mtab:
     if e.devNm notin devs and e.fsType notin fs:
       result.add(e.mntPt)
+      devLenMx = max(devLenMx, e.devNm.len)
 
 proc matchPrefix(path: string): string =
   var lenMax = 0
