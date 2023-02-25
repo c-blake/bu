@@ -39,8 +39,7 @@ proc parseMount(mt: string): seq[tuple[devNm, mntPt, fsType: string]] =
     result.add((cols[0], cols[1], cols[2]))
     devLenMx = max(devLenMx, cols[0].len)
     devNmOf[cols[1]] = cols[0]
-let mtabLoc = getEnv("MTAB")
-let mtab = parseMount(if mtabLoc.len > 0: mtabLoc else: "/proc/mounts")
+let mtab = parseMount(getEnv("MTAB", "/proc/mounts"))
 
 proc on(f: float): string =
   if   f < 0.05: attr["pct0"]
