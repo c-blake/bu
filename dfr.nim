@@ -1,8 +1,6 @@
 import os, posix, tables, sets, strformat, strutils, cligen, cligen/humanUt
 when not declared(stdout): import std/[syncio, formatfloat]
-
-proc o(a: varargs[string, `$`]) = stdout.write(a)         #short aliases
-proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n")
+proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n") #alias
 
 #TODO: These levels should user config'd, but best of all would be an option for
 #  a true-color HSV scale w/Hue tracking PercentFull & SV being LC_THEME-driven.
@@ -29,7 +27,7 @@ proc parseColor(color: seq[string], plain=false) =
     attr[k] = textAttrOn(v.split, plain)
 
 var devNmOf = initTable[string, string]()
-var devLenMx = len("Filesystem")  #max over ALL MOUNTED, no matter what printed
+var devLenMx = len("Filesystem")  # max over ALL MOUNTED, no matter what printed
 proc parseMount(mt: string): seq[tuple[devNm, mntPt, fsType: string]] =
   var i = 0
   for line in lines(open(mt)):
@@ -56,15 +54,16 @@ proc on(f: float): string =
 
 proc pct(f: float): string = fmt"{f * 100.0:5.2f} "
 
-var didHeader = false                   #guard to only print header once.
+proc o(a: varargs[string, `$`]) = stdout.write(a)
+var didHeader = false                   # Guard to only print header once.
 proc outputRow(mp: string, sf: Statvfs, unit: float, plain=false, avl=0.0): int=
   if not didHeader:
-    didHeader = true                    #output column headers (once)
+    didHeader = true                    # Output column headers (once)
     if not plain: o attr["header"]
     o alignLeft("Filesystem", devLenMx + 1)
     o fmt"""{"Total":>8} {"Used":>8} {"Avail":>8} {"Use%":>5} {"IUse%":>5}"""
     o " MntOn", (if plain: "" else: textAttrOff), "\n"
-  let used = float(sf.f_blocks - sf.f_bfree)    #output disk free stats
+  let used = float(sf.f_blocks - sf.f_bfree)    # Output disk free stats
   if not plain:
     o on(if int(sf.f_blocks)>0: used / float(sf.f_blocks) else: 0.0)
   o alignLeft(devNmOf[mp], devLenMx + 1)
@@ -96,7 +95,7 @@ proc dfr(devs = @[ "cgroup_root" ], fs = @[ "devtmpfs" ], unit = 1073741824.0,
          pseudo=false, avail=0.0, Dups=false, colors: seq[string] = @[],
          color: seq[string] = @[], plain=false, paths: seq[string]): int =
   ## Print disk free stats for paths in user-specified units (GiB by default).
-  var did = initHashSet[int]()        #did,st to suppress dups/bind mts
+  var did = initHashSet[int]()          # did,st to suppress dups/bind mts
   let plain = plain or existsEnv("NO_COLOR")
   if not plain:
     colors.textAttrRegisterAliases      # colors => registered aliases
@@ -104,25 +103,25 @@ proc dfr(devs = @[ "cgroup_root" ], fs = @[ "devtmpfs" ], unit = 1073741824.0,
   var st: Stat
   var sf: Statvfs
   for path in (if paths.len > 0: paths else: filter(devs, fs)):
-    var rp: string                      #fully symlink-resolved path
+    var rp: string                      # Fully symlink-resolved path
     try:
-      rp = expandFilename(path)         #POSIX realpath
+      rp = expandFilename(path)         # POSIX realpath
     except CatchableError:
       er "dfr: expandFilename(\"", path, "\"): ", osErrorMsg(osLastError())
       continue
     let mp = matchPrefix(rp)
-    if not Dups and paths.len == 0:     #Dups mode nicer w/hung NFS mounts
+    if not Dups and paths.len == 0:     # Dups mode nicer w/hung NFS mounts
       if stat(mp.cstring, st) < 0:
         er "dfr: stat(\"", mp, "\"): ", osErrorMsg(osLastError())
         continue
       if int(st.st_dev) in did:
-        continue                        #suppress duplicates from mtab
+        continue                        # Suppress duplicates from mtab
       did.incl int(st.st_dev)
     if statvfs(mp.cstring, sf) < 0:
       er "dfr: statvfs(\"", mp, "\"): ", osErrorMsg(osLastError())
       continue
     if paths.len == 0 and not pseudo and sf.f_blocks == 0:
-      continue                          #suppress pseudo FSes (unless listed)
+      continue                          # Suppress pseudo FSes (unless listed)
     result += outputRow(mp, sf, unit, plain, avail)
 
 include cligen/mergeCfgEnv
