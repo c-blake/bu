@@ -1,18 +1,12 @@
-import os, posix, tables, sets, strformat, strutils, cligen, cligen/humanUt
+import std/[os, posix, tables, sets, strformat, strutils], cligen,cligen/humanUt
 when not declared(stdout): import std/[syncio, formatfloat]
 proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n") #alias
 
-#TODO: These levels should user config'd, but best of all would be an option for
-#  a true-color HSV scale w/Hue tracking PercentFull & SV being LC_THEME-driven.
-var highlights = { "pct0"  : "purple",  # rainbow/spectrum order violet->red
-                   "pct5"  : "blue",
-                   "pct25" : "cyan",
-                   "pct50" : "green",
-                   "pct75" : "yellow",
-                   "pct85" : "bold",    # orange on my hacked `st` terminal
-                   "pct95" : "bold red",
-                   "pct100": "BLACK", "header" : "inverse" }.toTable
-var attr: Table[string, string]
+var levels: seq[(int,string)] = @[(0, "purple"), (5, "blue"), (25, "cyan"),
+  (50, "green"), (75, "yellow"),        # Default colors: violet->red rainbow
+  (85, "bold"),                         # Orange on my hacked `st` terminals
+  (95, "bold red"), (100, "BLACK")]     # Critical & Weird >100% values
+var attrHeader = "inverse"
 
 proc parseColor(color: seq[string], plain=false) =
   for spec in color:
@@ -20,21 +14,22 @@ proc parseColor(color: seq[string], plain=false) =
     if cols.len < 2:
       raise newException(ValueError, "bad color line: \"" & spec & "\"")
     let key = cols[0].optionNormalize
-    if key notin highlights:
-      raise newException(ValueError, "unknown color key: \"" & spec & "\"")
-    highlights[key] = cols[1]
-  for k, v in highlights:
-    attr[k] = textAttrOn(v.split, plain)
+    if key == "header": attrHeader = cols[1]
+    elif key.startsWith("pct") and (let thr = parseInt(key[3..^1]); thr >= 0):
+      if levels.len > 0 and thr < levels[^1][0]:
+        levels.setLen 0
+      levels.add (thr, cols[1])
+    else:
+      raise newException(ValueError, "expected header|pctINT; got \""&spec&"\"")
+  for kv in mitems(levels): kv[1] = textAttrOn(kv[1].split, plain)
+  levels.add (int.high, "")
+  attrHeader = textAttrOn(attrHeader.split, plain)
 
 proc on(f: float): string =
-  if   f < 0.05: attr["pct0"]
-  elif f < 0.25: attr["pct5"]
-  elif f < 0.50: attr["pct25"]
-  elif f < 0.75: attr["pct50"]
-  elif f < 0.85: attr["pct75"]
-  elif f < 0.95: attr["pct85"]
-  elif f < 1.00: attr["pct95"]
-  else: attr["pct100"]
+  let pct = int(100*f + 0.5)
+  for i in 1..levels.high:
+    if pct < levels[i][0]: return levels[i-1][1]
+  levels[^1][1]
 
 var devNmOf = initTable[string, string]()
 var devLenMx = len("Filesystem")  # max over ALL MOUNTED, no matter what printed
@@ -58,7 +53,7 @@ proc outputRow(mp: string, sf: Statvfs, unit: float, plain=false, avl=0.0): int=
   proc o(a: varargs[string, `$`]) = stdout.write(a)
   if not didHeader:
     didHeader = true                    # Output column headers (once)
-    if not plain: o attr["header"]
+    if not plain: o attrHeader
     o alignLeft("Filesystem", devLenMx + 1)
     o fmt"""{"Total":>8} {"Used":>8} {"Avail":>8} {"Use%":>5} {"IUse%":>5}"""
     o " MntOn", (if plain: "" else: textAttrOff), "\n"
