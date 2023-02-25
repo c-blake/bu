@@ -54,22 +54,25 @@ such)..No need for `df -i`.
 Configuration
 -------------
 
-I also wanted to colorize rows by how critically full file systems are.  My
-personal `~/.config/dfr` looks like:
+I also wanted to embellish rows by how critically full file systems are.  My
+personal `~/.config/dfr/darkBG` looks like:
 ```
-# Percentage STYLES (6 char fmts w/heatmap color scheme).
+# True Color Terminal 12 color spectrum w/colorless at the top end (post pink)
 color = "header inverse"
-color = "pct0   fhue0"
-color = "pct5   fhue1"
-color = "pct25  fhue2"
-color = "pct50  fhue3"
-color = "pct75  fhue4"
-color = "pct85  bold"
-color = "pct95  bold fhue5"
-color = "pct100 FHUE+"  # Weird >100% values
+color = "pct0   fsw0.000"               # Dark Violet
+color = "pct10  fsw0.091"               # Dark Indigo
+color = "pct20  fsw0.182"               # Light Blue
+color = "pct30  fsw0.273"               # Cyan
+color = "pct40  fsw0.364"               # Seafoam Grue
+color = "pct50  fsw0.455"               # Green; cf. FargoS1/Marvo query
+color = "pct60  fsw0.545"               # Grellow
+color = "pct75  fsw0.636"               # Yellow
+color = "pct85  fsw0.750 bold"          # Light Orange; Start to worry
+color = "pct92  fsw0.818 bold"          # Dark Orange
+color = "pct94  fsw0.909 bold italic"   # Red; Worry more
+color = "pct97  fsw1.000 bold inverse"  # Pink; Worry a lot
+color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-This uses a common set of cligen definitions I use, elaborated upon at
-https://github.com/c-blake/cligen/wiki/Color-themes-schemes
 
 Future Work:
 ------------
