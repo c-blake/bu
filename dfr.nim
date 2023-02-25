@@ -26,6 +26,16 @@ proc parseColor(color: seq[string], plain=false) =
   for k, v in highlights:
     attr[k] = textAttrOn(v.split, plain)
 
+proc on(f: float): string =
+  if   f < 0.05: attr["pct0"]
+  elif f < 0.25: attr["pct5"]
+  elif f < 0.50: attr["pct25"]
+  elif f < 0.75: attr["pct50"]
+  elif f < 0.85: attr["pct75"]
+  elif f < 0.95: attr["pct85"]
+  elif f < 1.00: attr["pct95"]
+  else: attr["pct100"]
+
 var devNmOf = initTable[string, string]()
 var devLenMx = len("Filesystem")  # max over ALL MOUNTED, no matter what printed
 proc parseMount(mt: string): seq[tuple[devNm, mntPt, fsType: string]] =
@@ -41,21 +51,11 @@ proc parseMount(mt: string): seq[tuple[devNm, mntPt, fsType: string]] =
     devNmOf[cols[1]] = cols[0]
 let mtab = parseMount(getEnv("MTAB", "/proc/mounts"))
 
-proc on(f: float): string =
-  if   f < 0.05: attr["pct0"]
-  elif f < 0.25: attr["pct5"]
-  elif f < 0.50: attr["pct25"]
-  elif f < 0.75: attr["pct50"]
-  elif f < 0.85: attr["pct75"]
-  elif f < 0.95: attr["pct85"]
-  elif f < 1.00: attr["pct95"]
-  else: attr["pct100"]
-
 proc pct(f: float): string = fmt"{f * 100.0:5.2f} "
 
-proc o(a: varargs[string, `$`]) = stdout.write(a)
 var didHeader = false                   # Guard to only print header once.
 proc outputRow(mp: string, sf: Statvfs, unit: float, plain=false, avl=0.0): int=
+  proc o(a: varargs[string, `$`]) = stdout.write(a)
   if not didHeader:
     didHeader = true                    # Output column headers (once)
     if not plain: o attr["header"]
