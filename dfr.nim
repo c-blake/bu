@@ -101,8 +101,8 @@ proc dfr(devs = @[ "cgroup_root" ], fs = @[ "devtmpfs" ], unit = 1073741824.0,
   if not plain:
     colors.textAttrRegisterAliases      # colors => registered aliases
     color.parseColor
-  var st: Stat
-  var sf: Statvfs
+  var st: Stat                          # NOTE: THIS LOOP IS 1-PASS (both stat/
+  var sf: Statvfs                       #       statvfs can hang on NFS/etc.)
   for path in (if paths.len > 0: paths else: filter(devs, fs)):
     var rp: string                      # Fully symlink-resolved path
     try:
