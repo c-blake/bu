@@ -73,10 +73,7 @@ color = "pct94  fsw0.909 bold italic"   # Red; Worry more
 color = "pct97  fsw1.000 bold inverse"  # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-
-Future Work:
-------------
-
-These fullness levels themselves should probably be user config'd, but best of
-all would be an option for a true-color HSV scale (with Hue tracking PercentFull
-and S)aturation and V)alue being `LC_THEME`-driven.
+The percentage levels can be any integers you like.  You can, of course, have
+different `~/.config/dfr/lightBG`, `~/.config/dfr/linuxVT` with other color
+schemes or else just do something like the above in a `~/.config/dfr` file
+(instead of a `dfr/` directory).
