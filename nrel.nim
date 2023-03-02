@@ -14,13 +14,16 @@ proc s2num(s: string): int =
     stderr.write "not a positive number: \"", s, "\"; Using zero\n"
 
 proc newVsn(curV: string, bump=patch): string =
-  if (let v = curV.strip.split('.'); v.len == 3): # Compute requested bump
-    case bump
-    of patch: return "$1.$2.$3" % [v[0], v[1], $(s2num(v[2]) + 1)]
-    of minor: return "$1.$2.$3" % [v[0], $(s2num(v[1]) + 1), "0" ]
-    of Major: return "$1.$2.$3" % [$(s2num(v[0]) + 1), "0" , "0" ]
-  else:
-    raise newException(ValueError, "non-tripartite version")
+  for line in curV.split('\n'):
+    if line.len > 0 and line[0] in {'0'..'9'}:
+      if (let v = line.strip.split('.'); v.len == 3): # Compute requested bump
+        case bump
+        of patch: return "$1.$2.$3" % [v[0], v[1], $(s2num(v[2]) + 1)]
+        of minor: return "$1.$2.$3" % [v[0], $(s2num(v[1]) + 1), "0" ]
+        of Major: return "$1.$2.$3" % [$(s2num(v[0]) + 1), "0" , "0" ]
+      else:
+        raise newException(ValueError, "non-tripartite version: " & line.repr)
+  raise newException(ValueError, "No output line looking like a version")
 
 proc nimbleUp(vsn: string, bump=patch, dryRun=false): string =
   let nbPath = nimblePath()
