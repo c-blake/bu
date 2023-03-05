@@ -16,6 +16,7 @@ when defined(Windows):
 # "du",         # Slight improvement on GNU du
 # "rr",         # Mostly a short alias for rm -rf but also faster
 # "dups",       # Fast finder of exact duplicate files
+  "fpr",        # File Pages Resident reporting utility like fincore
 
 # "cbtm",       # Back up & restore new Linux b-time stamps (creation/birth)
 # "dirt",       # Recursively set dir time stamp to oldest of members
@@ -41,6 +42,8 @@ when defined(Windows):
   "ww",         # Dynamic programming based word wrapper
 # "jointr",     # Join strace "unfinished ..." with conclusion
   "bu/colSort", # Sort *within* the columns of rows
+  "ndelta",     # Numerical difference between two reports utility
+  "topn",       # heap-based fast 1-pass top-N over m columns
 
 # "fsids",      # file system user & group id histogram
 # "chom",       # Enforce group owner & segregated perms in file trees
@@ -56,6 +59,7 @@ when defined(Windows):
   "dirq",       # Kind of its own system-building atom thing
 # "funnel",     # A reliable, record boundary respecting "FIFO funnel
 # "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
+  "wsample",    # Weighted random sampler with fancy weighting
  ]
 else:
  bin         = @[
@@ -69,6 +73,7 @@ else:
   "du",         # Slight improvement on GNU du
   "rr",         # Mostly a short alias for rm -rf but also faster
   "dups",       # Fast finder of exact duplicate files
+  "fpr",        # File Pages Resident reporting utility like fincore
 
   "cbtm",       # Back up & restore new Linux b-time stamps (creation/birth)
   "dirt",       # Recursively set dir time stamp to oldest of members
@@ -94,6 +99,8 @@ else:
   "ww",         # Dynamic programming based word wrapper
   "jointr",     # Join strace "unfinished ..." with conclusion
   "bu/colSort", # Sort *within* the columns of rows
+  "ndelta",     # Numerical difference between two reports utility
+  "topn",       # heap-based fast 1-pass top-N over m columns
 
   "fsids",      # file system user & group id histogram
   "chom",       # Enforce group owner & segregated perms in file trees
@@ -109,6 +116,7 @@ else:
   "dirq",       # Kind of its own system-building atom thing
   "funnel",     # A reliable, record boundary respecting "FIFO funnel
   "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
+  "wsample",    # Weighted random sampler with fancy weighting
  ]
 
 # Dependencies

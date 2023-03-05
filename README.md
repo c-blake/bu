@@ -34,6 +34,8 @@ Space Management (How Much)
 
 [dups - Fast finder of exact duplicate files](doc/dups.md)
 
+[fpr - File Pages Resident reporting utility like fincore](doc/fpr.md)
+
 File Time Related (When)
 ------------------------
 
@@ -87,6 +89,10 @@ Pipeline/Data Formatting/Calculation
 
 [colSort - Sort *within* the columns of rows](doc/colSort.md)
 
+[ndelta - Numerical difference between two reports utility](doc/ndelta.md)
+
+[topn - heap-based fast 1-pass top-N over m columns](doc/topn.md)
+
 System Administration on Unix/POSIX/Linux
 -----------------------------------------
 
@@ -119,6 +125,8 @@ Miscellaneous/Islands Unto Themselves
 [funnel - A reliable, record boundary respecting "FIFO funnel](doc/funnel.md)
 
 [stripe - Run jobs in parallel w/slot key vars/seqNos/shell elision](doc/stripe.md)
+
+[wsample - Weighted random sampler with fancy weighting](doc/wsample.md)
 
 Meta-Commentary
 ---------------
