@@ -55,10 +55,9 @@ proc print*(wt: WeightTab, tokens: seq[MSlice], stdize=false) =
 
 proc cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): seq[MSlice] =
   ## Weighted sample of size ``n`` capping to ``m`` copies of any given token.
-  ## This can be useful if weighting can become very skewed and repeat samples
-  ## at use can be cancelled.  This still biases sampling to make more heavily
-  ## weighted tokens earlier in a sample.  Algo used does not inf.loop, but
-  ## slows down for ``n >~ m*tokens.len``.
+  ## This can be useful if to weight but bound the skew.  This does bias to make
+  ## more heavily weighted tokens earlier in a sample.  Algo does not inf.loop,
+  ## but slows down for ``n >~ m*tokens.len``.
   let nEffective = min(n, m * tokens.len)
   let cdf = wt.weights(tokens).cumsummed
   var count: CountTable[MSlice]
