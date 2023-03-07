@@ -128,6 +128,8 @@ Miscellaneous/Islands Unto Themselves
 
 [wsample - Weighted random sampler with fancy weighting](doc/wsample.md)
 
+[zipf - Random samples according to Zipf distribution](doc/zipf.md)
+
 Meta-Commentary
 ---------------
 

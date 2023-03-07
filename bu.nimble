@@ -60,6 +60,7 @@ when defined(Windows):
 # "funnel",     # A reliable, record boundary respecting "FIFO funnel
 # "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
   "wsample",    # Weighted random sampler with fancy weighting
+  "bu/zipf",    # Random samples according to Zipf distribution
  ]
 else:
  bin         = @[
@@ -117,6 +118,7 @@ else:
   "funnel",     # A reliable, record boundary respecting "FIFO funnel
   "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
   "wsample",    # Weighted random sampler with fancy weighting
+  "bu/zipf",    # Random samples according to Zipf distribution
  ]
 
 # Dependencies
