@@ -11,6 +11,26 @@ set of many possible things (videos, documents, pages, URIs, users, etc.).
 Naive implementations of such sketches are more accurate for skewed
 distributions dominated by a few items of outsized popularity. }
 
+Inverse Transform Method
+========================
+Any distribution (specifically the [Cumulative Distribution
+Function](https://en.wikipedia.org/wiki/Cumulative_distribution_function) ) is
+really just a map from values to the fraction of a gigantic sample below said
+values.[^1]  The concept be either descriptive (what happened) or predictive
+(what you expect to happen).  A direct aspect of the defining idea is that if
+you randomly pick "some fraction" uniformly on [0,1] and "reverse the map" you
+get a value distributed according to the same mapping.  There is, naturally,
+[math](https://en.wikipedia.org/wiki/Inverse_transform_sampling) to back this
+up, but I view that math as mostly confirming the definition "makes sense".
+
+If the distribution is represented as a bunch of numbers in order in an array,
+"reversing the map" is just a search problem solvable with good old [binary
+searches](https://en.wikipedia.org/wiki/Binary_search_algorithm) (start with the
+whole range, find the middle & narrow to the side where the value might be).[^2]
+
+`zipf` uses this method to sample a Zipf not because it is the most efficient,
+but since it is efficient enough and can show interesting aspects of caching.
+
 Usage
 =====
 ```
@@ -33,10 +53,9 @@ An Example With Analysis
 ========================
 What we do here is first write a 800 MB file with the CDF of a Zipf distribution
 over 100e6 8B elements with alpha=1.5.  Then we run to sample a single element
-to see a fixed start-up overhead (probably kernel page table manipulations that
-can be much faster on a HugeTLBfs, for example).  Finally we time sampling 1e6
-events according to that distribution to get (copy-pastable; Zsh REPORTTIME and
-TIMEFMT are helpful here...):
+to see a fixed start-up overhead.[^3]  Finally we time sampling 1e6 events
+according to that distribution to get (copy-pastable; Zsh REPORTTIME and TIMEFMT
+are helpful here...):
 ```
 $ zipf -w /dev/shm/z1e8.Nd -n0 -g 1..100_000_000; \
   zipf -r /dev/shm/z1e8.Nd -n1 -g 1..100_000_000; \
@@ -49,12 +68,12 @@ $ zipf -w /dev/shm/z1e8.Nd -n0 -g 1..100_000_000; \
 So, only `(1.219-1.160)/1e6` = a small 59 nanosec / per RNG sample on a CPU with
 8MiB L3 cache where [memlat](memlat.md) gives 67 ns latency DIMMs.  The worst
 case of the per random sample binary search to map a U(0,1) number back to the
-array slot is something like `lg 1e8` = 27 memory access.  So, a worst case time
-of ~27\*67 = 1800 ns, over 30X longer.[^1]
+array slot is something like `log_2 1e8` = 27 memory access.  So, a worst case
+time of ~27\*67 = 1800 ns, over 30X longer.[^4]
 
 What happened?  The CDF is only 1% cachable (8/800), but the worst case is very
 rare.  Probability is concentrated to make most answers be at the start of the
-array.[^2]  So, the binary search path need never hit DIMM memory.  [temporal
+array.[^5]  So, the binary search path need never hit DIMM memory.  [temporal
 locality of reference](https://en.wikipedia.org/wiki/Locality_of_reference) {
 accessing the same data that was recently accessed } can often help like this.
 If you doubt the theory, you can use [ru](ru.md) to measure major faults after
@@ -63,18 +82,22 @@ loaded off a Winchester disk, merely 284 KiB or 0.036% of the data.
 
 *Conversely*, speed could be *disrupted* by ~30X if, between samples, competing
 work (in the same process/thread or elsewhere) evicts soon to be needed cache
-entries.[^3]  Beginners often neglect scenarios like this.
+entries.  Beginners often neglect scenarios like this.
 
 Those fascinated by [self-reference](https://en.wikipedia.org/wiki/Ouroboros)
 may be amused to see CPU designs working for very popular memory helping [to make
 data sets to evaluate approximations for which items are popular](#motivation).
 
-[^1]: Neglecting time to 8 MB to a /dev/shm ram disk which is O(1 ms).
+[^1]: People often plot the derivative (successive differences) which obscures this simplicity.
 
-[^2]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.7%
+[^2]: [Interpolation search](https://en.wikipedia.org/wiki/Interpolation_search)
+is also possible, but usually slower than binary search due to slow division.
+
+[^3]: Large here, but maybe faster on a HugeTLBfs with fewer kernel page table
+ manipulations.
+
+[^4]: Neglecting time to 8 MB to a /dev/shm ram disk which is O(1 ms).
+
+[^5]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.7%
 of samples as assessed by `nio pr /dev/shm/z1e8.Nd|head -n65536|tail -n1`.  The
 rest of the path of the binary search easily fits in the L3 CPU cache.
-
-[^3]: I am aware there are more compact ways to evaluate an inverse CDF for Zipf
-& accept-reject sampling strategies.  I tend to re-use prepared test input data
-sets.  So, I am not so sensitive to speed of preps and this method illuminates.
