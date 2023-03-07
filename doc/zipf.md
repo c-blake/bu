@@ -29,7 +29,7 @@ searches](https://en.wikipedia.org/wiki/Binary_search_algorithm) (start with the
 whole range, find the middle & narrow to the side where the value might be).[^2]
 
 `zipf` uses this method to sample a Zipf not because it is the most efficient,
-but since it is efficient enough and can show interesting aspects of caching.
+but since it is "efficient enough"[^3] and illuminates aspects of modern CPUs.
 
 Usage
 =====
@@ -53,7 +53,7 @@ An Example With Analysis
 ========================
 What we do here is first write a 800 MB file with the CDF of a Zipf distribution
 over 100e6 8B elements with alpha=1.5.  Then we run to sample a single element
-to see a fixed start-up overhead.[^3]  Finally we time sampling 1e6 events
+to see a fixed start-up overhead.[^4]  Finally we time sampling 1e6 events
 according to that distribution to get (copy-pastable; Zsh REPORTTIME and TIMEFMT
 are helpful here...):
 ```
@@ -69,11 +69,11 @@ So, only `(1.219-1.160)/1e6` = a small 59 nanosec / per RNG sample on a CPU with
 8MiB L3 cache where [memlat](memlat.md) gives 67 ns latency DIMMs.  The worst
 case of the per random sample binary search to map a U(0,1) number back to the
 array slot is something like `log_2 1e8` = 27 memory access.  So, a worst case
-time of ~27\*67 = 1800 ns, over 30X longer.[^4]
+time of ~27\*67 = 1800 ns, over 30X longer.[^5]
 
 What happened?  The CDF is only 1% cachable (8/800), but the worst case is very
 rare.  Probability is concentrated to make most answers be at the start of the
-array.[^5]  So, the binary search path need only load from slow memory once and
+array.[^6]  So, the binary search path need only load from slow memory once and
 then almost always re-accesses those same exact paths showing great [temporal
 locality of reference](https://en.wikipedia.org/wiki/Locality_of_reference).
 If you doubt the theory, you can use [ru](ru.md) to measure major faults (majF)
@@ -83,25 +83,40 @@ pages loaded off a Winchester disk, merely 284 KiB or 0.036% of the data.
 *Conversely*, speed could be *disrupted* by ~30X if, between samples, competing
 work (in the same process/thread or elsewhere) evicts soon to be needed cache
 entries.  Being routed to the same portion of the merely 32 KiB *L1* D-cache 99%
-of the time makes *another* feature of modern CPUs - branch prediction - also
-very effective -- log_2(32KiB/8B)=12.  So, the first 27-12 = 15 hops of binary
-search are the same 99% of the time.  Branch misprediction can also hinder less
-skewed binary searches.
+of the time helps *another* modern CPU feature a lot - [branch
+prediction](https://en.wikipedia.org/wiki/Branch_predictor) -- log_2(32KiB / 8B)
+= 12.  So, the first 27-12 = 15 hops of binary search are the same 99% of the
+time.  Branch misprediction can also hinder less skewed binary searches.
+
+Metaphorically, the inverse transform method for this highly skewed popularity
+distribution is almost like being afloat in the ocean on a raft.  One might
+naively expect to bobble along at 1 mile per hour fighting disruptive waves.
+But, for modern CPUs, this specific problem is more like having tail winds and a
+magic genie whispering in your ear which way to lean & when to capture the full
+force of almost every wave.  So, you cruise along at 30 mph instead of suffering
+like you might for other distributions.[^7]
 
 Those fascinated by [self-reference](https://en.wikipedia.org/wiki/Ouroboros)
-may be amused to see CPU designs working for very popular memory helping [to make
-data sets to evaluate approximations for which items are popular](#motivation).
+may be amused to see CPU designs working for very popular memory or branches
+helping [to make data sets to evaluate approximations for which items are
+popular](#motivation).
 
 [^1]: People often plot the derivative (successive differences) which obscures this simplicity.
 
 [^2]: [Interpolation search](https://en.wikipedia.org/wiki/Interpolation_search)
 is also possible, but usually slower than binary search due to slow division.
 
-[^3]: Large here, but maybe faster on a HugeTLBfs with fewer kernel page table
+[^3]: Almost everything like this depends on context.  I try to signal difficult
+interpretation with [Scare quotes](https://en.wikipedia.org/wiki/Scare_quotes).
+
+[^4]: Large here, but maybe faster on a HugeTLBfs with fewer kernel page table
  manipulations.
 
-[^4]: Neglecting time to 8 MB to a /dev/shm ram disk which is O(1 ms).
+[^5]: Neglecting time to 8 MB to a /dev/shm ram disk which is O(1 ms).
 
-[^5]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.6%
+[^6]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.6%
 of samples as assessed by `nio pr /dev/shm/z1e8.Nd|head -n32768|tail -n1`.  The
 rest of the path of the binary search easily fits in the L3 CPU cache.
+
+[^7]: I am no graphic artist, but I'd happily put an image here if someone wants
+to try. :-)
