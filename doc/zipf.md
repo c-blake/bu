@@ -73,16 +73,20 @@ time of ~27\*67 = 1800 ns, over 30X longer.[^4]
 
 What happened?  The CDF is only 1% cachable (8/800), but the worst case is very
 rare.  Probability is concentrated to make most answers be at the start of the
-array.[^5]  So, the binary search path need never hit DIMM memory.  [temporal
-locality of reference](https://en.wikipedia.org/wiki/Locality_of_reference) {
-accessing the same data that was recently accessed } can often help like this.
-If you doubt the theory, you can use [ru](ru.md) to measure major faults after
-dropping caches.  In the above example, I got one run with only 71 4096B pages
-loaded off a Winchester disk, merely 284 KiB or 0.036% of the data.
+array.[^5]  So, the binary search path need only load from slow memory once and
+then almost always re-accesses those same exact paths showing great [temporal
+locality of reference](https://en.wikipedia.org/wiki/Locality_of_reference).
+If you doubt the theory, you can use [ru](ru.md) to measure major faults (majF)
+after dropping caches.  In the above example, I got one run with only 71 4096B
+pages loaded off a Winchester disk, merely 284 KiB or 0.036% of the data.
 
 *Conversely*, speed could be *disrupted* by ~30X if, between samples, competing
 work (in the same process/thread or elsewhere) evicts soon to be needed cache
-entries.  Beginners often neglect scenarios like this.
+entries.  Being routed to the same portion of the merely 32 KiB *L1* D-cache 99%
+of the time makes *another* feature of modern CPUs - branch prediction - also
+very effective -- log_2(32KiB/8B)=12.  So, the first 27-12 = 15 hops of binary
+search are the same 99% of the time.  Branch misprediction can also hinder less
+skewed binary searches.
 
 Those fascinated by [self-reference](https://en.wikipedia.org/wiki/Ouroboros)
 may be amused to see CPU designs working for very popular memory helping [to make
@@ -98,6 +102,6 @@ is also possible, but usually slower than binary search due to slow division.
 
 [^4]: Neglecting time to 8 MB to a /dev/shm ram disk which is O(1 ms).
 
-[^5]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.7%
-of samples as assessed by `nio pr /dev/shm/z1e8.Nd|head -n65536|tail -n1`.  The
+[^5]: In this particular example, the L2 CPU cache of 256 KiB covers over 99.6%
+of samples as assessed by `nio pr /dev/shm/z1e8.Nd|head -n32768|tail -n1`.  The
 rest of the path of the binary search easily fits in the L3 CPU cache.
