@@ -1,3 +1,4 @@
+when not declared(addFloat): import std/formatFloat
 when defined(windows):
   import std/[winlean, times]
   let sin = getStdHandle(STD_INPUT_HANDLE)
