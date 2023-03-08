@@ -119,4 +119,9 @@ of samples as assessed by `nio pr /dev/shm/z1e8.Nd|head -n32768|tail -n1`.  The
 rest of the path of the binary search easily fits in the L3 CPU cache.
 
 [^7]: I am no graphic artist, but I'd happily put an image here if someone wants
-to try. :-)
+to try. :-)  Also, since `zipf` trusts data in the file read by `--rd` (rather
+than, say, spot-checking some points to match `--alpha`), you can fill a file
+with any normalized discrete CDF to compare.  Uniform (flat) shapes give me ~10X
+worse.  The 30X estimate is dodged for the same reason `ranElt` is much faster
+than `shuff` in [memlat](memlat.md) & disruptable by intervening work breaking
+[speculative execution](https://en.wikipedia.org/wiki/Speculative_execution).
