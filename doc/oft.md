@@ -49,7 +49,8 @@ competitions.  (Well, someone probably has..Feel free to PR a link.)
 
 ```sh
 $ curl https://www.gutenberg.org/files/98/98-0.txt > to2c.txt
-$ tr A-Z a-z < to2c.txt | tr -sc a-z \\n >/dev/shm/j; ru oft 10 </dev/shm/j
+$ tr A-Z a-z < to2c.txt | tr -sc a-z \\n >/dev/shm/to2c.wrd
+$ oft 10 </dev/shm/to2c.wrd
 1957 that
 1990 i
 2011 his
