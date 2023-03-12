@@ -93,6 +93,8 @@ Pipeline/Data Formatting/Calculation
 
 [topn - heap-based fast 1-pass top-N over m columns](doc/topn.md)
 
+[oft - Approximately most often items via a low-memory algorithm](doc/oft.md)
+
 System Administration on Unix/POSIX/Linux
 -----------------------------------------
 
@@ -129,6 +131,8 @@ Miscellaneous/Islands Unto Themselves
 [wsample - Weighted random sampler with fancy weighting](doc/wsample.md)
 
 [zipf - Random samples according to Zipf distribution](doc/zipf.md)
+
+[niom - nio moments w/hard dep on adix efficient histogram/quantiles](doc/niom.md)
 
 Meta-Commentary
 ---------------

@@ -44,6 +44,7 @@ when defined(Windows):
   "bu/colSort", # Sort *within* the columns of rows
   "ndelta",     # Numerical difference between two reports utility
   "topn",       # heap-based fast 1-pass top-N over m columns
+  "oft",        # Approximately most often items via a low-memory algorithm
 
 # "fsids",      # file system user & group id histogram
 # "chom",       # Enforce group owner & segregated perms in file trees
@@ -61,6 +62,7 @@ when defined(Windows):
 # "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
   "wsample",    # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
+  "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles
  ]
 else:
  bin         = @[
@@ -102,6 +104,7 @@ else:
   "bu/colSort", # Sort *within* the columns of rows
   "ndelta",     # Numerical difference between two reports utility
   "topn",       # heap-based fast 1-pass top-N over m columns
+  "oft",        # Approximately most often items via a low-memory algorithm
 
   "fsids",      # file system user & group id histogram
   "chom",       # Enforce group owner & segregated perms in file trees
@@ -119,7 +122,8 @@ else:
   "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
   "wsample",    # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
+  "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.5.41"
+requires "nim >= 1.6.0", "cligen >= 1.5.42", "adix >= 0.4.8", "nio >= 0.6.2"
