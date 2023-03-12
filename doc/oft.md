@@ -43,9 +43,12 @@ A classic example along these lines is word histogramming a la Knuth McIlroy
 [caffeine-fuled rage optimization](https://github.com/benhoyt/countwords)
 [comparisons](https://stackoverflow.com/questions/25957835/wordcount-how-inefficient-is-mcilroys-solution)
 even though Knuth [was clearly "set
-up"](https://buttondown.email/hillelwayne/archive/donald-knuth-was-framed/) }.
-Someone should actually do a meta-page linking to the many solutions and various
-competitions.  (Well, someone probably has..Feel free to PR a link.)
+up"](https://buttondown.email/hillelwayne/archive/donald-knuth-was-framed/), at
+least in how "history"/culture has "taken" the contest, [given literal in-text
+caveats McIlroy made at the time](https://www.spinellis.gr/blog/20200225/) }.
+Someone should actually do a meta-page linking to the many solutions,
+discussions, and various competitions.  (Well, someone probably has..it is a
+real sub-culture.  Feel free to PR a link.)
 
 ```sh
 $ curl https://www.gutenberg.org/files/98/98-0.txt > to2c.txt
