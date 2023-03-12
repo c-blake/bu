@@ -14,8 +14,8 @@ Full hash table based histograms can require a great deal of memory.  If you can
 be sure your deployment has enough, uncontended low latency DIMM memory to
 support the full histogram operation, those are usually still the fastest way.
 An only slightly slower way taking dramatically less space is the [Count-Min
-Sketch](en.wikipedia.org/wiki/Count%E2%80%93min_sketch) which is what `oft`
-uses via the `adix/amoft` (approximately most oft) module.
+Sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch) which is what
+`oft` uses via the `adix/amoft` (approximately most oft) module.
 
 Usage
 =====
