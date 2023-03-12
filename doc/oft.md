@@ -1,8 +1,8 @@
 Motivation
 ==========
 Sometimes it can be very informative to extract the *most oft seen* items from
-one or more columns of a very large, possibly compressed on storage input stream
-- essentially an incomplete histogram.  These could be time-stamp stripped log
+one|more columns of a very large, possibly compressed on storage input stream -
+essentially an incomplete histogram.  These could be time-stamp stripped log
 messages from a long list of errors or warnings, trending posts on some social
 media site (sometimes called "heavy hitters"), or any other situation where a
 huge fraction of activity is dominated by a few hundred or thousand popular
