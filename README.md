@@ -51,6 +51,8 @@ File Time Related (When)
 
 [saft - SAve&restore File Times across a command operating on them](doc/saft.md)
 
+[tmath - Convert/do arithmetic directly upon date & time formats](doc/tmath.md)
+
 Benchmarking Related Utilities (How Long)
 -----------------------------------------
 

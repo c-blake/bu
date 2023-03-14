@@ -24,6 +24,7 @@ when defined(Windows):
 # "newest",     # b-time supporting \`find -printf|sort|tail\`
 # "since",      # b-time supporting \`find -Xnewer\`
 # "saft",       # SAve&restore File Times across a command operating on them
+  "bu/tmath",   # Convert/do arithmetic directly upon date & time formats
 
   "memlat",     # Measure memory latency at various size scales
   "fread",      # Like `cat` but just read data (no writes)
@@ -84,6 +85,7 @@ else:
   "newest",     # b-time supporting \`find -printf|sort|tail\`
   "since",      # b-time supporting \`find -Xnewer\`
   "saft",       # SAve&restore File Times across a command operating on them
+  "bu/tmath",   # Convert/do arithmetic directly upon date & time formats
 
   "memlat",     # Measure memory latency at various size scales
   "fread",      # Like `cat` but just read data (no writes)
