@@ -1,3 +1,4 @@
+when not declared(stderr): import std/syncio
 import cligen, cligen/[mfile, osUt], std/strutils
 
 iterator fprs(paths: (iterator(): string)):
@@ -13,7 +14,7 @@ iterator fprs(paths: (iterator(): string)):
       else:
         yield (pages: empty, path: path, err: 1)
 
-type Emit = enum summary, detail
+type Emit = enum summary, detail, errors
 
 proc fpr(file="", delim='\n', emit={summary}, paths: seq[string]): int =
   ## File Pages Resident. Examine UNION of `paths` & optional `delim`-delimited
@@ -25,12 +26,14 @@ proc fpr(file="", delim='\n', emit={summary}, paths: seq[string]): int =
     r.inc    y.pages.resident           # y)ielded tuples
     t.inc    y.pages.total
     nErr.inc y.err
+    if errors in emit and y.err != 0:   # Ignore errors from zero length files?
+      stderr.write "fpr: error: \"", y, "\" (zero length/special file?)\n"
     if detail in emit:
       echo y.pages.resident," of ",y.pages.total," pages resident in ",y.path
   if summary in emit and nFile > 0:
     echo r," of ",t," pages ", formatFloat(r.float/t.float*100.0, ffDecimal, 2),
          "% resident in ",nFile," files ",nErr," errors"
-  max(nErr, 127)                        # Exit with appropriate status
+  min(nErr, 127)                        # Exit with appropriate status
 
 dispatch fpr, help={"file" : "optional input (\"-\"|!tty=stdin)",
                     "delim": "input file delimiter (\\0->NUL)",
