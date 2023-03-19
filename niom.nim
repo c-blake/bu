@@ -1,6 +1,6 @@
 # This is like `nio moments`, but has `adix` as a hard dep for histo & qs.
 when not declared(addFloat): import std/formatFloat
-import std/math, nio, adix/[stat, lghisto], cligen/osUt
+import std/math, nio, adix/[mvstat, lghisto], cligen/osUt
 
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum", mkAvg="avg",
                     mkSdev="sdev", mkSkew="skew", mkKurt="kurt", mkHisto="histo"
