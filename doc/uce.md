@@ -31,10 +31,10 @@ Emit Unique Count Estimate of input lines to stdout.  Algo is fast, low space
 Examples
 ========
 ```sh
-$ seq 1 50 | uce
-50.00 +- 0.12
+$ (seq 1 50; seq 1 50) | uce
+50.00 +- 0.10
 
-$ seq 1 5000000 | uce
+$ (seq 1 5000000; seq 1 5000000) | uce
 (5.09 +- 0.16)e+06
 ```
 
