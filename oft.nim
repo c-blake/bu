@@ -31,8 +31,8 @@ proc oft*(input="/dev/stdin", delim=" ", mxCol=0, errate=0.005, cover=0.98,
 
   template sweep(mf, T) {.dirty.} =
     for line in mSlices(mf, eat='\0'):  # RO mmap | slices from stdio
-      sep.split(line, row, mxCol)       # split into columns
-      for i in 0 ..< k:                 # update our 1-to-several OftAs
+      sep.split(line, row, mxCol)       # Split into columns
+      for i in 0 ..< k:                 # Update our 1-to-several AMOfts
         amos[i].inc $pyIx(row, keyC[i])
     for i in 0 ..< k:                   # Pops out like sort -gk<C+1>|tail -n<n>
       for (k, c) in amos[i].mostCommon: oFil[i].urite c, " ", k, "\n"
