@@ -27,6 +27,7 @@ Emit Unique Count Estimate of input lines to stdout.  Algo is fast, low space
   -f=, --fmt1=  "$val0 +- $err0"            fmt for uncertain num near 1
   -e=, --expF=  "($valMan +- $errV)$valExp" fmt for uncertain num beyond `re`
 ```
+Empty string for `fmt1` produces two columns of float at full precision.
 
 Examples
 ========
