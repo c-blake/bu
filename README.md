@@ -97,6 +97,8 @@ Pipeline/Data Formatting/Calculation
 
 [oft - Approximately most often items via a low-memory algorithm](doc/oft.md)
 
+[uce - Unique/distinct Count Estimate via a low-memory algorithm](doc/uce.md)
+
 System Administration on Unix/POSIX/Linux
 -----------------------------------------
 

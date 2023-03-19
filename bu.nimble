@@ -46,6 +46,7 @@ when defined(Windows):
   "ndelta",     # Numerical difference between two reports utility
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm
+  "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
 # "fsids",      # file system user & group id histogram
 # "chom",       # Enforce group owner & segregated perms in file trees
@@ -107,6 +108,7 @@ else:
   "ndelta",     # Numerical difference between two reports utility
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm
+  "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
   "fsids",      # file system user & group id histogram
   "chom",       # Enforce group owner & segregated perms in file trees
