@@ -28,10 +28,12 @@ Motivation
 `eval $(okpaths PATH : d rx u)` is useful in shell start-up scripts (like
 `~/.profile`) where you might assemble a search path or man path or et cetera
 from a wide variety of "possible locations", but then want to trim the value
-down to realizable locations (at the run-time of `okpaths`/shell start-up,
-anyway - login shells can be very long-lived and FS availability dynamic).
+down to realizable locations.
 
 This trimming makes `echo $ENVAR` less noisy and may prevent annoying extra,
 unneeded work during start-up of dependent programs.  Sometimes this extra work
 can be quite a lot, (e.g. with a slow NFS automounter), although just running
 `okpaths` will have to do it at least once.
+
+Note that the trim is based on availability at `okpaths`/shell start-up-time
+and login shells can be very long-lived and FS availability dynamic.
