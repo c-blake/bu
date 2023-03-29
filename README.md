@@ -68,8 +68,8 @@ Benchmarking Related Utilities (How Long)
 
 [eve - Extreme Value Estimator (e.g. *true* min time of an infinite sample)](doc/eve.md)
 
-Pipeline/Data Formatting/Calculation
-------------------------------------
+Row/Column/Text Table Things
+----------------------------
 
 [align - align text with better ergonomics than BSD `column`](doc/align.md)
 
@@ -81,6 +81,13 @@ Pipeline/Data Formatting/Calculation
 
 [crp - C row processor program-generator port of `rp`](doc/crp.md)
 
+[colSort - Sort *within* the columns of rows](doc/colSort.md)
+
+[cstats - preserve Context/Compute Column stats filter](doc/cstats.md)
+
+Freeform Text Things
+--------------------
+
 [cfold - Context folding (like csplit but to wrap lines)](doc/cfold.md)
 
 [unfold - Oft neglected inverse-to-wrapping/folding process](doc/unfold.md)
@@ -89,9 +96,10 @@ Pipeline/Data Formatting/Calculation
 
 [jointr - join strace "unfinished ..." with conclusion](doc/jointr.md)
 
-[colSort - Sort *within* the columns of rows](doc/colSort.md)
-
 [ndelta - Numerical difference between two reports utility](doc/ndelta.md)
+
+Pipeline Calculation Tools
+--------------------------
 
 [topn - heap-based fast 1-pass top-N over m columns](doc/topn.md)
 

@@ -38,12 +38,15 @@ when defined(Windows):
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
+  "bu/colSort", # Sort *within* the columns of rows
+  "cstats",     # Preserve Context/Compute Column stats filter
+
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
 # "jointr",     # Join strace "unfinished ..." with conclusion
-  "bu/colSort", # Sort *within* the columns of rows
   "ndelta",     # Numerical difference between two reports utility
+
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
@@ -100,12 +103,15 @@ else:
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
+  "bu/colSort", # Sort *within* the columns of rows
+  "cstats",     # Preserve Context/Compute Column stats filter
+
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
   "jointr",     # Join strace "unfinished ..." with conclusion
-  "bu/colSort", # Sort *within* the columns of rows
   "ndelta",     # Numerical difference between two reports utility
+
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
@@ -130,4 +136,4 @@ else:
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.6.0", "adix >= 0.5.0", "nio >= 0.6.3"
+requires "nim >= 1.6.0", "cligen >= 1.6.0", "adix >= 0.5.1", "nio >= 0.6.3"
