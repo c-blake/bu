@@ -7,7 +7,8 @@
 ## space one in hot loop benchmarks.  Less space-less time=win,win.  The costly
 ## method is kept as edifying. (Also, CPU/libcs with >2X slower exp/ln exist.)
 
-import std/[math, random, syncio], memfiles as mf
+when not declared writeFile: import std/syncio
+import std/[math, random], memfiles as mf
 
 proc calcCDF*(n: int, alpha=1.5): seq[float64] =
   ## Calculate Zipf CDF for for n items. Usable by random.sample(openArray,cdf).
