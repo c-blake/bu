@@ -101,7 +101,8 @@ may be amused to see CPU designs working for very popular memory or branches
 helping [to make data sets to evaluate approximations for which items are
 popular](#motivation).
 
-[^1]: People often plot the derivative (successive differences) which obscures this simplicity.
+[^1]: People often plot the derivative (successive differences) which obscures
+this simplicity.
 
 [^2]: [Interpolation search](https://en.wikipedia.org/wiki/Interpolation_search)
 is also possible, but usually slower than binary search due to slow division.
