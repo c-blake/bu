@@ -12,8 +12,8 @@ are a few:
     readability metrics might start with a width distribution.
 
  3. Automated paragraph end detection; Sometimes the only cue for paragraph
-    boundaries in poorly formatted text is significantly shorter line than the
-    "mode" of the width distribution, perhaps combined with punctuation.
+    boundaries in poorly formatted text is a significantly shorter line than
+    the "mode" of the width distribution, perhaps combined with punctuation.
 
 Usage
 =====
