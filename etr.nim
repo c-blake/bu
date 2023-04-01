@@ -13,6 +13,11 @@ proc etc*(t0: DateTime; age, total, did1, did2, measure: float): ETR =
 func `$`*(a: ETR): string =
   &"{100.0*a.done:.2f} %done {a.rate:.2f} /sec {a.left:.1f} secLeft {a.etc}"
 
+proc expSize(op: string, r: ETR, relTo=1): string =
+  let osz = try: op.getFileSize except Ce: 0
+  if relTo == 1: $int(osz.float/r.done) & " B"
+  else: &"{osz.float/r.done/relTo.float:.3f}"
+
 func notInt(str: string): bool =
   for ch in str: (if ch notin {'0'..'9'}: return true)
 
@@ -26,7 +31,7 @@ proc processAge(pfs: string): float =
   let start = parseInt((pfs & "/stat").readFile.split[21])
   0.01 * float(uptime - start)
 
-proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="") =
+proc etr*(pid=0,did="",total="",age="",scaleAge=1.0,measure=0.0,op="",relTo=1) =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
   ## processing (age of `pid` or that produced by the `age` command).  Commands
@@ -60,8 +65,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="") =
     did2 = if did.notInt: parseFloat(execProcess(did).strip)
            else: parseFloat(readFile(pfs & "fdinfo/" & did).split()[1])
   let r = etc(now(), age, tot, did1, did2, measure)
-  if op.len>0:echo r," ",int(float(try:op.getFileSize except Ce:0)/r.done)," B"
-  else: echo r
+  if op.len > 0: echo r, " ", op.expSize(r, relTo) else: echo r
 
 when isMainModule:
   dispatch etr,
@@ -71,4 +75,5 @@ when isMainModule:
                  "age"     : "cmd for `age` (age of pid if not given)",
                  "scaleAge": "re-scale output of `age` cmd as needed",
                  "measure" : "measure rate NOW across this given delay",
-                 "op"      : "output path for a report including expected size"}
+                 "op"      : "output path for a report including expected size",
+                 "relTo"   : "divide expected size by this"}

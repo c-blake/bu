@@ -32,6 +32,7 @@ Options:
   -s=, --scaleAge= float  1.0 re-scale output of age cmd as needed
   -m=, --measure=  float  0.0 measure rate NOW across this given delay
   -o=, --op=       string ""  output path for a report including expected size
+  -r=, --relTo=    int    1   divide expected size by this
 ```
 
 Naming Note
