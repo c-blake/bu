@@ -44,6 +44,7 @@ when defined(Windows):
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
+  "widths",     # Compute & emit line widths/lengths | distro
 # "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
 
@@ -109,6 +110,7 @@ else:
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
+  "widths",     # Compute & emit line widths/lengths | distro
   "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
 

@@ -94,6 +94,8 @@ Freeform Text Things
 
 [ww - Dynamic programming based word wrapper](doc/ww.md)
 
+[widths - Compute & emit line widths/lengths | distro](doc/widths.md)
+
 [jointr - join strace "unfinished ..." with conclusion](doc/jointr.md)
 
 [ndelta - Numerical difference between two reports utility](doc/ndelta.md)
