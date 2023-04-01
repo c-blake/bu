@@ -54,7 +54,7 @@ $ widths doc/*.md | cstats
 43.08 +- 0.60
 ```
 
-Or an exact distribution:
+Or an exact distribution[^1]:
 ```gnuplot
 gnuplot> plot '<widths -d *.nim bu/*.nim' with impulses
 ```
@@ -88,7 +88,11 @@ Related
 [ww](ww.md) has ways to re-word-wrap text that take a width as an input.  This
 program is one way to maybe decide what length to give it.
 
-[^1]: On a personal note, not trusting number parsing but especially formatting
+[^1]: I am aware that one could also do something like this mouthful `awk
+'{a[length($0)]++}END{for(i in a)printf("%d %d\n",i,a[i]);}'`, but it is ~3X
+slower than `widths` even in ASCII mode & does not support any NIO/binary mode.
+
+[^2]: On a personal note, not trusting number parsing but especially formatting
 to be "essentially free" was among my first lessons learning systems programming
 decades ago.  The way "Unix philosophy" is often presented makes this a lesson
 learnt anew generation after generation.  That is more a failure in teaching &|
