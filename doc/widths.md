@@ -31,8 +31,8 @@ Options:
   -d, --distro    bool false  emit a histogram, not individual widths
 ```
 
-Example
-=======
+Examples
+========
 ```sh
 $ widths doc/*.md | awk '$1>80'
 168
