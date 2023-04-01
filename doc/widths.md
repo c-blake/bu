@@ -45,7 +45,7 @@ $ widths doc/*.md | awk '$1>80'
 106
 106
 ```
-You can `grep "^$(for i in {1..81}; printf .).*" doc/*.md` to list offenders and
+You can `grep "^$(for i in {1..81}; printf .)" doc/*.md` to list offenders and
 decide if they should be wrapped. { Sometimes tabulation and URI non-splitting
 trumps blind obedience to text width limits; "Accessibility" is not 1-D. }
 
