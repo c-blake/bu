@@ -79,7 +79,7 @@ cycles can sometimes mean orders of magnitude speed-ups.  E.g., running `widths
 **.c >/dev/null` on Linux-6.2.8 source unpacked in /dev/shm (about 658 MB and
 22.75e6 lines in ~32e3 files) took 17.5 seconds.  Simply adding in `-oi` took
 the time down to 0.755s - over 23X faster.  Adding `|cstats` or `|niom` changes
-these times to 26.33 & 1.00 because of parsing costs, a worse ratio.[^1] { Just
+these times to 26.33 & 1.00 because of parsing costs, a worse ratio.[^2] { Just
 mapping files & framing lines with memchr via `widths -d **.c >/dev/null` takes
 0.57sec or ~25ns/line. }
 
