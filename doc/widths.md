@@ -69,9 +69,9 @@ $ widths -oi *.nim | niom -s,=,n,a,sd .Ni
 shows summary stats on line widths for this source code repository at the time
 of writing this document. (Note the `'i'` in `-oi` and `.Ni` must match.)
 
-All `niom` information can be derived from the exact histogram, but if there
-were many input lines and, say, you cared about "time series" properties for a
-custom analysis the (tiny 19 lines of real logic) source code of `widths.nim`
+All `niom` information can be derived from the exact histogram, but if there was
+a lot of input and, say, you cared about "time series" properties for a custom
+analysis, then the (tiny 19 lines of real logic[^2]) source code of `widths.nim`
 shows how to use [nio](https://github.com/c-blake/nio) to "stay in binary".
 
 Avoiding oft recommended but expensive binary -> ASCII -> binary conversion
@@ -79,7 +79,7 @@ cycles can sometimes mean orders of magnitude speed-ups.  E.g., running `widths
 **.c >/dev/null` on Linux-6.2.8 source unpacked in /dev/shm (about 658 MB and
 22.75e6 lines in ~32e3 files) took 17.5 seconds.  Simply adding in `-oi` took
 the time down to 0.755s - over 23X faster.  Adding `|cstats` or `|niom` changes
-these times to 26.33 & 1.00 because of parsing costs, a worse ratio.[^2] { Just
+these times to 26.33 & 1.00 because of parsing costs, a worse ratio.[^3] { Just
 mapping files & framing lines with memchr via `widths -d **.c >/dev/null` takes
 0.57sec or ~25ns/line. }
 
@@ -92,7 +92,12 @@ program is one way to maybe decide what length to give it.
 '{a[length($0)]++}END{for(i in a)printf("%d %d\n",i,a[i]);}'`, but it is ~3X
 slower than `widths` even in ASCII mode & does not support any NIO/binary mode.
 
-[^2]: On a personal note, not trusting number parsing but especially formatting
+[^2]: As with many `bu` utilities, documenting it for broader consumption &|
+appreciation is most of the work.  This one is especially trivial, actually --
+more about measuring IO than anything else { which I think could be a tad faster
+with a file size check; stdio is probably faster for < ~2048 bytes.. }
+
+[^3]: On a personal note, not trusting number parsing but especially formatting
 to be "essentially free" was among my first lessons learning systems programming
 decades ago.  The way "Unix philosophy" is often presented makes this a lesson
 learnt anew generation after generation.  That is more a failure in teaching &|
