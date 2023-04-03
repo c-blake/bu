@@ -1,7 +1,7 @@
 Usage:
 ======
 ```
-  etr [optional-params] 
+  etr [optional-params]
 
 Estimate Time Remaining (ETR) using A) work already done given by did,
 B) expected total work as given by the output of total, and C) the age of
@@ -16,7 +16,7 @@ common use cases:
 Some examples (each assumes only 1 matching pid found by pf):
 
   etr -p$(pf x) -d3 -a'fage SOME-LOG'
-  etr -p$(pf ffmpeg) -d3 -m5.0 -oXYZ
+  etr -p$(pf ffmpeg) -d3 -o4 -m2 -r0``  # Also estim. final compr.ratio
   etr -p$(pf stripe) -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
 
 Estimation assumes a constant work rate, equal to the average so far.  If you
@@ -31,8 +31,9 @@ Options:
   -a=, --age=      string ""  cmd for age (age of pid if not given)
   -s=, --scaleAge= float  1.0 re-scale output of age cmd as needed
   -m=, --measure=  float  0.0 measure rate NOW across this given delay
-  -o=, --op=       string ""  output path for a report including expected size
-  -r=, --relTo=    int    1   divide expected size by this
+  -o=, --op=       string ""  int fd of pid; str->cmd saying out used
+  -r=, --relTo=    string ""  ratio of exp.size to {this float|<=0 to total}|
+                              str cmd giving such a float
 ```
 
 Naming Note
