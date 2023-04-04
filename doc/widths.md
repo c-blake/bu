@@ -88,9 +88,8 @@ Related
 [ww](ww.md) has ways to re-word-wrap text that take a width as an input.  This
 program is one way to maybe decide what length to give it.
 
-[^1]: I am aware that one could also do something like this mouthful `awk
-'{a[length($0)]++}END{for(i in a)printf("%d %d\n",i,a[i]);}'`, but it is ~3X
-slower than `widths` even in ASCII mode & does not support any NIO/binary mode.
+[^1]: `awk '{a[length($0)]++} END{for(i in a)print i,a[i]}'` also works, but is
+~3X slower than `widths` for ASCII out & supports no binary out mode easily.
 
 [^2]: As with many `bu` utilities, documenting it for broader consumption &|
 appreciation is most of the work.  This one is especially trivial, actually --
