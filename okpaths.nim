@@ -2,12 +2,16 @@ import std/[os, posix, strutils, sets]
 
 if paramCount() < 1 or  paramCount() mod 5 != 0: quit """Usage:
   okpaths ENVAR [DELIM(:) [ITYPE{bcdpfls}(d) [PERMS{rwx}(x) [DEDUP{FL*}(F)]]]]
+
 echos re-assembled value for $ENVAR delimited by char DELIM where each element
-kept is inode type ITYPE w/permissions PERMS.  E.g., PATH=`okpaths PATH` keeps
-only existing (d)irs executable(x) by the invoking user.  DEPDUP starting with
-'F' means keep first use, while 'L' keeps last use & any other means no de-dup.
-eval `okpaths PATH : d rx u` is nice in rc/init scripts for Unix shells. Blocks
-of 5 params can repeat (since fork&exec can add to shell start-up times).""", 0
+kept is i-node type ITYPE with permissions PERMS & optional de-duplication.
+
+Eg., PATH=`okpaths PATH` keeps only existing (d)irs executable(x) by an invoking
+user.  DEPDUP starting with 'F' means keep F)irst use, while 'L' keeps L)ast use
+& other means no de-dup (this is case-insensitive).  So, eval `okpaths PATH` is
+nice in rc/init scripts for Unix shells.
+
+Blocks of the 5 params can repeat (since fork&exec add to shell init time).""",0
 
 for shf in countup(0, paramCount()-1, 5):
   let delim = if paramCount()>1+shf: paramStr(2+shf)[0]         else: ':'
