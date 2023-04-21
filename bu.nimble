@@ -33,6 +33,7 @@ when defined(Windows):
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* min time of infinite sample)
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
@@ -99,6 +100,7 @@ else:
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* min time of infinite sample)
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
@@ -138,5 +140,5 @@ else:
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.6.0",
+requires "nim >= 1.6.0", "cligen >= 1.6.1",
          "adix >= 0.5.3", "nio >= 0.6.3", "fitl >= 0.3.1"
