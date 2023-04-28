@@ -145,7 +145,7 @@ mk1: no work to do
 TM      0.040612 wall    0.006080 usr    0.034430 sys     99.7 % 2.750 mxRM
 IO      0.000000 inMB    0.000000 ouMB          0 majF     113 minF  0 swap
 ```
-GNU Make is indeed slow - over 34X worse than `mk1`.[^1]  But ninja's *best*
+GNU Make is indeed slow - over 34X worse than `mk1`.[^3]  But ninja's *best*
 case is barely faster than the interpreted bash loop (156/113=1.38X).  `mk1` on
 the other hand is ~3X faster than ninja's best case and ~4X faster than bash.
 
