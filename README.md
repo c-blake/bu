@@ -53,6 +53,8 @@ File Time Related (When)
 
 [tmath - Convert/do arithmetic directly upon date & time formats](doc/tmath.md)
 
+[mk1 - Very fast `make` for many 1-to-1 input-output mappings](doc/mk1.md)
+
 Benchmarking Related Utilities (How Long)
 -----------------------------------------
 

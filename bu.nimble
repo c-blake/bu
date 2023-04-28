@@ -25,6 +25,7 @@ when defined(Windows):
 # "since",      # b-time supporting \`find -Xnewer\`
 # "saft",       # SAve&restore File Times across a command operating on them
   "bu/tmath",   # Convert/do arithmetic directly upon date & time formats
+  "mk1",        # Very fast `make` for many 1-to-1 input-output mappings
 
   "memlat",     # Measure memory latency at various size scales
   "fread",      # Like `cat` but just read data (no writes)
@@ -92,6 +93,7 @@ else:
   "since",      # b-time supporting \`find -Xnewer\`
   "saft",       # SAve&restore File Times across a command operating on them
   "bu/tmath",   # Convert/do arithmetic directly upon date & time formats
+  "mk1",        # Very fast `make` for many 1-to-1 input-output mappings
 
   "memlat",     # Measure memory latency at various size scales
   "fread",      # Like `cat` but just read data (no writes)
