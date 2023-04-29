@@ -49,6 +49,7 @@ when defined(Windows):
   "widths",     # Compute & emit line widths/lengths | distro
 # "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
+  "tmpls",      # A fast string template interpolater
 
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm
@@ -117,6 +118,7 @@ else:
   "widths",     # Compute & emit line widths/lengths | distro
   "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
+  "tmpls",      # A fast string template interpolater
 
   "topn",       # heap-based fast 1-pass top-N over m columns
   "oft",        # Approximately most often items via a low-memory algorithm

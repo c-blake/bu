@@ -102,6 +102,8 @@ Freeform Text Things
 
 [ndelta - Numerical difference between two reports utility](doc/ndelta.md)
 
+[tmpls - A fast string template interpolater](doc/tmpls.md)
+
 Pipeline Calculation Tools
 --------------------------
 
