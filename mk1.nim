@@ -31,17 +31,17 @@ proc get(times: var seq[Time], paths: seq[MSlice], keep=false) =
       for i in 0 .. batch(rv[0].addr, ba[0].addr, nB, 0.clong, 0.clong):
         if rv[i] == 0:
           times[i] = initTime(sx[i].stx_mtime.tv_sec, sx[i].stx_mtime.tv_nsec)
-        elif not keep: return
+        elif i mod 2 == 0 and not keep: return
     else:
       var stx: Statx
       for i, p in paths:                # Nim alloc0 => No need to set TBAD
         if statx(cast[cstring](p.mem), stx, AT_STATX_DONT_SYNC, STATX_MTIME)==0:
           times[i] = initTime(stx.stx_mtime.tv_sec, stx.stx_mtime.tv_nsec)
-        elif not keep: return
+        elif i mod 2 == 0 and not keep: return
   else:
     for i, p in paths:
       times[i] = try: getLastModificationTime($p) except Ce: TBAD
-      if times[i] == TBAD and not keep: return
+      if times[i] == TBAD and i mod 2 == 0 and not keep: return
 
 proc add0(buf: var seq[char], ms: MSlice): MSlice = # Add w/0 but return ptr2cpy
   result.mem = cast[pointer](buf.len)         # ptr ~ global 0 offset memory
