@@ -20,23 +20,21 @@ Usage
 ```
   mk1 [optional-params] ip op cmd
 
-A fast build tool for a special but common case when, for many pairs, just
-1 input makes just 1 output by just 1 rule.  file has only "stubs", %s which are
-interpolated into [io]p - the [io]paths used to test need and %[io] are then
-interpolated into cmd (with POSIX sh single quotes).  This only prints commands.
-Pipe to /bin/sh, xargs -n1 -P$(nproc).. to run. Egs.:
+A fast build tool for a special but common case when, for many pairs, just 1
+inp makes just 1 out by just 1 rule.  file has back-to-back even-odd already
+quoted if necessary input-output pairs.  If ages indicate updating, %[io] are
+interpolated into cmd.  mk1 only prints commands.  To run, pipe to /bin/sh,
+xargs -n1 -P$(nproc)..  E.g.:
+  touch a.x b.x; printf 'a.x\na.y\nb.x\nb.y\n' | mk1 'touch %o'
 
-  touch a.x b.x; printf 'a\nb\n' | mk1 %s.x %s.y 'touch %o'
-  find -name '*.c' | sed 's/.c$//' | mk1 %s.c %s.o 'cc -c %i -o %o'
-
-Best yet, save file somewhere & update only if needed based on other context,
-such as dir mtimes.  Options are gmake-compatible (where portable & sensible in
+Ideally, save file somewhere & update that only if needed based on other
+context, such as dir mtimes.  Options are gmake-compatible (where sensible in
 this much more limited role).
 
   -f=, --file=      string  "/dev/stdin" input file of name stubs
   -n=, --nl=        char    '\n'         input string terminator
   -m=, --meta=      char    '%'          self-quoting meta for %sub
-  -x, --explain     bool    false        add #(absent|stale) at EOL
+  -x, --explain     bool    false        add #(absent|stale|forced) @EOL
   -k, --keep        bool    false        keep going if cannot age %i
   -B, --always-make bool    false        always emit build commands
   -q, --question    bool    false        question if work is empty
@@ -44,13 +42,13 @@ this much more limited role).
   -W=, --what-if=   strings {}           pretend these %i are fresh
 ```
 
-Motivating Example
-==================
+A Motivating Example
+====================
 It is often easy to weave freshness checking into tools, such as my
 [framed.nim](https://github.com/c-blake/ndup/blob/main/framed.nim).  Sometimes,
 though, interfaces are beyond your control &| stdin/stdout just seem nice. E.g.:
 ```sh
-find . -type f -print |
+find . -type f -print | tmpls %s /myHashes/%s |
   mk1 -m@ @s /tmp/SHAs/@s 'sha256sum < @i > @o' | sh -x
 ```
 is one way to create a "shadow" or "mirror" file tree where every file `foo/bar`
@@ -67,13 +65,10 @@ times are short, but still doing 40,000 files:
 ```sh
 #!/bin/sh
 set -e  # This is an up-to-dateness benchmark for 40 KFiles
-cd /dev/shm
-rm -rf t-mk1
-mkdir  t-mk1
-cd     t-mk1
-mkdir i o
+cd /dev/shm             # Elim device IO, clean-up & set-up
+rm -rf t-mk1; mkdir t-mk1; cd t-mk1; mkdir i o
 
-echo "initial build"; ru bash -c '
+echo "initial build"; ru -ht bash -c '
 for i in {0..9}; do
     mkdir i/abcd$i o/abcd$i
     for j in {0..9}; do
@@ -95,11 +90,11 @@ EOF
 sed -e's/\([ :$]\)/$\1/g' \
     -e's@^\(.*\)$@build o/\1.o: makeIt i/\1.c@' < inp \
     >>build.ninja
-echo "ninja ON UP-TO-DATE dirs"; ru ninja --quiet
-echo "ninja second time"       ; ru ninja --quiet
+echo "ninja ON UP-TO-DATE dirs"; ru -ht ninja --quiet
+echo "ninja second time"       ; ru -ht ninja --quiet
 echo "Now rm .ninja_log"       ; rm .ninja_log
 echo "special, hacked ninja-nv, -t restat, freshness"
-ru sh -c 'ninja-nv -nv >/dev/null; ninja -t restat; ninja --quiet'
+ru -ht sh -c 'ninja-nv -nv >/dev/null; ninja -t restat; ninja --quiet'
 
 echo "GNU make fresh check"
 cat >Makefile <<EOF
@@ -107,52 +102,46 @@ cat >Makefile <<EOF
 all: \$(addprefix o/, \$(addsuffix .o,\$(shell cat inp)))
 o/%.o: i/%.c; touch "\$@" # $< unused
 EOF
-ru make
+ru -ht make
 
 echo "straight bash looping"
-ru bash -c 'while read a; do
+ru -ht bash -c 'while read a; do
     [ "o/$a.o" -nt "i/$a.c" ] || printf "touch o/$a.o\n"
 done' < inp > /dev/null
 
-echo "Check freshness w/mk1"; ru mk1 i/%s.c o/%s.o 'touch %o' <inp
+tmpls i/%s.c o/%s.o < inp > inp2 # `tim` sez (3.76+-0.04)ms
+echo "Check freshness w/mk1"; ru -ht mk1 'touch %o' < inp2
 ```
 gives on an i7-1270P (Alder Lake) running Linux 6.2.10 built w/gcc-12:
 ```
 initial build
-TM      0.952648 wall    0.575243 usr    0.355604 sys     97.7 % 2.875 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF  251142 minF  0 swap
+TM      1.112654 wall    0.610959 usr    0.471952 sys     97.3 % 3.000 mxRM
 ninja ON UP-TO-DATE dirs
-TM      5.228888 wall   12.285471 usr    7.172243 sys    372.1 % 38.105 mxRM
-IO      0.000000 inMB    0.000000 ouMB       4359 majF  4012090 minF  0 swap
+TM      7.777944 wall   15.247225 usr   22.734465 sys    488.3 % 37.859 mxRM
 ninja second time
 ninja: no work to do.
-TM      0.113218 wall    0.065915 usr    0.046916 sys     99.7 % 38.852 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF    9939 minF  0 swap
+TM      0.119358 wall    0.073478 usr    0.045673 sys     99.8 % 38.980 mxRM
 Now rm .ninja_log
 special, hacked ninja-nv, -t restat, freshness
 ninja: no work to do.
-TM      0.406945 wall    0.231055 usr    0.173422 sys     99.4 % 40.086 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF   22173 minF  0 swap
+TM      0.410272 wall    0.235480 usr    0.172278 sys     99.4 % 40.180 mxRM
 GNU make fresh check
 make: Nothing to be done for 'all'.
-TM      1.376430 wall    1.302053 usr    0.070776 sys     99.7 % 82.262 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF   32361 minF  0 swap
+TM      1.550844 wall    1.432694 usr    0.114489 sys     99.8 % 82.133 mxRM
 straight bash looping
-TM      0.156478 wall    0.106107 usr    0.050059 sys     99.8 % 3.125 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF     157 minF  0 swap
+TM      0.151993 wall    0.099890 usr    0.051956 sys     99.9 % 3.125 mxRM
 Check freshness w/mk1
 mk1: no work to do
-TM      0.040612 wall    0.006080 usr    0.034430 sys     99.7 % 2.750 mxRM
-IO      0.000000 inMB    0.000000 ouMB          0 majF     113 minF  0 swap
+TM      0.039390 wall    0.005039 usr    0.034388 sys    100.1 % 3.875 mxRM
 ```
-GNU Make is indeed slow - over 34X worse than `mk1`.[^3]  But ninja's *best*
-case is barely faster than the interpreted bash loop (156/113=1.38X).  `mk1` on
-the other hand is ~3X faster than ninja's best case and ~4X faster than bash.
+GNU Make is indeed slow - ~40X worse than `mk1`.[^3]  But ninja's *best* case is
+barely faster than the interpreted bash loop (152/119=1.28X).  `mk1` on the
+other hand is ~3X faster than ninja's best case and ~4X faster than bash.
 
-I learned what must be common knowledge among ninja users that achieving that a
-best case depends strongly on `.ninja_log` files to avoid from-scratch builds
-(and also that such from-scratch builds are oddly ~5.5X slower than the manual
-shell touch loop - for undiagnosed reasons).
+I learned what must be common knowledge among ninja users -- achieving that best
+case depends strongly on `.ninja_log` files to avoid from-scratch builds (and
+also that such from-scratch builds are oddly ~7X slower than the manual shell
+touch loop - for undiagnosed reasons, but worsened by lower parallelism).
 
 I found [a hack](
 https://stackoverflow.com/questions/73058509/how-do-i-manually-populate-ninja-log-with-information-preventing-unnecesary-reb)
@@ -160,11 +149,13 @@ to fix this ninja deficiency which sort of works, but a simple bash loop still
 is over 2.5X faster than that "smart but hacky" ninja way that first time.
 
 So, either comparing against this new `mk1` thing or just bash, the "reputation"
-seems to come more from make slowness than Ninja fastness.  Specifically, make's
+seems to come more from make-slowness than Ninja-fastness.  Specifically, make's
 time likely explodes when any work is delegated to complex subshells.
 
-[^1]: It's more like 150 lines now.  But it can also support my custom Linux
-kernel module that can speed things up in Spectre-Meltdown mitigation settings.
+[^1]: It's more like 150 lines now, but can also support my custom Linux kernel
+module that can get 2X+ speed ups in Meltdown-Spectre mitigation settings where
+it winds up over 4X faster than ninja.  https://github.com/blackmius/nimuring
+ought to yield similar results.
 
 [^2]: To be fair, Nim does not support VMS or Amiga or whatever 1980s stuff.
 
