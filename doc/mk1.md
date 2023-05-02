@@ -3,8 +3,8 @@ Motivation
 I keep hearing praise of ninja, but was skeptical.  So, I rolled my own output
 freshener in ~60 lines of Nim originally.[^1]  Your own motivation might be an
 *even simpler* syntax than ninja or arguably shell.  In the simplified problem
-setting of 1-to-1 rules with related naming, all you need is 3 variables - stub,
-input, and output, here `%s, %i, %o`.
+setting of 1-to-1 rules with related naming, all you need is 2 variables - input
+& output, here `%i & %o`.
 
 I was a bit surprised to learn how few GNU make command options remain relevant
 for this simpler problem.  I think I got all but -L/min(fileAge, linkAge) which
