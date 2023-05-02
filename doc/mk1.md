@@ -163,9 +163,9 @@ ought to yield similar results.
 exists.  At the start of the command you can put `[ -e %o ] || { mkdir -p %o &&
 rmdir %o; }; `.  For robust cleanup after failure you might want an `|| rm -f
 %o` at the end.  I wanted to keep the example simple.
-I also discovered bugs in 3 different shells using the `| sh -x` form (but *not*
-saving to a temp script or running via `*sh -c`) which is why I think it's a
-shell bug.  So, either that temp script or `| stripe 1` may be more reliable.
+NOTE: Since job processors can steal input from the shared pipe stdin a shell
+reads from, saving to a temp script or `| stripe 1` may be more reliable (or
+else be sure to re-direct stdin as in this example).
 
 [^4]: There are surely other approaches to my addprefix-addsuffix idea, such as
 generating the whole file like build.ninja requires. Have at it, `make` fans! :)
