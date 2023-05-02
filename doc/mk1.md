@@ -18,7 +18,7 @@ Not much, as it turns out.
 Usage
 =====
 ```
-  mk1 [optional-params] ip op cmd
+  mk1 [optional-params] cmdStringWith%i%o
 
 A fast build tool for a special but common case when, for many pairs, just 1
 inp makes just 1 out by just 1 rule.  file has back-to-back even-odd already
