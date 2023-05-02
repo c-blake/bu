@@ -51,7 +51,7 @@ though, interfaces are beyond your control &| stdin/stdout just seem nice. E.g.:
 find . -type f -print | tmpls %s /myHashes/%s |
   mk1 -m@ @s /tmp/SHAs/@s 'sha256sum < @i > @o' | sh -x
 ```
-is one way to create a "shadow" or "mirror" file tree where every file `foo/bar`
+is one way to create a "shadow" or "mirror" file tree[^3] where every file `foo/bar`
 under "." gets a sha256 file under `/tmp/SHAs/foo/bar` (or wherever).
 
 There are even more expensive hashes which would take weeks, not merely hours,
@@ -134,7 +134,7 @@ Check freshness w/mk1
 mk1: no work to do
 TM      0.039390 wall    0.005039 usr    0.034388 sys    100.1 % 3.875 mxRM
 ```
-GNU Make is indeed slow - ~40X worse than `mk1`.[^3]  But ninja's *best* case is
+GNU Make is indeed slow - ~40X worse than `mk1`.[^4]  But ninja's *best* case is
 barely faster than the interpreted bash loop (152/119=1.28X).  `mk1` on the
 other hand is ~3X faster than ninja's best case and ~4X faster than bash.
 
@@ -159,5 +159,14 @@ ought to yield similar results.
 
 [^2]: To be fair, Nim does not support VMS or Amiga or whatever 1980s stuff.
 
-[^3]: There are surely other approaches to my addprefix-addsuffix idea, such as
+[^3]: As written this will not "just work" unless a directory structure already
+exists.  At the start of the command you can put `[ -e %o ] || { mkdir -p %o &&
+rmdir %o; }; `.  For robust cleanup after failure you might want an `|| rm -f
+%o` at the end.  I wanted to keep the example simple.
+
+I also discovered bugs in 3 different shells using the `| sh -x` form (but *not*
+saving to a temp script or running via `*sh -c`) which is why I think it's a
+shell bug.  So, either that temp script or `| stripe 1` may be more reliable.
+
+[^4]: There are surely other approaches to my addprefix-addsuffix idea, such as
 generating the whole file like build.ninja requires. Have at it, `make` fans! :)
