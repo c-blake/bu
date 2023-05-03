@@ -21,10 +21,10 @@ Usage
   mk1 [optional-params] cmdStringWith%i%o
 
 A fast build tool for a special but common case when, for many pairs, just 1
-inp makes just 1 out by just 1 rule.  file has back-to-back even-odd already
-quoted if necessary input-output pairs.  If ages indicate updating, %[io] are
-interpolated into cmd.  mk1 only prints commands.  To run, pipe to /bin/sh,
-xargs -n1 -P$(nproc)..  E.g.:
+inp makes just 1 out by just 1 rule.  file has back-to-back even-odd pathnames.
+If ages indicate updating, mk1 prints cmd with %[io] interpolated (with POSIX sh
+single quotes).  To run, pipe to /bin/sh, xargs -n1 -P$(nproc).. E.g.:
+
   touch a.x b.x; printf 'a.x\na.y\nb.x\nb.y\n' | mk1 'touch %o'
 
 Ideally, save file somewhere & update that only if needed based on other
