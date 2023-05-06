@@ -1,5 +1,6 @@
 when not declared(stderr): import std/syncio
-import std/[os, times, sets, sugar], cligen, cligen/[strUt, mslice, mfile, osUt]
+import std/[os, times, sets, sugar, strutils],
+       cligen, cligen/[strUt, mslice, mfile, osUt], bu/esquo
 when defined linux: import cligen/statx
 
 var TBAD: Time                          # The zero time is our sentinel
@@ -55,22 +56,14 @@ proc relTo(ms: MSlice, base: pointer): MSlice = # Make input ms relative to base
   result.mem = cast[pointer](cast[uint](ms.mem) + cast[uint](base))
   result.len = ms.len
 
-var hunks: seq[MSlice]
-proc sQuote(f: File, a: MSlice) =       #Q: Condition upon need to quote at all?
-  putchar '\''                          # If a starts or ends with ' this could
-  discard a.msplit(hunks, '\'', 0)      #..save an empty string ('') catenation
-  for i, hunk in hunks:                 #..w/a little more logic, but probably
-    f.urite hunk                        #..testing if quoting is needed at all
-    if i != 0: f.urite "'\\''"          #..has priority.
-  putchar '\''
-
-proc cInterPrint(why, cmd0: string, prs: seq[MacroCall]; iPath, oPath: MSlice) =
+proc cInterPrint(why, cmd0: string, prs: seq[MacroCall]; iPath, oPath: MSlice;
+                 iQ, oQ: EsQuo) =
   for (id, arg, call) in prs:
     if id == 0..0: stdout.urite cmd0, arg
     else:       # Only test 1st char on purpose so user can say %in or %output.
       case cmd0[id.a]
-      of 'i': stdout.sQuote iPath
-      of 'o': stdout.sQuote oPath
+      of 'i': stdout.emit iPath, iQ
+      of 'o': stdout.emit oPath, oQ
       else: stdout.urite cmd0, call
   stdout.urite why
   stdout.urite "\n"
@@ -78,20 +71,20 @@ proc cInterPrint(why, cmd0: string, prs: seq[MacroCall]; iPath, oPath: MSlice) =
 var emptySeq: seq[string]
 proc mk1(file="/dev/stdin", nl='\n', meta='%', explain=false, keep=false,
          alwaysMake=false, question=false, oldFile=emptySeq, whatIf=emptySeq,
-         batch=32, cmd: seq[string]): int =
+         Quoting="n,n", batch=32, cmd: seq[string]): int =
   ## A fast build tool for a special but common case when, for many pairs, just
-  ## 1 inp makes just 1 out by just 1 rule.  `file` has back-to-back even-odd
-  ## pathnames.  If ages indicate updating, `mk1` prints `cmd` with `%[io]`
-  ## interpolated (with POSIX sh single quotes).  To run, pipe to `/bin/sh`,
-  ## `xargs -n1 -P$(nproc)`.. E.g.:
+  ## 1 inp makes just 1 out by just 1 rule.  `file` has `nl`-terminated back to
+  ## back even-odd IO paths.  If ages indicate updating, `mk1` prints `cmd` with
+  ## `%[io]` interpolated.  To run, pipe to `/bin/sh`, `xargs -n1`, ..  E.g.:
   ##   ``touch a.x b.x; printf 'a.x\\na.y\\nb.x\\nb.y\\n' | mk1 'touch %o'``
-  ##
-  ## Ideally, save `file` somewhere & update that only if needed based on other
-  ## context, such as dir mtimes.  Options are gmake-compatible (where sensible
-  ## in this much more limited role).
+  ## Ideally, save `file` somewhere, updating only if needed based on e.g. dir
+  ## mtimes.  Options are gmake-compatible where sensible in this limited role.
   if cmd.len != 1: raise newException(HelpError, "Need `cmd`; Full ${HELP}")
   let oldFile = collect(for path in oldFile: {path.toMSlice})
   let whatIf = collect(for path in whatIf: {path.toMSlice})
+  let q = Quoting.toLowerAscii.split(',')
+  if q.len != 2: raise newException(HelpError, "invalid Quoting; Full ${HELP}")
+  let (iQ, oQ) = (q[0].esQuoParse, q[1].esQuoParse)
   let cmdP = cmd[0].tmplParsed(meta)    # Pre-parsed command template
   var buf: seq[char]                    # seq[] to advertise many embedded NUL
   var paths: seq[MSlice]                # pointers to path data in `buf`
@@ -114,7 +107,7 @@ proc mk1(file="/dev/stdin", nl='\n', meta='%', explain=false, keep=false,
         inc nDo                         # Register that there is work to do
         if not question:                # If above is not all that's wanted: Prn
           let why = if explain: (if absent: " #absent" else: " #stale") else: ""
-          cInterPrint why, cmd[0], cmdP, paths[i], paths[o]
+          cInterPrint why, cmd[0], cmdP, paths[i], paths[o], iQ, oQ
 
   var iPath: MSlice; var n = 0          # Last loop iPath; Loop parity counter
   for ms in mSlices(file, sep=nl, eat='\0'):
@@ -125,7 +118,7 @@ proc mk1(file="/dev/stdin", nl='\n', meta='%', explain=false, keep=false,
         inc nDo                         # Register that there is work to do
         if not question:                # If above is not all that's wanted: Prn
           let why = if explain: " #forced" else: ""  # always|whatIf => forced
-          cInterPrint why, cmd[0], cmdP, iPath.relTo(buf[0].addr), ms
+          cInterPrint why, cmd[0], cmdP, iPath.relTo(buf[0].addr), ms, iQ, oQ
         buf.setLen buf.len - (iPath.len + 1)  # Pair is handled; Release copy
         continue
       paths.add iPath                   # Accumulate pair into paths[]
@@ -140,7 +133,7 @@ proc mk1(file="/dev/stdin", nl='\n', meta='%', explain=false, keep=false,
 when isMainModule:
   dispatch mk1, short={"alwaysMake": 'B', "whatIf": 'W', "explain": 'x'},
     help={"cmd"        : "command using %i%o",
-          "file"       : "input file of name stubs",
+          "file"       : "input file of IO path pairs",
           "nl"         : "input string terminator",
           "meta"       : "self-quoting meta for %sub",
           "explain"    : "add #(absent|stale|forced) @EOL",
@@ -149,4 +142,5 @@ when isMainModule:
           "question"   : "question if work is empty",
           "old-file"   : "keep %o if exists & is stale",
           "what-if"    : "pretend these %i are fresh",
+          "Quoting"    : "[ane],[ane]: I,O; Always Need Escape",
           "batch"      : "CLIGEN-NOHELP"} # Doubled to enforce pair constraint

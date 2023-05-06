@@ -11,27 +11,26 @@ for this simpler problem.  I think I got all but -L/min(fileAge, linkAge) which
 smelled non-portable to Windows/etc.
 
 Anyway, over 40,000 lines of C for GNU make[^2] or 27,000 of C++ for Ninja
-seemed silly for some of my use cases.  Mostly, though I was have long done
-shell update scripts yet wondered what overhead that might be incurring.
-Not much, as it turns out.
+seemed silly for some of my use cases.  Mostly, though I've long done shell
+update scripts, yet wondered what overhead that might be incurring.  Not much,
+as it turns out.
 
 Usage
 =====
 ```
-  mk1 [optional-params] cmdStringWith%i%o
+  mk1 [optional-params] command using %i%o
 
-A fast build tool for a special but common case when, for many pairs, just 1
-inp makes just 1 out by just 1 rule.  file has back-to-back even-odd pathnames.
-If ages indicate updating, mk1 prints cmd with %[io] interpolated (with POSIX sh
-single quotes).  To run, pipe to /bin/sh, xargs -n1 -P$(nproc).. E.g.:
+A fast build tool for a special but common case when, for many pairs, just 1 inp
+makes just 1 out by just 1 rule.  file has nl-terminated back to back even-odd
+IO paths.  If ages indicate updating, mk1 prints cmd with %[io] interpolated.
+To run, pipe to /bin/sh, xargs -n1, ..  E.g.:
 
   touch a.x b.x; printf 'a.x\na.y\nb.x\nb.y\n' | mk1 'touch %o'
 
-Ideally, save file somewhere & update that only if needed based on other
-context, such as dir mtimes.  Options are gmake-compatible (where sensible in
-this much more limited role).
+Ideally, save file somewhere, updating only if needed based on e.g. dir mtimes.
+Options are gmake-compatible where sensible in this limited role.
 
-  -f=, --file=      string  "/dev/stdin" input file of name stubs
+  -f=, --file=      string  "/dev/stdin" input file of IO path pairs
   -n=, --nl=        char    '\n'         input string terminator
   -m=, --meta=      char    '%'          self-quoting meta for %sub
   -x, --explain     bool    false        add #(absent|stale|forced) @EOL
@@ -40,6 +39,7 @@ this much more limited role).
   -q, --question    bool    false        question if work is empty
   -o=, --old-file=  strings {}           keep %o if exists & is stale
   -W=, --what-if=   strings {}           pretend these %i are fresh
+  -Q=, --Quoting=   string  "n,n"        [ane],[ane]: I,O; Always Need Escape
 ```
 
 A Motivating Example
