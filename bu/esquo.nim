@@ -1,0 +1,39 @@
+when not declared(stderr): import std/syncio
+import std/strutils, cligen/[strUt, mslice, osUt]
+
+type EsQuo* = enum eqNeed, eqAlways, eqEscape ## Quoting mode enum
+
+proc esQuoParse*(q: string): EsQuo =
+  ## Parse a quoting mode string into its enum or raise `ValueError`.
+  if q.len > 0:
+    case q[0].toLowerAscii
+    of 'n': eqNeed
+    of 'q': eqAlways
+    of 'e': eqEscape
+    else: raise newException(ValueError, "Unknown quote mode: \"" & q & "\".")
+
+const needQuo* = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
+                  '*', ';', '<', '=', '>', '?', '?', '[', '`' , '{', '|', '~'}
+
+# Can save empty string ('') catenation if you can *know* starts|ends with '
+var quoHunks: seq[MSlice]
+proc sQuote*(f: File, s: SomeString; hunks: var seq[MSlice] = quoHunks) =
+  ## Shell Single-Quoter.  `hunks` is just for MT-safety if you need that.
+  putchar '\''
+  discard s.msplit(hunks, '\'', 0)
+  for i, hunk in hunks:
+    f.urite hunk
+    if i != 0: f.urite "'\\''"
+  putchar '\''
+
+proc escape*(f: File, s: SomeString, esc='\\') =
+  ## Escape every byte with `esc`.  Not very unicode-friendly.
+  for c in s:
+    putchar esc; putchar c
+
+proc emit*(f: File, s: SomeString, qmode=eqNeed, esc='\\') =
+  ## Emit `s` to `f`, quoting or escaping as specified.
+  case qmode
+  of eqNeed: (if needQuo in s: stdout.sQuote s else: stdout.urite s)
+  of eqAlways: stdout.sQuote s
+  of eqEscape: stdout.escape s

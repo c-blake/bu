@@ -1,33 +1,16 @@
 when not declared(stderr): import std/syncio
-import std/sugar, cligen, cligen/[strUt, mslice, mfile, osUt]
+import std/sugar, cligen, cligen/[strUt, mslice, mfile, osUt], bu/esquo
 
-const nq = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
-            '*', ';', '<', '=', '>', '?', '?', '[', '`' , '{', '|', '~'}
-
-var hunks: seq[MSlice]
-proc sQuote(f: File, s: MSlice) =       # If a starts or ends with ' this can..
-  putchar '\''                          #..save an empty string ('') catenation
-  discard s.msplit(hunks, '\'', 0)
-  for i, hunk in hunks:
-    f.urite hunk
-    if i != 0: f.urite "'\\''"
-  putchar '\''
-
-proc escape(f: File, s: MSlice) =       # This just escapes every char
-  for c in s:
-    putchar '\\'; putchar c
-
-proc interPrint(tmpl: string, prs: seq[MacroCall]; stub: MSlice) =
+proc interPrint(f: File; tmpl: string, prs: seq[MacroCall]; str: SomeString) =
   for (id, arg, call) in prs:
-    if id == 0..0: stdout.urite tmpl, arg
-    elif tmpl[id.a] == 's': stdout.urite stub
-    elif tmpl[id.a] == 'n':
-      if nq in stub: stdout.sQuote stub else: stdout.urite stub
-    elif tmpl[id.a] == 'q': stdout.sQuote stub
-    elif tmpl[id.a] == 'e': stdout.escape stub
-    else: stdout.urite tmpl, call
+    if id == 0..0: f.urite tmpl, arg
+    elif tmpl[id.a] == 's': f.urite str
+    elif tmpl[id.a] == 'n': (if needQuo in str: f.sQuote str else: f.urite str)
+    elif tmpl[id.a] == 'q': f.sQuote str
+    elif tmpl[id.a] == 'e': f.escape str
+    else: f.urite tmpl, call
 
-proc tmpls(file="/dev/stdin", nl='\n', term='\n', meta='%',
+proc tmpls(inp="/dev/stdin", nl='\n', outp="/dev/stdout", term='\n', meta='%',
            templates: seq[string]): int =
   ## Interpolate { %s)tring | %n)eed quoted | always %q)uoted | %e)scaped } into
   ## as many templates as given, writing back-to-back template-filled-in batches
@@ -36,14 +19,17 @@ proc tmpls(file="/dev/stdin", nl='\n', term='\n', meta='%',
   if templates.len < 1:
     raise newException(HelpError, "Need some template; Full ${HELP}")
   let prs = collect(for t in templates: t.tmplParsed(meta))
-  for ms in mSlices(file, sep=nl, eat='\0'):
+  let f = try: (if outp == "/dev/stdout": stdout else: open(outp, fmWrite))
+          except: quit "could not open output: " & outp, 1
+  for ms in mSlices(inp, sep=nl, eat='\0'):
     for i in 0 ..< templates.len:
-      interPrint templates[i], prs[i], ms
+      f.interPrint templates[i], prs[i], ms
       putchar term
 
 when isMainModule:
   dispatch tmpls, help={"templates": "templates...",
-    "file" : "input file of name stubs",
+    "inp"  : "input file of name 'stubs'",
     "nl"   : "input string terminator",
+    "outp" : "output file of expansions",
     "term" : "output string terminator",
     "meta" : "self-quoting meta for %sub"}
