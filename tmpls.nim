@@ -20,7 +20,7 @@ proc tmpls(inp="/dev/stdin", nl='\n', outp="/dev/stdout", term='\n', meta='%',
     raise newException(HelpError, "Need some template; Full ${HELP}")
   let prs = collect(for t in templates: t.tmplParsed(meta))
   let f = try: (if outp == "/dev/stdout": stdout else: open(outp, fmWrite))
-          except: quit "could not open output: " & outp, 1
+          except Ce: quit "could not open output: " & outp, 1
   for ms in mSlices(inp, sep=nl, eat='\0'):
     for i in 0 ..< templates.len:
       f.interPrint templates[i], prs[i], ms
