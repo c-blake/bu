@@ -1,7 +1,12 @@
 when not declared(stderr): import std/syncio
 include cligen/unsafeAddr
-import std/[os, posix, strutils, sets, tables, hashes, sha1, algorithm],
+import std/[os, posix, strutils, sets, tables, hashes, algorithm],
   cligen/[procpool,mfile,mslice,fileUt,strUt, osUt,posixUt,sysUt, dents,statx]
+
+proc SHA256(i: pointer, n: uint64, o: pointer) {.importc.}
+{.passl: "-lcrypto".}
+proc secureHash(x: openArray[char]): array[32, char] =
+  SHA256 x[0].unsafeAddr, x.len.uint64, result[0].addr
 
 type Lg* = enum osErr, summ                     #A tiny logging system
 var dupsLog* = { osErr }
@@ -57,12 +62,12 @@ iterator carefulSplit*(paths: seq[string]): seq[string] =
                  "]: too big to sort.  Use a better hash?\n"
     yield paths                                 #Just yield whole set :(
 
-type Digest* = enum size, wy, nim, Sha1 ##Zero,Fast,fast,&slow time hashes
+type Digest* = enum size, wy, nim, Sha  ##Zero,Fast,fast,&slow time hashes
 var digSize: array[Digest, int] = [ 0, 8, 8, 20]
 
 template hashAndCpy(hash: untyped) {.dirty.} =
   var h = if b > a: hash(toOpenArray[char](data, a, b - 1)) else: hash("")
-  copyMem(addr wkit.dig[8], addr h, digSize[d])
+  copyMem(addr wkit.dig[8], addr h, digSize[d]) #NOTE: Only 1st 8 bytes of SHA!
 
 type WorkItem = tuple[sz: int; path, dig: string; m: MFile]
 proc digest(wkit: var WorkItem, d: Digest, slice: string) =
@@ -78,7 +83,7 @@ proc digest(wkit: var WorkItem, d: Digest, slice: string) =
   of size: discard
   of wy  : hashAndCpy(hashWY)
   of nim : hashAndCpy(hash)
-  of Sha1: hashAndCpy(secureHash)
+  of Sha : hashAndCpy(secureHash)
   if d != size: wkit.m.close()
 
 iterator dupSets*(sz2paths: Table[int, seq[string]], slice="",
@@ -96,7 +101,7 @@ iterator dupSets*(sz2paths: Table[int, seq[string]], slice="",
       wkls.add((sz, p, newString(8 + digSize[hash]), m))
   if jobs == 1:
     for i in 0 ..< wkls.len: digest(wkls[i], hash, slice)
-  else: # hashWY runs@6B/cyc~30GB/s >>IObw => par helps rarely | w/SHA1&!cmp
+  else: # hashWY runs@6B/cyc~30GB/s >>IObw => par helps rarely | w/SHA & !cmp
     var pp = initProcPool((proc(r, w: cint) =
                              let i = r.open(fmRead, osUt.IONBF)
                              let o = w.open(fmWrite, osUt.IOFBF)
@@ -171,7 +176,7 @@ when isMainModule:                        #Provide a useful CLI wrapper.
              "Deref" : "dereference symlinks",
              "minLen": "minimum file size to consider",
              "slice" : "file slice (float|%:frac; <0:tailRel)",
-             "Hash"  : "hash function `[size|wy|nim|SHA1]`",
+             "Hash"  : "hash function `[size|wy|nim|SHA]`",
              "cmp"   : "compare; do not trust hash",
              "jobs"  : "Use this much parallelism",
              "log"   : ">stderr{ `osErr`, `summ` }",

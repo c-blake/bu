@@ -47,7 +47,7 @@ Options:
   -D, --Deref     bool    false dereference symlinks
   -m=, --minLen=  int     1     minimum file size to consider
   -s=, --slice=   string  ""    file slice (float|%:frac; <0:tailRel)
-  -H=, --Hash=    Digest  wy    hash function [size|wy|nim|SHA1]
+  -H=, --Hash=    Digest  wy    hash function [size|wy|nim|SHA]
   -c, --cmp       bool    false compare; do not trust hash
   -j=, --jobs=    int     1     Use this much parallelism
   -l=, --log=     set(Lg) osErr >stderr{ osErr, summ }
