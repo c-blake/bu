@@ -90,6 +90,8 @@ Row/Column/Text Table Things
 Freeform Text Things
 --------------------
 
+[noc - stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs](doc/noc.md)
+
 [cfold - Context folding (like csplit but to wrap lines)](doc/cfold.md)
 
 [unfold - Oft neglected inverse-to-wrapping/folding process](doc/unfold.md)

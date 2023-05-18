@@ -34,7 +34,6 @@ when defined(Windows):
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* min time of infinite sample)
 
-  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
@@ -43,6 +42,7 @@ when defined(Windows):
   "bu/colSort", # Sort *within* the columns of rows
   "cstats",     # Preserve Context/Compute Column stats filter
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
@@ -103,7 +103,6 @@ else:
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* min time of infinite sample)
 
-  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
@@ -112,6 +111,7 @@ else:
   "bu/colSort", # Sort *within* the columns of rows
   "cstats",     # Preserve Context/Compute Column stats filter
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
