@@ -17,7 +17,9 @@ proc timeOfDay(): Timespec = discard clock_gettime(CLOCK_REALTIME, result)
 proc `$`(t: Timespec):string = $clong(t.tv_sec) & intToStr(t.tv_nsec div 1000,6)
 
 proc ERR(x: string) = stderr.write(x)
-const BLD = "\e[1m"; const INV = "\e[7m"; const REG = "\e[m"
+const BefDfl = "$tm \e[1mslot: $nm $cmd\e[m"
+const AftDfl = "$tm \e[7mslot: $nm usr: $u sys: $s\e[m"
+var bef, aft: string
 var binsh = false
 var sh_cmd: int                         # Shared between bg_setup() & bg()
 var sh_av: cstringArray
@@ -37,8 +39,7 @@ proc bg_setup(run: string, sub: seq[string]): File =
   sh_av = allocCStringArray(sh)
 
 proc bg(cmd: string; verb,seqNo,i: int; name,sub: seq[string]): int {.inline.} =
-  if (verb and 1) != 0:
-    ERR("$# $#slot: $# $#$#\n"%[$timeOfDay(), BLD, name[i], cmd, REG])
+  if (verb and 1) != 0: ERR(bef % ["tm",$timeOfDay(), "nm",name[i], "cmd",cmd])
   if exportSeqNo:                       # Sequence number export was requested
     putEnv("STRIPE_SEQ", $seqNo)
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
@@ -67,8 +68,7 @@ proc wait(verb: int, slot: seq[int], name: seq[string]): int =
   nKid -= 1                             # Count kid & accum exit status
   if WIFEXITED(st): sumSt += WEXITSTATUS(st)
   if (verb and 2) != 0:                 # Maybe report rusage
-    ERR("$# $#slot: $# usr: $# sys: $#$#\n" %
-        [ $timeOfDay(), INV, name[i], $ru.ru_utime, $ru.ru_stime, REG ])
+    ERR(aft%["tm",$timeOfDay(),"nm",name[i], "u",$ru.ru_utime,"s",$ru.ru_stime])
   return i
 
 proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
@@ -105,8 +105,8 @@ proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
     discard wait(verb, slot, name)      # Wait for any until nKid == 0
   return sumSt                          # Exit w/informative status
 
-proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1,
-         before=false, after=false, posArgs: seq[string]) =
+proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
+         after=false, BefFmt="", AftFmt="", posArgs: seq[string]) =
   ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
   ## job lines from *stdin* and keeps up to `N` | `M` running at once.
   ## 
@@ -121,6 +121,8 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1,
   exportSeqNo = nums
   if len(posArgs) < 1:
     raise newException(ValueError, "Too few posArgs; need { num | 2+ slots }")
+  bef = (if BefFmt.len > 0: BefFmt else: BefDfl) & "\n"
+  aft = (if AftFmt.len > 0: BefFmt else: AftDfl) & "\n"
   var slot: seq[int]
   var name, sub: seq[string]
   if len(posArgs) == 1:                 # FIXED NUM JOBS MODE
@@ -150,10 +152,13 @@ when isMainModule:
     elif signo == SIGUSR2: dec(dSlot)   # SIGUSR2 decreases N
   signal(SIGUSR1, sigu12); signal(SIGUSR2, sigu12)
 
-  dispatch(CLI, cmdName = "stripe",
-           help = {"run"   : "run job lines via this interpreter",
-                   "nums"  : "provide **STRIPE_SEQ** to job procs",
-                   "secs"  : "sleep `SECS` before running each job",
-                   "load"  : "0/1/2: 1/5/15-minute load average < `N`",
-                   "before": "time & BOLD-job pre-run -> *stderr*",
-                   "after" : "usr & sys-time post-complete -> *stderr*"})
+  include cligen/mergeCfgEnv
+  dispatch CLI, cmdName = "stripe",
+           help={"run"   : "run job lines via this interpreter",
+                 "nums"  : "provide **STRIPE_SEQ** to job procs",
+                 "secs"  : "sleep `SECS` before running each job",
+                 "load"  : "0/1/2: 1/5/15-minute load average < `N`",
+                 "before": "emit pre-run report to *stderr*",
+                 "after" : "emit post-complete to *stderr*",
+                 "BefFmt": "\"\": $tm \\\\e[1mslot: $nm $cmd\\\\e[m",
+                 "AftFmt": "\"\": $tm \\\\e[7mslot: $nm usr: $u sys: $s\\\\e[m"}
