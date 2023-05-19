@@ -1,6 +1,15 @@
 {.push hint[Performance]: off.}         # No warn about token copy in bu/execstr
-import strutils, parseutils, os, posix, cligen, bu/execstr
+import std/[strutils, parseutils, os, posix, random], cligen, bu/execstr
 when not declared(stderr): import std/syncio
+when defined(release): randomize()
+
+proc overloaded(loadSlot, n: int): bool =
+  proc getloadavg(avs: pointer, nelem: int): int {.importc, header: "stdlib.h".}
+  var avs: array[3, float]
+  if loadSlot notin 0..2: return false  # Could raise ValueError
+  let got = getloadavg(avs[0].addr, 3)
+  if got == -1 or loadSlot > got: return false
+  avs[loadSlot] > n.float
 
 proc `$`(tv: Timeval): string =         # For Rusage.ru_utime, Rusage.ru_stime
   $clong(tv.tv_sec) & "." & intToStr(tv.tv_usec, 6)
@@ -63,7 +72,7 @@ proc wait(verb: int, slot: seq[int], name: seq[string]): int =
   return i
 
 proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
-            secs = 0.0, verb = 0): int =
+            secs = 0.0, load = -1, verb = 0): int =
   var nSlot = len(slot)
   var seqNo = 1
   for job in lines(jobs):               # Get a job, maybe wait for slot
@@ -85,6 +94,10 @@ proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
       nSlot = len(slot)
     if secs > 0.0 and seqNo > 1:        # Maybe sleep before launch
       discard usleep(Useconds(secs * 1_000_000))
+    elif secs < 0.0 and seqNo > 1:
+      discard usleep(Useconds(rand(-secs * 1_000_000)))
+    while overloaded(load, slot.len):   # While overloaded sleep >= 1 second
+      discard usleep(Useconds(max(1.0, secs.abs) * 1_000_000.float))
     slot[i] = bg(job, verb, seqNo, i, name, sub)
     nKid += 1                           # Count kid as spawned
     seqNo += 1
@@ -92,8 +105,8 @@ proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
     discard wait(verb, slot, name)      # Wait for any until nKid == 0
   return sumSt                          # Exit w/informative status
 
-proc CLI(run="/bin/sh", secs=0.0, before=false, after=false, nums=false,
-         posArgs: seq[string]) =
+proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1,
+         before=false, after=false, posArgs: seq[string]) =
   ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
   ## job lines from *stdin* and keeps up to `N` | `M` running at once.
   ## 
@@ -123,7 +136,7 @@ proc CLI(run="/bin/sh", secs=0.0, before=false, after=false, nums=false,
     name = posArgs                      #   successive vals of
     sub  = posArgs                      #   $STRIPE_SLOT,_SUB
   try:
-    quit(min(127, stripe(bg_setup(run, sub), slot, name, sub, secs, verb)))
+    quit(min(127, stripe(bg_setup(run, sub), slot, name, sub, secs, load,verb)))
   except IOError:
     stderr.write "No file descrip 0/stdin | stdout/err output space issue.\n"
     quit(min(127, sumSt))
@@ -139,7 +152,8 @@ when isMainModule:
 
   dispatch(CLI, cmdName = "stripe",
            help = {"run"   : "run job lines via this interpreter",
+                   "nums"  : "provide **STRIPE_SEQ** to job procs",
                    "secs"  : "sleep `SECS` before running each job",
+                   "load"  : "0/1/2: 1/5/15-minute load average < `N`",
                    "before": "time & BOLD-job pre-run -> *stderr*",
-                   "after" : "usr & sys-time post-complete -> *stderr*",
-                   "nums"  : "provide **STRIPE_SEQ** to job procs"})
+                   "after" : "usr & sys-time post-complete -> *stderr*"})
