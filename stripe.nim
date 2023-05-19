@@ -26,6 +26,15 @@ var sh_av: cstringArray
 var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
 var dSlot = 0                           # Signal handlers update this global
 
+iterator lines2(f: File, tot: var int): string =
+  if "$tot" in bef:                     # `BefFmt` requests $tot => readAll
+    var all: seq[string]                # std/sugar.collect fails in iterators?
+    for line in f.lines: all.add line
+    tot = all.len                       # Provide for $tot interpretation
+    for line in all: yield line         #  ..as in $seq/$tot message with -b
+  else:
+    for line in f.lines: yield line
+
 proc bg_setup(run: string, sub: seq[string]): File =
   discard open(result, dup(0), fmRead)  # Keep kids away from stdin; FD_CLOEXEC
   discard close(0)                      #..borks due to misinterp.of reused fd0
@@ -38,8 +47,9 @@ proc bg_setup(run: string, sub: seq[string]): File =
   sh.add("dummyArg")
   sh_av = allocCStringArray(sh)
 
-proc bg(cmd: string; verb,seqNo,i: int; name,sub: seq[string]): int {.inline.} =
-  if (verb and 1) != 0: ERR(bef % ["tm",$timeOfDay(), "nm",name[i], "cmd",cmd])
+proc bg(cmd: string; verb, seqNo, i, tot: int; name, sub: seq[string]): int =
+  if (verb and 1) != 0:
+    ERR(bef%["tm",$timeOfDay(),"nm",name[i],"cmd",cmd, "seq",$seqNo,"tot",$tot])
   if exportSeqNo:                       # Sequence number export was requested
     putEnv("STRIPE_SEQ", $seqNo)
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
@@ -74,8 +84,8 @@ proc wait(verb: int, slot: seq[int], name: seq[string]): int =
 proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
             secs = 0.0, load = -1, verb = 0): int =
   var nSlot = len(slot)
-  var seqNo = 1
-  for job in lines(jobs):               # Get a job, maybe wait for slot
+  var seqNo = 1; var tot = 0
+  for job in lines2(jobs, tot):         # Get a job, maybe wait for slot
     var i = if nKid == nSlot: wait(verb, slot, name) else: slot.find(0)
     if sub.len == 0:
       let diff = dSlot                  # Minimize real time window for..
@@ -98,7 +108,7 @@ proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
       discard usleep(Useconds(rand(-secs * 1_000_000)))
     while overloaded(load, slot.len):   # While overloaded sleep >= 1 second
       discard usleep(Useconds(max(1.0, secs.abs) * 1_000_000.float))
-    slot[i] = bg(job, verb, seqNo, i, name, sub)
+    slot[i] = bg(job, verb, seqNo, i, tot, name, sub)
     nKid += 1                           # Count kid as spawned
     seqNo += 1
   while nKid > 0:                       # No more to start =>
@@ -117,6 +127,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
   ## 
   ## **$STRIPE_SLOT** (arg slot index) & optionally **$STRIPE_SEQ** (job seqNum)
   ## are also provided to jobs.  In `N`-mode `SIGUSR[12]` (in|de)creases `N`.
+  ## If `BefFmt` uses `$tot`, job lines are read upfront to provide that count.
   var verb = (if before: 1 else: 0) or (if after: 2 else: 0) # verbosity mask
   exportSeqNo = nums
   if len(posArgs) < 1:

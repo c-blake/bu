@@ -24,7 +24,8 @@ runs FileJobs first on host X then on host Y then on whichever finishes first.
 Repeat X or Y to keep more jobs running on each host.
 
 $STRIPE_SLOT (arg slot index) & optionally $STRIPE_SEQ (job seqNum) are also
-provided to jobs.  In N-mode SIGUSR[12] (in|de)creases N.
+provided to jobs.  In N-mode SIGUSR[12] (in|de)creases N.  If BefFmt uses $tot,
+job lines are read upfront to provide that count.
 
   -r=, --run=    string "/bin/sh" run job lines via this interpreter
   -n, --nums     bool   false     provide STRIPE_SEQ to job procs
