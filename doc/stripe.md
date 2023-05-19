@@ -26,11 +26,14 @@ Repeat X or Y to keep more jobs running on each host.
 $STRIPE_SLOT (arg slot index) & optionally $STRIPE_SEQ (job seqNum) are also
 provided to jobs.  In N-mode SIGUSR[12] (in|de)creases N.
 
-  -r=, --run=   string "/bin/sh" run job lines via this interpreter
-  -s=, --secs=  float  0.0       sleep SECS before running each job
-  -b, --before  bool   false     time & BOLD-job pre-run -> stderr
-  -a, --after   bool   false     usr & sys-time post-complete -> stderr
-  -n, --nums    bool   false     provide STRIPE_SEQ to job procs
+  -r=, --run=    string "/bin/sh" run job lines via this interpreter
+  -n, --nums     bool   false     provide STRIPE_SEQ to job procs
+  -s=, --secs=   float  0.0       sleep SECS before running each job
+  -l=, --load=   int    -1        0/1/2: 1/5/15-minute load average < N
+  -b, --before   bool   false     emit pre-run report to stderr
+  -a, --after    bool   false     emit post-complete to stderr
+  -B=, --BefFmt= string ""        "": $tm \e[1mslot: $nm $cmd\e[m
+  -A=, --AftFmt= string ""        "": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
 ```
 
 There is no need for `STRIP_SUB` to be ssh targets.  Any regular pool of work
@@ -50,8 +53,8 @@ like not having to worry about shell array portability to convert from a numeric
 process-slot-var to string keys.  This is all trivial enough that it's probably
 been done many times by many folks to suit their idiosyncratic tastes.
 
-Anyway, your "chunks" of work need to be on the large side (>30..100 usec) for
-this to make sense or even larger if a real shell launch per command is
-involved.  If your per job code is shell-ish you may be able to do something
-lower overhead (fork scale rather than exec scale) with `wait -n` added to Bash
-in 2014, IIRC.
+Anyway, "chunks" of work need to be >30-100 microsec for this to make sense[^1].
+If per-job code is shell-ish, you may be able to do a lower overhead (fork scale
+rather than exec scale) system with `wait -n` added to Bash in 2014, IIRC.
+
+[^1]: or even larger if a real shell launch per command is involved..
