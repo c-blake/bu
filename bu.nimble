@@ -72,6 +72,7 @@ when defined(Windows):
   "wsample",    # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
   "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles
+  "ac",         # aped commands with aping rules stored in local file tree
  ]
 else:
  bin         = @[
@@ -141,6 +142,7 @@ else:
   "wsample",    # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
   "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles
+  "ac",         # aped commands with aping rules stored in local file tree
  ]
 
 # Dependencies

@@ -154,6 +154,8 @@ Miscellaneous/Islands Unto Themselves
 
 [niom - nio moments w/hard dep on adix efficient histogram/quantiles](doc/niom.md)
 
+[ac - aped commands with aping rules stored in local file tree](doc/ac.md)
+
 Meta-Commentary
 ---------------
 
