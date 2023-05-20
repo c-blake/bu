@@ -90,7 +90,7 @@ when isMainModule:
     ##
     ## E.g. config file (for `ndup/sh/vhup` setup) is (in `/d/vid/.ac.cfg`):
     ##   [mv mkdir rmdir mmv]        # '@' = user-chosen delimiter
-    ##   pwd="@/d/vid@/d/.v/digs.NL" # `ac X` yields 1 aped,2 total cmds
+    ##   pwd="@/d/vid@/d/.v/dig.NL"  # `ac X` yields 1 aped,2 total cmds
     ## which enables e.g.: `ac mkdir bar; ac mv foo\*.mp4 bar.mp4`.
     if cmdArgs.len < 1:
       raise newException(HelpError, "No command given\n\nFull ${HELP}")

@@ -60,7 +60,7 @@ rules yielding many apes split by KIND == sep.
 
 E.g. config file (for ndup/sh/vhup setup) is (in /d/vid/.ac.cfg):
   [mv mkdir rmdir mmv]        # '@' = user-chosen delimiter
-  pwd="@/d/vid@/d/.v/digs.NL" # ac X yields 1 aped,2 total cmds
+  pwd="@/d/vid@/d/.v/dig.NL" # ac X yields 1 aped,2 total cmds
 which enables e.g.: ac mkdir bar; ac mv foo*.mp4 bar.mp4.
 
   -c=, --config= string  ".ac.cfg" basename of ini file going up to root
@@ -90,8 +90,8 @@ ac -s,=,mv,args,.c\$,.o -s,=,mv,args,.o\$,.c mv foo.o bar.o
 # 2: Bigger
 A bigger example is already in the doc string above that comes from the [ndup](
 https://github.com/c-blake/ndup)'s `sh/vhup`.  There we have primary video files
-(in `/d/vid` for the example), frame digests in `/d/.v/digs.nL` and
-derived set files `/d/.v/digs.nL`.
+(in `/d/vid` for the example), frame digests in `/d/.v/dig.nL` and
+derived set files `/d/.v/dig.nL`.
 
 Any re-org would ordinarily mean doing so "in triplicate" to avoid re-compute,
 and re-compute can mean hours, days, or even weeks.  `ac` instead makes it easy.
