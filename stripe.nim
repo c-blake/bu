@@ -133,7 +133,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
   if len(posArgs) < 1:
     raise newException(ValueError, "Too few posArgs; need { num | 2+ slots }")
   bef = (if BefFmt.len > 0: BefFmt else: BefDfl) & "\n"
-  aft = (if AftFmt.len > 0: BefFmt else: AftDfl) & "\n"
+  aft = (if AftFmt.len > 0: AftFmt else: AftDfl) & "\n"
   var slot: seq[int]
   var name, sub: seq[string]
   if len(posArgs) == 1:                 # FIXED NUM JOBS MODE
