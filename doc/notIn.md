@@ -29,9 +29,7 @@ Usage
 ```
   notIn [optional-params] [roots: string...]
 
-Find files under NOT matching pattern applied to any file entry.
-
-E.g.:
+Find files under roots NOT matching pattern applied to any file entry.  E.g.:
   (cd D1; find . -print0) | notIn D2 D3 | xargs -0 echo
 echoes every entry under D2 or D3 not also under D1.
 

@@ -3,7 +3,8 @@ when not declared(stdin): import std/syncio
 
 proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
               roots: seq[string]) =
-  ## Find files under NOT matching `pattern` applied to any `file` entry.  E.g.:
+  ## Find files under `roots` NOT matching `pattern` applied to any `file` entry.
+  ## E.g.:
   ##   `(cd D1; find . -print0) | notIn D2 D3 | xargs -0 echo`
   ## echoes every entry under *D2* or *D3* not also under *D1*.  Input paths are
   ## normalized to nix empty path components (e.g. 1st & 3rd in "./foo/./bar").
