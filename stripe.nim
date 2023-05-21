@@ -35,7 +35,7 @@ iterator lines2(f: File, tot: var int): string =
   else:
     for line in f.lines: yield line
 
-proc bg_setup(run: string, sub: seq[string]): File =
+proc bg_setup(run: string): File =      #NOTE: Immediately dups stdin for result
   discard open(result, dup(0), fmRead)  # Keep kids away from stdin; FD_CLOEXEC
   discard close(0)                      #..borks due to misinterp.of reused fd0
   discard open("/dev/null", O_RDONLY)   # Replace original fd0 with /dev/null
@@ -149,7 +149,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
     name = posArgs                      #   successive vals of
     sub  = posArgs                      #   $STRIPE_SLOT,_SUB
   try:
-    quit(min(127, stripe(bg_setup(run, sub), slot, name, sub, secs, load,verb)))
+    quit(min(127, stripe(run.bg_setup, slot, name, sub, secs, load, verb)))
   except IOError:
     stderr.write "No file descrip 0/stdin | stdout/err output space issue.\n"
     quit(min(127, sumSt))
