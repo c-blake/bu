@@ -1,5 +1,6 @@
 {.push hint[Performance]: off.}         # No warn about token copy in bu/execstr
-import std/[strutils, parseutils, os, posix, random], cligen, bu/execstr
+import std/[strutils, parseutils, os, posix, random],
+       cligen, cligen/posixUt, bu/execstr
 when not declared(stderr): import std/syncio
 when defined(release): randomize()
 
@@ -20,11 +21,12 @@ proc ERR(x: string) = stderr.write(x)
 const BefDfl = "$tm \e[1mslot: $nm $cmd\e[m"
 const AftDfl = "$tm \e[7mslot: $nm usr: $u sys: $s\e[m"
 var bef, aft: string
-var binsh = false
+var binsh = false; var fancy = false    # Flags based on how we are called
 var sh_cmd: int                         # Shared between bg_setup() & bg()
 var sh_av: cstringArray
 var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
 var dSlot = 0                           # Signal handlers update this global
+var t0: seq[Timespec]                   # Wall clock start times
 
 iterator lines2(f: File, tot: var int): string =
   if "$tot" in bef:                     # `bef` requests $tot =>read all upfront
@@ -49,7 +51,8 @@ proc bg_setup(run: string): File =      #NOTE: Immediately dups stdin for result
 
 proc bg(cmd: string; verb, seqNo, i, tot: int; name, sub: seq[string]): int =
   if (verb and 1) != 0:
-    ERR(bef%["tm",$timeOfDay(),"nm",name[i],"cmd",cmd, "seq",$seqNo,"tot",$tot])
+    t0[i] = timeOfDay()
+    ERR bef % ["tm",$t0[i], "nm",name[i], "cmd",cmd, "seq",$seqNo, "tot",$tot]
   if exportSeqNo:                       # Sequence number export was requested
     putEnv("STRIPE_SEQ", $seqNo)
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
@@ -78,12 +81,22 @@ proc wait(verb: int, slot: seq[int], name: seq[string]): int =
   nKid -= 1                             # Count kid & accum exit status
   if WIFEXITED(st): sumSt += WEXITSTATUS(st)
   if (verb and 2) != 0:                 # Maybe report rusage
-    ERR(aft%["tm",$timeOfDay(),"nm",name[i], "u",$ru.ru_utime,"s",$ru.ru_stime])
+    let t1 = timeOfDay(); var w: Timeval; var pc: string; var mr: string
+    if fancy:
+      let dt     = t1 - t0[i]
+      w.tv_sec   = Time(dt div 1_000_000_000)
+      w.tv_usec  = clong(dt mod 1_000_000_000) div 1_000
+      let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
+                   ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
+      pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
+      mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
+    ERR aft % ["tm",$t1, "nm",name[i], "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
+               "u",$ru.ru_utime, "s",$ru.ru_stime]
   return i
 
 proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
             secs = 0.0, load = -1, verb = 0): int =
-  var nSlot = len(slot)
+  var nSlot = len(slot); t0.setLen nSlot
   var seqNo = 1; var tot = 0
   for job in lines2(jobs, tot):         # Get a job, maybe wait for slot
     var i = if nKid == nSlot: wait(verb, slot, name) else: slot.find(0)
@@ -94,12 +107,12 @@ proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
         let n = min(1024, nSlot + diff)
         for j in nSlot ..< n:
           slot.add(0)
-          name.add($j)
+          name.add($j); t0.add t0[0]
       elif diff < 0:                    # At least one SIGUSR2 during wait
         let n = max(1, nSlot + diff)    # NOTE: wait does the nKid -= 1
         while nKid + 1 > n:             # nKid will usually start @nSlot-1..
           slot.delete(i)                # ..but a signal could hit while..
-          name.delete(i)                # ..stripe is still ramping up kids.
+          name.delete(i); t0.delete(i)  # ..stripe is still ramping up kids.
           i = wait(verb, slot, name)    # Either way wait until nKid=n is ok
       nSlot = len(slot)
     if secs > 0.0 and seqNo > 1:        # Maybe sleep before launch
@@ -134,6 +147,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
     raise newException(ValueError, "Too few posArgs; need { num | 2+ slots }")
   bef = (if BefFmt.len > 0: BefFmt else: BefDfl) & "\n"
   aft = (if AftFmt.len > 0: AftFmt else: AftDfl) & "\n"
+  fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
   var slot: seq[int]
   var name, sub: seq[string]
   if len(posArgs) == 1:                 # FIXED NUM JOBS MODE
@@ -171,5 +185,7 @@ when isMainModule:
                  "load"  : "0/1/2: 1/5/15-minute load average < `N`",
                  "before": "emit pre-run report to *stderr*",
                  "after" : "emit post-complete to *stderr*",
-                 "BefFmt": "\"\": $tm \\\\e[1mslot: $nm $cmd\\\\e[m",
-                 "AftFmt": "\"\": $tm \\\\e[7mslot: $nm usr: $u sys: $s\\\\e[m"}
+                 "BefFmt":"""\"\": $tm \\\\e[1mslot: $nm $cmd\\\\e[m
+also avail: \$seq \$tot""",
+                 "AftFmt": """\"\": $tm \\\\e[7mslot: $nm usr: $u sys: $s\\\\e[m
+also avail: \$w (wall) \$m (MiB RSS) \$pcpu"""}

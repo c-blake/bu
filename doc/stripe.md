@@ -34,7 +34,9 @@ job lines are read upfront to provide that count.
   -b, --before   bool   false     emit pre-run report to stderr
   -a, --after    bool   false     emit post-complete to stderr
   -B=, --BefFmt= string ""        "": $tm \e[1mslot: $nm $cmd\e[m
+                                  also avail: $seq $tot
   -A=, --AftFmt= string ""        "": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
+                                  also avail: $w (wall) $m (MiB RSS) $pcpu
 ```
 
 There is no need for `STRIP_SUB` to be ssh targets.  Any regular pool of work
