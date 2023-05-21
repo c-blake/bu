@@ -27,7 +27,7 @@ var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
 var dSlot = 0                           # Signal handlers update this global
 
 iterator lines2(f: File, tot: var int): string =
-  if "$tot" in bef:                     # `BefFmt` requests $tot => readAll
+  if "$tot" in bef:                     # `bef` requests $tot =>read all upfront
     var all: seq[string]                # std/sugar.collect fails in iterators?
     for line in f.lines: all.add line
     tot = all.len                       # Provide for $tot interpretation
