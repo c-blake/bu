@@ -1,5 +1,4 @@
-import std/[os, osproc, re, strutils, strtabs, parsecfg, streams, strformat],
-       std/private/ospaths2     # parentDirs
+import std/[os, osproc, re, strutils, strtabs, parsecfg, streams, strformat]
 type
   AcKind* = enum acCmd="cmd", acArg1="arg1", acArg2="arg2", acArg3="arg3",
     acArg4="arg4", acArg5="arg5", acArgs="args", acArgE="argE", acArgF="argF",
