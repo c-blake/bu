@@ -85,9 +85,7 @@ proc wait(verb: int): int =
   if (verb and 2) != 0:                 # Maybe report rusage
     let t1 = timeOfDay(); var w: Timeval; var pc: string; var mr: string
     if fancy:
-      let dt     = t1 - rs[i].t0
-      w.tv_sec   = Time(dt div 1_000_000_000)
-      w.tv_usec  = clong(dt mod 1_000_000_000) div 1_000
+      let dt     = t1 - rs[i].t0; w = dt.nsToTimeVal
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
