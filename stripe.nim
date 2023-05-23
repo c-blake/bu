@@ -21,12 +21,15 @@ proc ERR(x: string) = stderr.write(x)
 const BefDfl = "$tm \e[1mslot: $nm $cmd\e[m"
 const AftDfl = "$tm \e[7mslot: $nm usr: $u sys: $s\e[m"
 var bef, aft: string
-var binsh = false; var fancy = false    # Flags based on how we are called
+var binsh = false; var fancy = false; var numMo = false #Flags saying how called
+var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
 var sh_cmd: int                         # Shared between bg_setup() & bg()
 var sh_av: cstringArray
-var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
-var dSlot = 0                           # Signal handlers update this global
-var t0: seq[Timespec]                   # Wall clock start times
+var dSlot = 0                           # Signal handlers access these globals
+var sumSt, nKid: int                    # sum(exCodes) & num live kids
+var rs: seq[tuple[pid: Pid; nm, sub: string; t0: Timespec]]
+proc rsFind(p: Pid): int =
+  result = -1; for i, r in rs: (if r.pid == p: return i)
 
 iterator lines2(f: File, tot: var int): string =
   if "$tot" in bef:                     # `bef` requests $tot =>read all upfront
@@ -49,15 +52,15 @@ proc bg_setup(run: string): File =      #NOTE: Immediately dups stdin for result
   sh.add("dummyArg")
   sh_av = allocCStringArray(sh)
 
-proc bg(cmd: string; verb, seqNo, i, tot: int; name, sub: seq[string]): int =
+proc bg(cmd: string; verb, seqNo, i, tot: int): Pid =
   if (verb and 1) != 0:
-    t0[i] = timeOfDay()
-    ERR bef % ["tm",$t0[i], "nm",name[i], "cmd",cmd, "seq",$seqNo, "tot",$tot]
+    rs[i].t0 = timeOfDay()
+    ERR bef%["tm",$rs[i].t0, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo, "tot",$tot]
   if exportSeqNo:                       # Sequence number export was requested
     putEnv("STRIPE_SEQ", $seqNo)
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
-  if sub.len != 0:                      #..So, could maybe be optimized to save
-    putEnv("STRIPE_SUB", sub[i])        #..0.5-1 microsec so per kid launch.
+  if rs[i].sub.len != 0:                #..So, could maybe be optimized to save
+    putEnv("STRIPE_SUB", rs[i].sub)     #..0.5-1 microsec so per kid launch.
   var pid: Pid = vfork()                # MUST BE C-ish between vfork & exec
   if pid == -1: exitnow(3)              # vfork failed! => DIE NOW
   if pid != 0: return pid               # Parent returns
@@ -69,63 +72,57 @@ proc bg(cmd: string; verb, seqNo, i, tot: int; name, sub: seq[string]): int =
   ERR("Cannot run \"$#\"\n" % cmd)
   exitnow(113)                          # ..or exit kid on failed exec
 
-var nKid, sumSt: int = 0                # num live kids & sum(exCodes)
-
-proc wait(verb: int, slot: seq[int], name: seq[string]): int =
+proc wait(verb: int): int =
   var ru: Rusage
   var st: cint
   var i = -1
   while i < 0:                          # 1st|pid from prior prog of same parent
     let pid = wait4(Pid(-1), addr st, cint(0), addr ru)
-    i = slot.find(pid)                  # Unfound => not a kid of ours!
+    i = rsFind(pid)                     # Unfound => not our kid! (Pre-exec)
   nKid -= 1                             # Count kid & accum exit status
+  rs[i].pid = 0.Pid                     # Mark run slot free (Maybe unneeded)
   if WIFEXITED(st): sumSt += WEXITSTATUS(st)
   if (verb and 2) != 0:                 # Maybe report rusage
     let t1 = timeOfDay(); var w: Timeval; var pc: string; var mr: string
     if fancy:
-      let dt     = t1 - t0[i]
+      let dt     = t1 - rs[i].t0
       w.tv_sec   = Time(dt div 1_000_000_000)
       w.tv_usec  = clong(dt mod 1_000_000_000) div 1_000
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
-    ERR aft % ["tm",$t1, "nm",name[i], "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
+    ERR aft % ["tm",$t1, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
                "u",$ru.ru_utime, "s",$ru.ru_stime]
   return i
 
-proc stripe(jobs: File, slot: var seq[int], name,sub: var seq[string],
-            secs = 0.0, load = -1, verb = 0): int =
-  var nSlot = len(slot); t0.setLen nSlot
+proc stripe(jobs: File, secs = 0.0, load = -1, verb = 0): int =
+  var nSlot = rs.len
   var seqNo = 1; var tot = 0
-  for job in lines2(jobs, tot):         # Get a job, maybe wait for slot
-    var i = if nKid == nSlot: wait(verb, slot, name) else: slot.find(0)
-    if sub.len == 0:
+  for cmd in lines2(jobs, tot):         # Get a cmd, maybe wait for slot
+    var i = if nKid == nSlot: wait(verb) else: rsFind(0.Pid)
+    if numMo:                           # MAYBE ADJUST NUMBER OF RUN SLOTS
       let diff = dSlot                  # Minimize real time window for..
       dSlot = 0                         # ..signal deliveries to be lost.
       if diff > 0:                      # At least one SIGUSR1 during wait
         let n = min(1024, nSlot + diff)
-        for j in nSlot ..< n:
-          slot.add(0)
-          name.add($j); t0.add t0[0]
+        for k in nSlot ..< n: rs.add (0.Pid, $k, "", rs[0].t0)
       elif diff < 0:                    # At least one SIGUSR2 during wait
         let n = max(1, nSlot + diff)    # NOTE: wait does the nKid -= 1
-        while nKid + 1 > n:             # nKid will usually start @nSlot-1..
-          slot.delete(i)                # ..but a signal could hit while..
-          name.delete(i); t0.delete(i)  # ..stripe is still ramping up kids.
-          i = wait(verb, slot, name)    # Either way wait until nKid=n is ok
-      nSlot = len(slot)
-    if secs > 0.0 and seqNo > 1:        # Maybe sleep before launch
+        while nKid + 1 > n:             # nKid usually starts @nSlot-1, but SIG
+          rs.delete i                   # ..can hit while still ramping up kids.
+          i = wait(verb)                # ..Either way wait until nKid=n is ok.
+      nSlot = rs.len   
+    if secs > 0.0 and seqNo > 1:        # MAYBE SLEEP BEFORE LAUNCH
       discard usleep(Useconds(secs * 1_000_000))
     elif secs < 0.0 and seqNo > 1:
       discard usleep(Useconds(rand(-secs * 1_000_000)))
-    while overloaded(load, slot.len):   # While overloaded sleep >= 1 second
+    while overloaded(load, rs.len):     # While overloaded sleep >= 1 second
       discard usleep(Useconds(max(1.0, secs.abs) * 1_000_000.float))
-    slot[i] = bg(job, verb, seqNo, i, tot, name, sub)
+    rs[i].pid = bg(cmd, verb, seqNo, i, tot)
     nKid += 1                           # Count kid as spawned
     seqNo += 1
-  while nKid > 0:                       # No more to start =>
-    discard wait(verb, slot, name)      # Wait for any until nKid == 0
+  while nKid > 0: discard wait(verb)    # No more new=>Wait for any until 0 kids
   return sumSt                          # Exit w/informative status
 
 proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
@@ -148,22 +145,18 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
   bef = (if BefFmt.len > 0: BefFmt else: BefDfl) & "\n"
   aft = (if AftFmt.len > 0: AftFmt else: AftDfl) & "\n"
   fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
-  var slot: seq[int]
-  var name, sub: seq[string]
-  if len(posArgs) == 1:                 # FIXED NUM JOBS MODE
+  numMo = posArgs.len == 1
+  if numMo:                             # FIXED NUM JOBS MODE
     var n: int
     if parseInt(posArgs[0], n) == 0 or n <= 0:
       raise newException(ValueError, "Only one slot but not a positive int.")
-    slot = newSeq[int](n)               #   impossible zero PID
-    name = newSeq[string](n)
-    for i in 0 ..< n: name[i] = $i      #   slot names == nums
-    sub = newSeq[string](0)             #   0 len => no substs
+    rs.setLen n                         #   impossible zero PIDs
+    for i in 0 ..< n: rs[i].nm = $i     #   slot names == nums
   else:                                 # STRIPE ID SUBST MODE
-    slot = newSeq[int](len(posArgs))    #   impossible zero PID
-    name = posArgs                      #   successive vals of
-    sub  = posArgs                      #   $STRIPE_SLOT,_SUB
+    rs.setLen posArgs.len               #   impossible zero PIDs
+    for i, a in posArgs: rs[i].nm = a; rs[i].sub = a  # $STRIPE_SLOT,_SUB
   try:
-    quit(min(127, stripe(run.bg_setup, slot, name, sub, secs, load, verb)))
+    quit(min(127, stripe(run.bg_setup, secs, load, verb)))
   except IOError:
     stderr.write "No file descrip 0/stdin | stdout/err output space issue.\n"
     quit(min(127, sumSt))
