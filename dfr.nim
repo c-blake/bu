@@ -26,9 +26,8 @@ proc parseColor(color: seq[string], plain=false) =
   attrHeader = textAttrOn(attrHeader.split, plain)
 
 proc on(f: float): string =
-  let pct = int(100*f + 0.5)
   for i in 1..levels.high:
-    if pct < levels[i][0]: return levels[i-1][1]
+    if 100*f < levels[i][0].float: return levels[i-1][1]
   levels[^1][1]
 
 var devNmOf = initTable[string, string]()
