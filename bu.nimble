@@ -146,5 +146,5 @@ else:
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.6.5",
-         "adix >= 0.5.4", "nio >= 0.6.5", "fitl >= 0.3.1"
+requires "nim >= 1.6.0", "cligen >= 1.6.6",
+         "adix >= 0.5.4", "nio >= 0.6.6", "fitl >= 0.3.1"
