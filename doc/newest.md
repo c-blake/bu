@@ -5,7 +5,7 @@ This is (mostly) a convenience program for something I often want to know.
 Usage
 -----
 ```
-  printNewest [optional-params] [paths: string...]
+  newest [optional-params] [paths: string...]
 
 Echo ended by outEnd the <= n newest files in file time order {-}[bamcv] for
 Birth, Access, Mod, Ctime, Version=max(MC); { - | CAPITAL means oldest }.

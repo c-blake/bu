@@ -4,9 +4,9 @@ import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
 
 type TimePath = tuple[tm: int64, path: string]
 
-proc printNewest*(n=1, time="m", recurse=1, chase=false, Deref=false,
-                  kinds={fkFile}, quiet=false, xdev=false, outEnd="\n",
-                  file="", delim='\n', eof0=false, paths: seq[string]) =
+proc newest*(n=1, time="m", recurse=1, chase=false, Deref=false, kinds={fkFile},
+             quiet=false, xdev=false, outEnd="\n", file="", delim='\n',
+             eof0=false, paths: seq[string]) =
   ## Echo ended by *outEnd* <= *n* newest files in file *time* order
   ## `{-}[bamcv]` for Birth, Access, Mod, Ctime, Version=max(MC); {`-` | CAPITAL
   ## means ***oldest***}.  Examined files = UNION of *paths* + optional
@@ -35,15 +35,15 @@ proc printNewest*(n=1, time="m", recurse=1, chase=false, Deref=false,
     stdout.write q.pop().path, outEnd           #..in the specified-time order.
 
 when isMainModule:  # Exercise this with an actually useful CLI wrapper.
-  dispatch printNewest,
-           help = { "n"      : "number of 'newest' files",
-                    "time"   : "timestamp to compare ({-}[bamcv]\\*)",
-                    "recurse": "recurse n-levels on dirs; 0:unlimited",
-                    "chase"  : "chase symlinks to dirs in recursion",
-                    "xdev"   : "block recursion across device boundaries",
-                    "Deref"  : "dereference symlinks for file times",
-                    "kinds"  : "i-node type like find(1): [fdlbcps]",
-                    "quiet"  : "suppress file access errors",
-                    "outEnd" : "output record terminator",
-                    "file"   : "optional input (\"-\"|!tty=stdin)",
-                    "delim"  : "input file record delimiter" }
+  dispatch newest, help = {
+    "n"      : "number of 'newest' files",
+    "time"   : "timestamp to compare ({-}[bamcv]\\*)",
+    "recurse": "recurse n-levels on dirs; 0:unlimited",
+    "chase"  : "chase symlinks to dirs in recursion",
+    "xdev"   : "block recursion across device boundaries",
+    "Deref"  : "dereference symlinks for file times",
+    "kinds"  : "i-node type like find(1): [fdlbcps]",
+    "quiet"  : "suppress file access errors",
+    "outEnd" : "output record terminator",
+    "file"   : "optional input (\"-\"|!tty=stdin)",
+    "delim"  : "input file record delimiter" }
