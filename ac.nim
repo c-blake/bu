@@ -48,8 +48,8 @@ proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
 
 proc fop(wd, name: string): (string, File) =  # Find & open FIRST `name`
   for dir in parentDirs(wd, inclusive=true):  #.. going up to the root.
-    try   : result[0] = dir/name; result[1] = open(result[0]); return
-    except: discard
+    try: result[0] = dir/name; result[1] = open(result[0]); return
+    except CatchableError: discard
 
 proc parseRules(pf: (string, File), cmd: string): seq[ApeRule] =
   result.add (acSep, "".re, "") # Early so that model command is always run
