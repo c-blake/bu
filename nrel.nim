@@ -1,5 +1,5 @@
 when not declared(stderr): import std/syncio
-import std/[os, osproc, strutils, parseutils, tempfiles]
+import std/[os, osproc, strutils, parseutils, tempfiles, json, tables]
 
 proc nimblePath(): string =             # nicked from nimp.nim
   for k, path in ".".walkDir(true):
@@ -25,38 +25,76 @@ proc newVsn(curV: string, bump=patch): string =
         raise newException(ValueError, "non-tripartite version: " & line.repr)
   raise newException(ValueError, "No output line looking like a version")
 
-proc nimbleUp(vsn: string, bump=patch, dryRun=false): string =
+proc latestVersion(repoURI: string): string =   # Get tags for some git repo
+  let cmd = "git ls-remote --tags \"" & repoURI & "\""
+  let (outp, xs) = cmd.execCmdEx; if xs != 0: quit "could not run: " & cmd, 5
+  for row in outp.splitLines:
+    var row = row
+    if row.endsWith("^{}"): row.setLen row.len - 3
+    if (let ix = row.find("refs/tags/"); ix != -1):
+      row = row[ix+10 .. ^1]
+      if row.startsWith("v"): row = row[1 .. ^1]
+      if row > result: result = row             #TODO: Careful "version-compare"
+
+proc getNm2URI(): Table[string, string] =       # pkgNm -> repo URI
+  proc n(x: string): string = x.toLower.multiReplace(("_", ""))
+  const u = "raw.githubusercontent.com/nim-lang/packages/master/packages.json"
+  const cmd = "curl -s https://" & u            # Cache this for "a while"?
+  let (pks, xs) = execCmdEx(cmd); if xs != 0: quit "could not run: " & cmd, 6
+  var alt: Table[string, string]
+  for p in parseJson(pks):
+    try: result[($p["name"]).n[1..^2]] = ($p["url"])[1..^2]
+    except CatchableError:                      # [1..^2] slice kills '"'s
+      try: alt[($p["name"]).n[1..^2]] = ($p["alias"]).n[1..^2]
+      except CatchableError: stderr.write "problem with: ", p, "\n"
+  for k, v in alt: result[k] = result[v][0..^1] # COPY apply aliases
+
+proc depsUp(reqs: seq[string]): seq[(string, string)] =
+  let uris = getNm2URI()
+  for req in reqs:
+    let cols = req.split()
+    if cols[0] != "nim" and cols[1] == ">=":    # Only edit non-Nim >= rules
+      let latest = latestVersion(uris[cols[0]])
+      if cols[2] != latest: result.add (req, cols[0] & " >= " & latest)
+
+proc apply(s: string, rs: seq[(string, string)]): string =
+  result = s
+  for pair in rs: result = result.replace(pair[0], pair[1])
+
+proc nimbleUp(vsn: string, bump=patch, upDeps=false, dryRun=false): string =
   let nbPath = nimblePath()
   let (_, pknm, _) = nbPath.splitFile
   if nbPath.len == 0: quit "could not find nimble file", 2
   let nb = if nbPath.len > 0: nbPath.readFile else: ""
-  let (dvF, dvPath) = createTempFile("dumpVsn", ".nims")
-  dvF.write nb, "\necho version\n"      #  For full generality, add `echo`
-  dvF.close                             #..to end of .nimble & then nim e
-  let (curV, xs) = execCmdEx("nim e " & dvPath)
+  let (dvF, dvPath) = createTempFile("dumpVsn", ".nims") # Generality=>add echos
+  dvF.write nb, "\necho version\nimport strutils\n"      #..to .nimble & nim e.
+  dvF.write "for d in requiresData: (for dd in d.split(\",\"): echo dd.strip)\n"
+  dvF.close
+  let (outp, xs) = execCmdEx("nim e " & dvPath)
+  let outps = outp.splitLines
+  let curV = outps[0]
   if xs != 0: quit "could not find nim or run nim e " & dvPath, 3
   try: removeFile dvPath
   except CatchableError: quit "could not clean-up " & dvPath, 4
   result = if vsn.len == 0: curV.newVsn(bump) else: vsn
   echo "Edit ", pknm, ".nimble version from ", curV.strip, " to ", result
-  if not dryRun:
-    let newNb = nb.replace("\"" & curV.strip & "\"", "\"" & result & "\"")
-    let f = open(nbPath, fmWrite)       # Could add an optional `reqs` stage to
-    f.write newNb                       #..autoupdate `requires` to each latest.
-    f.close
+  var rs: seq[(string, string)] = if upDeps: outps[1..^1].depsUp else: @[]
+  for r in rs: echo "replace: ", r[0], " with: ", r[1]
+  if not dryRun: writeFile nbPath,
+    nb.replace("\"" & curV.strip & "\"", "\"" & result & "\"").apply(rs)
 
 proc run(cmd, failMsg: string; failCode: int, dryRun=false) =
   if dryRun: echo cmd
   elif execShellCmd(cmd) != 0: quit failMsg, failCode
 
-proc nrel(vsn="", bump=patch, msg="", stage=push, title="", rNotes="",
-          dryRun=false) =
+proc nrel(vsn="", bump=patch, upDeps=false, msg="", stage=push, title="",
+          rNotes="", dryRun=false) =
   ## Bump version in `.nimble`, commit, tag & push using just `nim`, this prog
   ## & `git`.  Final optional stage uses github-cli's ``gh release`` creation.
   if stage == release and (title.len == 0 or rNotes.len == 0):
     quit "Need non-empty `title` and `rNotes` for release stage", 1
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
-  let newV = nimbleUp(vsn, bump, dryRun)
+  let newV = nimbleUp(vsn, bump, upDeps, dryRun)
   if stage == nimble: quit()
   run "git commit -am \'" & msg & "\'", "error committing version bump",5,dryRun
   if stage == commit: quit()
@@ -70,6 +108,7 @@ proc nrel(vsn="", bump=patch, msg="", stage=push, title="", rNotes="",
 when isMainModule: import cligen; dispatch nrel, help={
   "vsn"   : "New version; \"\": auto bump",
   "bump"  : "Version slot to bump: Major, minor, patch",
+  "upDeps": "Also auto-update >= version deps in .nimble",
   "msg"   : ".nimble commit; \"\": Bump versions pre-release",
   "stage" : "nimble, commit, tag, push, release",
   "title" : "Release title",
