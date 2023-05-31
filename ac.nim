@@ -1,3 +1,4 @@
+when not declared(stderr): import std/syncio
 import std/[os, osproc, re, strutils, strtabs, parsecfg, streams, strformat]
 type
   AcKind* = enum acCmd="cmd", acArg1="arg1", acArg2="arg2", acArg3="arg3",
