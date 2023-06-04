@@ -53,9 +53,9 @@ proc fop(wd, name: string): (string, File) =  # Find & open FIRST `name`
     try: result[0] = dir/name; result[1] = open(result[0]); return
     except CatchableError: discard
 
-proc parseRules(pf: (string, File), cmd: string): seq[ApeRule] =
+proc parseRules(pf: (string, File), cmd: string, verbose: bool): seq[ApeRule] =
   result.add (acSep, "".re, "") # Early so that model command is always run
-  if pf[1].isNil: return
+  if pf[1].isNil: stderr.write "Found no config\n"; return
   var f = newFileStream(pf[1])
   var p: CfgParser; open(p, f, pf[0])
   var doing = false
@@ -71,6 +71,7 @@ proc parseRules(pf: (string, File), cmd: string): seq[ApeRule] =
         result.add (parseEnum[AcKind](e.key), cols[0].re, cols[1])
     of cfgError: echo e.msg
   p.close
+  if verbose: stderr.write &"{result.len} rules from {pf[0]}\n"
 
 when isMainModule:
   import cligen; include cligen/mergeCfgEnv
@@ -100,7 +101,7 @@ when isMainModule:
     if wd.len > 0:                      # Only override if *same* dir
       if wd.getFileInfo.id == pwd.getFileInfo.id: pwd = wd
       else: stderr.write &"warning: `{wd}` not same (dev,inode) as `{pwd}`\n"
-    var rules = parseRules(fop(pwd, config), cmdArgs[0])
+    var rules = parseRules(fop(pwd, config), cmdArgs[0], verbose)
     for i in countup(0, subs.len-1, 4): # Add CL subs on top of above cf subs
       if subs[i+0] == cmdArgs[0]:       # Filter relevant rules for this launch
         rules.add (parseEnum[AcKind](subs[i+1]), subs[i+2].re, subs[i+3])
