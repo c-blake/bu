@@ -41,8 +41,9 @@ proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
       var n = eP; for (k, v) in eP.pairs: n[k] = v.replacef(frm, to); eP = n
     of acSep: discard           # Maybe many subst sets giving mult. aped cmds
     if i == rules.len - 1 or kind == acSep: # Order matters; `acSep` separates
-      if dryRun: (if not verbose: stderr.write cmd.join(" "), "\n") #shellQuote?
-      elif(let x=startProcess(cmd[0], wd, cmd[1..^1],eP,opts).waitForExit;x!=0):
+      if dryRun or verbose: stderr.write cmd.join(" "), "\n"  # shellQuote?
+      if not dryRun and
+         (let x=startProcess(cmd[0], wd, cmd[1..^1],eP,opts).waitForExit;x!=0):
         return x                # Stop at the first failed command
       if i != rules.len - 1:    # Revert to initial states
         cmd = args; eP = envs; wd = pwd
