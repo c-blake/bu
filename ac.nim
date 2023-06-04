@@ -48,8 +48,15 @@ proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
       if i != rules.len - 1:    # Revert to initial states
         cmd = args; eP = envs; wd = pwd
 
+iterator parentDirs(path: string): string =
+  var current = path            # Lifted from ospaths2 & simplified.  There
+  while not current.isRootDir:  # <- mm:arc bug; current=="" =>current.isRootDir
+    yield current               # (Nim-f552618d6b1cddee3fdad7b4cf1917481ca346d4)
+    current = current.parentDir # stdlib works fine in e.g. nim-1.6.12, though.
+  yield current
+
 proc fop(wd, name: string): (string, File) =  # Find & open FIRST `name`
-  for dir in parentDirs(wd, inclusive=true):  #.. going up to the root.
+  for dir in parentDirs(wd):                  #.. going up to the root.
     try: result[0] = dir/name; result[1] = open(result[0]); return
     except CatchableError: discard
 
