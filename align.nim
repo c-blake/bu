@@ -23,7 +23,7 @@ proc findSGR(row: seq[string]): bool {.inline.} =
 var usePrLen = false
 
 proc mpl(s: string): int {.inline.} =   #mpl=(m)aybe(p)rinted(l)en
-  result = if usePrLen: printedLen(s): else: s.len
+  if usePrLen: s.printedLen else: s.len
 
 proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
            Widths=false, HeadersOnly=false, empty="", null="", prLen=false,
