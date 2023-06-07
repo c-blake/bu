@@ -29,12 +29,12 @@ proc overloaded(loadSlot, n: int): bool =
   if loadSlot notin 0..2: return false  # Could raise ValueError
   let got = getloadavg(avs[0].addr, 3)
   if got == -1 or loadSlot > got: return false
-  avs[loadSlot] > n.float       # Fastest load avg 5min EWMA => sleep >= 1 sec
+  avs[loadSlot] > n.float               # Fastest=300s-avg means sleep >= 3 sec
 
 proc maybeSleep(secs: float; seqNo, load: int) =
   if   secs > 0.0 and seqNo > 1: discard usleep(Useconds(secs * 1000000))
   elif secs < 0.0 and seqNo > 1: discard usleep(Useconds(rand(-secs * 1000000)))
-  while overloaded(load,rs.len): discard usleep(Useconds(max(1.0,secs.abs)*1e6))
+  while overloaded(load,rs.len): discard usleep(Useconds(max(3.0,secs.abs)*1e6))
 
 iterator lines2(f: File, tot: var int): string =
   if "$tot" in bef:                     # `bef` requests $tot =>read all upfront
