@@ -58,10 +58,11 @@ proc bg_setup(run: string): File =      #NOTE: Immediately dups stdin for result
   sh_av = allocCStringArray(sh)
 
 proc bg(cmd: string; seqNo, i, tot: int): Pid =
-  if bef.len > 1:                       # `> 1` since \n is always appended.
+  if bef.len + aft.len + irp.len > 1:   # Want t0 for wall if any fmt nontrivial
     rs[i].t0 = timeOfDay()
+  if bef.len > 1:                       # `> 1` since \n is always appended.
     ERR bef%["tm",$rs[i].t0, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo, "tot",$tot]
-  if aft.len > 1: rs[i].cmd = cmd       # Maybe save for `wait` report
+  if aft.len+irp.len>1: rs[i].cmd = cmd # Maybe save for `wait`|interrupt report
   if putSN: putEnv "STRIPE_SEQ", $seqNo # Sequence number export was requested
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
   if rs[i].sub.len != 0:                #..So, could maybe be optimized to save
