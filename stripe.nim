@@ -89,15 +89,16 @@ proc wait(): int =
   rs[i].pid = 0.Pid                     # Mark run slot free (Maybe unneeded)
   if WIFEXITED(st): sumSt += WEXITSTATUS(st)
   if aft.len > 1:                       # Maybe report rusage
-    let t1 = timeOfDay(); var w: Timeval; var pc: string; var mr: string
+    let t1 = timeOfDay(); var w, ct: Timeval; var pc: string; var mr: string
     if fancy:
       let dt     = t1 - rs[i].t0; w = dt.nsToTimeVal
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
+      ct.tv_sec = Time(tSched div 1_000_000); ct.tv_usec = tSched mod 1_000_000
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
     ERR aft % ["tm",$t1, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
-               "u",$ru.ru_utime, "s",$ru.ru_stime, "cmd",rs[i].cmd]
+               "u",$ru.ru_utime, "s",$ru.ru_stime, "ct",$ct, "cmd",rs[i].cmd]
   rs[i].cmd.setLen 0
   i
 
@@ -185,6 +186,6 @@ when isMainModule:
                  "before":"""\"D\": $tm \\e[1mslot: $nm $cmd\\e[m
 alsoAvail: \$seq \$tot""",
                  "after" :"""\"D\": $tm \\e[7mslot: $nm usr: $u sys: $s\\e[m
-alsoAvail: wall \$w MiBRSS \$m \$pcpu \$cmd""",
+alsoAvail: wall \$w MiBRSS \$m \$ct \$pcpu \$cmd""",
                  "irupt" :"""\"D\": $tm interrupt $nm after $w: $cmd
 alsoAvail: substitution \$sub"""}

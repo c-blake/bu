@@ -34,7 +34,7 @@ job lines are read upfront to provide that count.
   -b=, --before= string ""        "D": $tm \e[1mslot: $nm $cmd\e[m
                                   alsoAvail: $seq $tot
   -a=, --after=  string ""        "D": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
-                                  alsoAvail: wall $w MiBRSS $m $pcpu $cmd
+                                  alsoAvail: wall $w MiBRSS $m $ct $pcpu $cmd
   -i=, --irupt=  string ""        "D": $tm interrupted $nm after $w: $cmd
                                   alsoAvail: substitution $sub
 ```
