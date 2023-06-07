@@ -35,6 +35,8 @@ job lines are read upfront to provide that count.
                                   alsoAvail: $seq $tot
   -a=, --after=  string ""        "D": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
                                   alsoAvail: wall $w MiBRSS $m $pcpu $cmd
+  -i=, --irupt=  string ""        "D": $tm interrupted $nm after $w: $cmd
+                                  alsoAvail: substitution $sub
 ```
 
 There is no need for `STRIP_SUB` to be ssh targets.  Any regular pool of work

@@ -12,7 +12,8 @@ proc ERR(x: string) = stderr.write(x)
 
 const BefDfl = "$tm \e[1mslot: $nm $cmd\e[m"
 const AftDfl = "$tm \e[7mslot: $nm usr: $u sys: $s\e[m"
-var bef, aft: string; var binsh, fancy, numMo, putSN: bool # How prog was called
+const IrpDfl = "$tm interrupt $nm after $w: $cmd"
+var bef, aft, irp: string; var binsh,fancy,numMo,putSN: bool # How prog called
 
 var sh_cmd: int                         # Shared between bg_setup() & bg()
 var sh_av: cstringArray
@@ -124,7 +125,7 @@ proc stripe(jobs: File, secs = 0.0, load = -1): int =
   sumSt                                 # Exit w/informative status
 
 proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
-         posArgs: seq[string]) =
+         irupt="", posArgs: seq[string]) =
   ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
   ## job lines from *stdin* and keeps up to `N` | `M` running at once.
   ## 
@@ -141,6 +142,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
   putSN = nums
   bef   = (if before in ["d", "D"]: BefDfl else: before) & "\n"
   aft   = (if after  in ["d", "D"]: AftDfl else: after ) & "\n"
+  irp   = (if irupt  in ["d", "D"]: IrpDfl else: irupt ) & "\n"
   fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
   numMo = posArgs.len == 1
   if numMo:                             # FIXED NUM JOBS MODE
@@ -159,8 +161,14 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
     quit(min(127, sumSt))
 
 when isMainModule:
-  proc ctrlC() {.noconv.} = quit(min(127, sumSt)) # Could be 2-128 dep on which
-  setControlCHook(ctrlC)                          #..consistency we want.
+  proc ctrlC() {.noconv.} =
+    if irp.len > 1:                     # interrupt reports requested
+      let t1 = timeOfDay(); var w: Timeval
+      for r in rs:
+        if r.cmd.len>0:(w = nsToTimeVal(t1 - r.t0); ERR irp %
+                        ["tm",$t1, "nm",r.nm, "w",$w, "cmd",r.cmd, "sub",r.sub])
+    quit(min(127, sumSt))               # stdlib saturates at 127
+  setControlCHook(ctrlC)
 
   proc sigu12(signo: cint) {.noconv.} =
     if   signo == SIGUSR1: inc(dSlot)   # SIGUSR1 increases N
@@ -176,4 +184,6 @@ when isMainModule:
                  "before":"""\"D\": $tm \\e[1mslot: $nm $cmd\\e[m
 alsoAvail: \$seq \$tot""",
                  "after" :"""\"D\": $tm \\e[7mslot: $nm usr: $u sys: $s\\e[m
-alsoAvail: wall \$w MiBRSS \$m \$pcpu \$cmd"""}
+alsoAvail: wall \$w MiBRSS \$m \$pcpu \$cmd""",
+                 "irupt" :"""\"D\": $tm interrupted $nm after $w: $cmd
+alsoAvail: substitution \$sub"""}
