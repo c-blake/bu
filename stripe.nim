@@ -186,5 +186,5 @@ when isMainModule:
 alsoAvail: \$seq \$tot""",
                  "after" :"""\"D\": $tm \\e[7mslot: $nm usr: $u sys: $s\\e[m
 alsoAvail: wall \$w MiBRSS \$m \$pcpu \$cmd""",
-                 "irupt" :"""\"D\": $tm interrupted $nm after $w: $cmd
+                 "irupt" :"""\"D\": $tm interrupt $nm after $w: $cmd
 alsoAvail: substitution \$sub"""}
