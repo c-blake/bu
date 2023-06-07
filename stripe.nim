@@ -4,14 +4,6 @@ import std/[strutils, parseutils, os, posix, random],
 when not declared(stderr): import std/syncio
 when defined(release): randomize()
 
-proc overloaded(loadSlot, n: int): bool =
-  proc getloadavg(avs: pointer, nelem: int): int {.importc, header: "stdlib.h".}
-  var avs: array[3, float]
-  if loadSlot notin 0..2: return false  # Could raise ValueError
-  let got = getloadavg(avs[0].addr, 3)
-  if got == -1 or loadSlot > got: return false
-  avs[loadSlot] > n.float
-
 proc `$`(tv: Timeval): string =         # For Rusage.ru_utime, Rusage.ru_stime
   $clong(tv.tv_sec) & "." & intToStr(tv.tv_usec, 6)
 proc timeOfDay(): Timespec = discard clock_gettime(CLOCK_REALTIME, result)
@@ -30,6 +22,19 @@ var sumSt, nKid: int                    # sum(exCodes) & num live kids
 var rs: seq[tuple[pid: Pid; nm, sub: string; t0: Timespec]]
 proc rsFind(p: Pid): int =
   result = -1; for i, r in rs: (if r.pid == p: return i)
+
+proc overloaded(loadSlot, n: int): bool =
+  proc getloadavg(avs: pointer, nelem: int): int {.importc, header: "stdlib.h".}
+  var avs: array[3, float]
+  if loadSlot notin 0..2: return false  # Could raise ValueError
+  let got = getloadavg(avs[0].addr, 3)
+  if got == -1 or loadSlot > got: return false
+  avs[loadSlot] > n.float       # Fastest load avg 5min EWMA => sleep >= 1 sec
+
+proc maybeSleep(secs: float; seqNo, load: int) =
+  if   secs > 0.0 and seqNo > 1: discard usleep(Useconds(secs * 1000000))
+  elif secs < 0.0 and seqNo > 1: discard usleep(Useconds(rand(-secs * 1000000)))
+  while overloaded(load,rs.len): discard usleep(Useconds(max(1.0,secs.abs)*1e6))
 
 iterator lines2(f: File, tot: var int): string =
   if "$tot" in bef:                     # `bef` requests $tot =>read all upfront
@@ -92,7 +97,7 @@ proc wait(verb: int): int =
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
     ERR aft % ["tm",$t1, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
                "u",$ru.ru_utime, "s",$ru.ru_stime]
-  return i
+  i
 
 proc stripe(jobs: File, secs = 0.0, load = -1, verb = 0): int =
   var nSlot = rs.len
@@ -111,17 +116,12 @@ proc stripe(jobs: File, secs = 0.0, load = -1, verb = 0): int =
           rs.delete i                   # ..can hit while still ramping up kids.
           i = wait(verb)                # ..Either way wait until nKid=n is ok.
       nSlot = rs.len   
-    if secs > 0.0 and seqNo > 1:        # MAYBE SLEEP BEFORE LAUNCH
-      discard usleep(Useconds(secs * 1_000_000))
-    elif secs < 0.0 and seqNo > 1:
-      discard usleep(Useconds(rand(-secs * 1_000_000)))
-    while overloaded(load, rs.len):     # While overloaded sleep >= 1 second
-      discard usleep(Useconds(max(1.0, secs.abs) * 1_000_000.float))
+    maybeSleep(secs, seqNo, load)       # MAYBE SLEEP BEFORE LAUNCH
     rs[i].pid = bg(cmd, verb, seqNo, i, tot)
     nKid += 1                           # Count kid as spawned
     seqNo += 1
   while nKid > 0: discard wait(verb)    # No more new=>Wait for any until 0 kids
-  return sumSt                          # Exit w/informative status
+  sumSt                                 # Exit w/informative status
 
 proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
          after=false, BefFmt="", AftFmt="", posArgs: seq[string]) =
