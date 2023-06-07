@@ -24,19 +24,17 @@ runs FileJobs first on host X then on host Y then on whichever finishes first.
 Repeat X or Y to keep more jobs running on each host.
 
 $STRIPE_SLOT (arg slot index) & optionally $STRIPE_SEQ (job seqNum) are also
-provided to jobs.  In N-mode SIGUSR[12] (in|de)creases N.  If BefFmt uses $tot,
+provided to jobs.  In N-mode SIGUSR[12] (in|de)creases N.  If before uses $tot,
 job lines are read upfront to provide that count.
 
   -r=, --run=    string "/bin/sh" run job lines via this interpreter
   -n, --nums     bool   false     provide STRIPE_SEQ to job procs
   -s=, --secs=   float  0.0       sleep SECS before running each job
   -l=, --load=   int    -1        0/1/2: 1/5/15-minute load average < N
-  -b, --before   bool   false     emit pre-run report to stderr
-  -a, --after    bool   false     emit post-complete to stderr
-  -B=, --BefFmt= string ""        "": $tm \e[1mslot: $nm $cmd\e[m
-                                  also avail: $seq $tot
-  -A=, --AftFmt= string ""        "": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
-                                  also avail: $w (wall) $m (MiB RSS) $pcpu
+  -b=, --before= string ""        "D": $tm \e[1mslot: $nm $cmd\e[m
+                                  alsoAvail: $seq $tot
+  -a=, --after=  string ""        "D": $tm \e[7mslot: $nm usr: $u sys: $s\e[m
+                                  alsoAvail: wall $w MiBRSS $m $pcpu $cmd
 ```
 
 There is no need for `STRIP_SUB` to be ssh targets.  Any regular pool of work

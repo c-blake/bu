@@ -8,18 +8,17 @@ proc `$`(tv: Timeval): string =         # For Rusage.ru_utime, Rusage.ru_stime
   $clong(tv.tv_sec) & "." & intToStr(tv.tv_usec, 6)
 proc timeOfDay(): Timespec = discard clock_gettime(CLOCK_REALTIME, result)
 proc `$`(t: Timespec):string = $clong(t.tv_sec) & intToStr(t.tv_nsec div 1000,6)
-
 proc ERR(x: string) = stderr.write(x)
+
 const BefDfl = "$tm \e[1mslot: $nm $cmd\e[m"
 const AftDfl = "$tm \e[7mslot: $nm usr: $u sys: $s\e[m"
-var bef, aft: string
-var binsh = false; var fancy = false; var numMo = false #Flags saying how called
-var exportSeqNo: bool = false           # Export STRIPE_SEQ if user-requested
+var bef, aft: string; var binsh, fancy, numMo, putSN: bool # How prog was called
+
 var sh_cmd: int                         # Shared between bg_setup() & bg()
 var sh_av: cstringArray
 var dSlot = 0                           # Signal handlers access these globals
 var sumSt, nKid: int                    # sum(exCodes) & num live kids
-var rs: seq[tuple[pid: Pid; nm, sub: string; t0: Timespec]]
+var rs: seq[tuple[pid: Pid; nm, sub, cmd: string; t0: Timespec]]
 proc rsFind(p: Pid): int =
   result = -1; for i, r in rs: (if r.pid == p: return i)
 
@@ -57,12 +56,12 @@ proc bg_setup(run: string): File =      #NOTE: Immediately dups stdin for result
   sh.add("dummyArg")
   sh_av = allocCStringArray(sh)
 
-proc bg(cmd: string; verb, seqNo, i, tot: int): Pid =
-  if (verb and 1) != 0:
+proc bg(cmd: string; seqNo, i, tot: int): Pid =
+  if bef.len > 1:                       # `> 1` since \n is always appended.
     rs[i].t0 = timeOfDay()
     ERR bef%["tm",$rs[i].t0, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo, "tot",$tot]
-  if exportSeqNo:                       # Sequence number export was requested
-    putEnv("STRIPE_SEQ", $seqNo)
+  if aft.len > 1: rs[i].cmd = cmd       # Maybe save for `wait` report
+  if putSN: putEnv "STRIPE_SEQ", $seqNo # Sequence number export was requested
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
   if rs[i].sub.len != 0:                #..So, could maybe be optimized to save
     putEnv("STRIPE_SUB", rs[i].sub)     #..0.5-1 microsec so per kid launch.
@@ -77,7 +76,7 @@ proc bg(cmd: string; verb, seqNo, i, tot: int): Pid =
   ERR("Cannot run \"$#\"\n" % cmd)
   exitnow(113)                          # ..or exit kid on failed exec
 
-proc wait(verb: int): int =
+proc wait(): int =
   var ru: Rusage
   var st: cint
   var i = -1
@@ -87,7 +86,7 @@ proc wait(verb: int): int =
   nKid -= 1                             # Count kid & accum exit status
   rs[i].pid = 0.Pid                     # Mark run slot free (Maybe unneeded)
   if WIFEXITED(st): sumSt += WEXITSTATUS(st)
-  if (verb and 2) != 0:                 # Maybe report rusage
+  if aft.len > 1:                       # Maybe report rusage
     let t1 = timeOfDay(); var w: Timeval; var pc: string; var mr: string
     if fancy:
       let dt     = t1 - rs[i].t0; w = dt.nsToTimeVal
@@ -96,35 +95,36 @@ proc wait(verb: int): int =
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
     ERR aft % ["tm",$t1, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
-               "u",$ru.ru_utime, "s",$ru.ru_stime]
+               "u",$ru.ru_utime, "s",$ru.ru_stime, "cmd",rs[i].cmd]
+  rs[i].cmd.setLen 0
   i
 
-proc stripe(jobs: File, secs = 0.0, load = -1, verb = 0): int =
+proc stripe(jobs: File, secs = 0.0, load = -1): int =
   var nSlot = rs.len
   var seqNo = 1; var tot = 0
   for cmd in lines2(jobs, tot):         # Get a cmd, maybe wait for slot
-    var i = if nKid == nSlot: wait(verb) else: rsFind(0.Pid)
+    var i = if nKid == nSlot: wait() else: rsFind(0.Pid)
     if numMo:                           # MAYBE ADJUST NUMBER OF RUN SLOTS
       let diff = dSlot                  # Minimize real time window for..
       dSlot = 0                         # ..signal deliveries to be lost.
       if diff > 0:                      # At least one SIGUSR1 during wait
         let n = min(1024, nSlot + diff)
-        for k in nSlot ..< n: rs.add (0.Pid, $k, "", rs[0].t0)
+        for k in nSlot ..< n: rs.add (0.Pid, $k, "", "", rs[0].t0)
       elif diff < 0:                    # At least one SIGUSR2 during wait
         let n = max(1, nSlot + diff)    # NOTE: wait does the nKid -= 1
         while nKid + 1 > n:             # nKid usually starts @nSlot-1, but SIG
           rs.delete i                   # ..can hit while still ramping up kids.
-          i = wait(verb)                # ..Either way wait until nKid=n is ok.
+          i = wait()                    # ..Either way wait until nKid=n is ok.
       nSlot = rs.len   
     maybeSleep(secs, seqNo, load)       # MAYBE SLEEP BEFORE LAUNCH
-    rs[i].pid = bg(cmd, verb, seqNo, i, tot)
+    rs[i].pid = bg(cmd, seqNo, i, tot)
     nKid += 1                           # Count kid as spawned
     seqNo += 1
-  while nKid > 0: discard wait(verb)    # No more new=>Wait for any until 0 kids
+  while nKid > 0: discard wait()        # No more new=>Wait for any until 0 kids
   sumSt                                 # Exit w/informative status
 
-proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
-         after=false, BefFmt="", AftFmt="", posArgs: seq[string]) =
+proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
+         posArgs: seq[string]) =
   ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
   ## job lines from *stdin* and keeps up to `N` | `M` running at once.
   ## 
@@ -135,13 +135,12 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
   ## 
   ## **$STRIPE_SLOT** (arg slot index) & optionally **$STRIPE_SEQ** (job seqNum)
   ## are also provided to jobs.  In `N`-mode `SIGUSR[12]` (in|de)creases `N`.
-  ## If `BefFmt` uses `$tot`, job lines are read upfront to provide that count.
-  var verb = (if before: 1 else: 0) or (if after: 2 else: 0) # verbosity mask
-  exportSeqNo = nums
+  ## If `before` uses `$tot`, job lines are read upfront to provide that count.
   if len(posArgs) < 1:
     raise newException(ValueError, "Too few posArgs; need { num | 2+ slots }")
-  bef = (if BefFmt.len > 0: BefFmt else: BefDfl) & "\n"
-  aft = (if AftFmt.len > 0: AftFmt else: AftDfl) & "\n"
+  putSN = nums
+  bef   = (if before in ["d", "D"]: BefDfl else: before) & "\n"
+  aft   = (if after  in ["d", "D"]: AftDfl else: after ) & "\n"
   fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
   numMo = posArgs.len == 1
   if numMo:                             # FIXED NUM JOBS MODE
@@ -154,7 +153,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before=false,
     rs.setLen posArgs.len               #   impossible zero PIDs
     for i, a in posArgs: rs[i].nm = a; rs[i].sub = a  # $STRIPE_SLOT,_SUB
   try:
-    quit(min(127, stripe(run.bg_setup, secs, load, verb)))
+    quit(min(127, stripe(run.bg_setup, secs, load)))
   except IOError:
     stderr.write "No file descrip 0/stdin | stdout/err output space issue.\n"
     quit(min(127, sumSt))
@@ -174,9 +173,7 @@ when isMainModule:
                  "nums"  : "provide **STRIPE_SEQ** to job procs",
                  "secs"  : "sleep `SECS` before running each job",
                  "load"  : "0/1/2: 1/5/15-minute load average < `N`",
-                 "before": "emit pre-run report to *stderr*",
-                 "after" : "emit post-complete to *stderr*",
-                 "BefFmt":"""\"\": $tm \\\\e[1mslot: $nm $cmd\\\\e[m
-also avail: \$seq \$tot""",
-                 "AftFmt": """\"\": $tm \\\\e[7mslot: $nm usr: $u sys: $s\\\\e[m
-also avail: \$w (wall) \$m (MiB RSS) \$pcpu"""}
+                 "before":"""\"D\": $tm \\e[1mslot: $nm $cmd\\e[m
+alsoAvail: \$seq \$tot""",
+                 "after" :"""\"D\": $tm \\e[7mslot: $nm usr: $u sys: $s\\e[m
+alsoAvail: wall \$w MiBRSS \$m \$pcpu \$cmd"""}
