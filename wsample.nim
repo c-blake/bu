@@ -61,15 +61,13 @@ proc cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): seq[MSlice] =
   let nEffective = min(n, m * tokens.len)
   let cdf = wt.weights(tokens).cumsummed
   var count: CountTable[MSlice]
-  var i = 0
-  while i < nEffective:         #Algo must infinite loop at >= nEffective
+  for i in 0 ..< nEffective:    #Algo must infinite loop at >= nEffective
     var s {.noinit.}: MSlice
     while true:                 #Becomes slow after n >=~ (m-1)*tokens.len
       s = sample(tokens, cdf)
       count.inc(s)
       if count[s] <= m: break
     echo s
-    inc(i)
 
 when isMainModule:
   when defined(release): randomize()
