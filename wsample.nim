@@ -53,7 +53,7 @@ proc print*(wt: WeightTab, tokens: seq[MSlice], stdize=false) =
     if cnt > 1: outu "*", cnt
     outu "\n"
 
-proc cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): seq[MSlice] =
+iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
   ## Weighted sample of size ``n`` capping to ``m`` copies of any given token.
   ## This can be useful if to weight but bound the skew.  This does bias to make
   ## more heavily weighted tokens earlier in a sample.  Algo does not inf.loop,
@@ -67,20 +67,19 @@ proc cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): seq[MSlice] =
       s = sample(tokens, cdf)
       count.inc(s)
       if count[s] <= m: break
-    echo s
+    yield s
 
 when isMainModule:
   when defined(release): randomize()
-  proc wsample*(weights, tokens: string; n=4000, m=3, dir=".",
-                explain=false, stdize=false) =
+  proc wsample(weights, tokens: string; n=4000, m=3, dir=".",
+               explain=false, stdize=false) =
     ## Print `n`-sample of tokens {nl-delim file `tokens`} weighted by path
     ## `weights` which has fmt: SRC W LABEL\\n where each SRC file is a set of
     ## nl-delimited tokens.  BASE in `weights` = `tokens` (gets no label).
     setCurrentDir(dir)
     let tokens = loadTokens(tokens)
     let wt = loadWeights(weights, tokens)
-    if explain:
-      wt.print(tokens, stdize); quit(0)
+    if explain: wt.print(tokens, stdize); quit 0
     if m > 0:
       for s in wt.cappedSample(tokens, n, m): echo s
     else:
