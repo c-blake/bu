@@ -19,8 +19,8 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
     if line.len == 0 or line[0] == '#': continue
     var cols = line.msplit(0)
     if cols.len != 3: continue
-    let path  = $cols[0]                    # Format is: PATH WEIGHT LABEL
-    let amt   = parseInt($cols[1]).int32
+    let path = $cols[0]                     # Format is: PATH WEIGHT LABEL
+    let amt  = parseInt($cols[1]).int32
     if path == "BASE":
       for token in tokens: result.wtab.mgetOrPut(token, empty).w += amt
     else:
