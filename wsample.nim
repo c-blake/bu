@@ -83,6 +83,7 @@ when isMainModule:
     ## Print `n`-sample of tokens {nl-delim file `tokens`} weighted by path
     ## `weights` which has fmt: SRC W LABEL\\n where each SRC file is a set of
     ## nl-delimited tokens.  BASE in `weights` = `tokens` (gets no label).
+    var b = newSeq[char](8192); discard c_setvbuf(stdout, b[0].addr, 0, 8192)
     setCurrentDir(dir)
     let tokens = loadTokens(tokens)
     let wts = loadWeights(weights, tokens)
