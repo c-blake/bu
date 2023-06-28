@@ -1,4 +1,5 @@
-import os, tables, strutils, math, random, cligen, cligen/[mfile, mslice, osUt]
+import std/[os, tables, strutils, math, random],
+       cligen, cligen/[mfile, mslice, osUt, sysUt]
 
 proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
   for token in mopen(tokens).mSlices: result.add(token)
@@ -10,7 +11,7 @@ type
     wtab: WeightTab
     labs: seq[MSlice]
     cnt: Table[MSlice, array[64, uint8]]    # token -> (cnt[labIx] tab for mults
-var emptyArr: array[64, uint8]
+var emptyA: array[64, uint8]
 
 proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
   result.wtab = initTable[MSlice, Weight](tokens.len)
@@ -32,8 +33,8 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
           cell.w += amt
           if (cell.why and bit) != 0:       # Bit already on: inc multiples
             cell.aMul = true                # Avoids lookup-to-test in `print`
-            result.cnt.mgetOrPut(token, emptyArr)[result.labs.len].inc # Updt>1
-          else:                             #XXX saturating `incs` ^^^ overload
+            result.cnt.mgetOrPut(token, emptyA)[result.labs.len].incSat # Updt>1
+          else:
             cell.why = cell.why or bit      # Turn bit on for labs[^1]
         cols[2].mem = cols[2].mem +! -1; cols[2].len += 1 # extend to delim
         result.labs.add cols[2]             # @end to avoid earlier -1/^1's
@@ -53,8 +54,8 @@ proc print*(wts: Weights, stdize=false) =
     if stdize: ws = formatFloat(w.float/meanW, ffDefault, 4)
     else: ws.setLen 0; ws.addInt w
     ws.add " "; ws.add tok; outu ws     # 1 outu faster than outu ws, " ", tok
-    let cnt = if aMul: wts.cnt[tok] else: emptyArr # Good C compiler skips cpy..
-    for i, lab in wts.labs:                        #..unless cnt[i] needed below
+    let cnt = if aMul: wts.cnt[tok] else: emptyA # Good C compiler skips copy..
+    for i, lab in wts.labs:                      #..unless cnt[i] needed below.
       if (why and (1u64 shl i)) != 0:
         outu lab
         if aMul and cnt[i] > 0: outu "*", $(cnt[i] + 1) # `cnt` counts > 1
@@ -89,10 +90,10 @@ when isMainModule:
     let wts = loadWeights(weights, tokens)
     if explain: wts.print stdize; quit 0
     if m > 0:
-      for s in wts.wtab.cappedSample(tokens, n, m): echo s
+      for s in wts.wtab.cappedSample(tokens, n, m): outu s, "\n"
     else:
       let cdf = wts.wtab.weights(tokens).cumsummed
-      for i in 1..n: echo sample(tokens, cdf)
+      for i in 1..n: outu sample(tokens, cdf), "\n"
   dispatch wsample,help={"weights": "path to weight meta file",
                          "tokens" : "path to tokens file",
                          "n"      : "sample size",
