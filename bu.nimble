@@ -1,5 +1,5 @@
 # Package
-version     = "0.9.0"
+version     = "0.9.1"
 author      = "Charles Blake"
 description = "B)asic|But-For U)tility Code/Programs (Usually Nim & With Unix/POSIX/Linux Context)"
 license     = "MIT/ISC"
@@ -146,5 +146,5 @@ else:
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.6.6",
-         "adix >= 0.5.5", "nio >= 0.6.7", "fitl >= 0.3.1"
+requires "nim >= 1.6.0", "cligen >= 1.6.7",
+         "adix >= 0.5.6", "nio >= 0.6.8", "fitl >= 0.3.1"
