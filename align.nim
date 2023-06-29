@@ -2,13 +2,13 @@ import cligen, cligen/[textUt, mslice]  # printedLen Sep
 from strutils import nil #unqualifiedVisibility(strutils.align) breaks dispatch
 when not declared(stdout): import std/syncio
 
-proc pr(str: string; sWidth, width: int; algn, pad: string) {.inline.} =
+proc pr(str: string; sWidth, width: int; algn, pad: string; last: bool) =
   proc prPad(n: int, p=pad) {.inline.} =
     if n < 0: return                    # cannot possibly pad
     discard stdout.writeBuffer(cast[pointer](cstring(p)), n)
   let extra = max(1, width) - sWidth
   case algn[0]
-  of '-': stdout.write(str); prPad(extra)
+  of '-': stdout.write(str); (if not last: prPad extra)
   of '+': prPad(extra); stdout.write(str)
   of '0':
     let nL = extra div 2
@@ -93,13 +93,13 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
     for j in 0 ..< M:                   #print column width header
       if j != 0: stdout.write(sepOut)   #Count w/for separator|NULL
       let o = $(if Widths: w[j] else: wPr[j])
-      pr(o, o.len, wPr[j], aligns[j], pad)
+      pr o, o.len, wPr[j], aligns[j], pad, j+1 == M
     stdout.write('\n')
   if origin >= 0:                       #print numeric column headers
     for j in 0 ..< M:
       if j != 0: stdout.write(sepOut)
       let o = $(origin + j)
-      pr(o, o.len, wPr[j], aligns[j], pad)
+      pr o, o.len, wPr[j], aligns[j], pad, j+1 == M
     stdout.write('\n')
   if HeadersOnly:                       #print only header (rows[0])
     let row = rows[0]
@@ -107,12 +107,12 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
       if j != 0: stdout.write(sepOut)
       let jl = row[j].mpl
       if jl > 0:
-        pr(row[j], jl, wPr[j], aligns[j], pad)
+        pr row[j], jl, wPr[j], aligns[j], pad, j+1 == M
       else:
-        pr(empty, nEmpty, wPr[j], aligns[j], pad)
+        pr empty, nEmpty, wPr[j], aligns[j], pad, j+1 == M
     for j in row.len ..< M:
       stdout.write(sepOut)
-      pr(null, nNull, wPr[j], aligns[j], pad)
+      pr null, nNull, wPr[j], aligns[j], pad, j+1 == M
     stdout.write('\n')
     return 0
   var blankIx = 0                       #PASS3b: PRINT FORMATTED DATA
@@ -128,12 +128,12 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
       if j != 0: stdout.write(sepOut)
       let jl = row[j].mpl
       if jl > 0:
-        pr(row[j], jl, wPr[j], aligns[j], pad)
+        pr row[j], jl, wPr[j], aligns[j], pad, j+1 == M
       else:
-        pr(empty, nEmpty, wPr[j], aligns[j], pad)
+        pr empty, nEmpty, wPr[j], aligns[j], pad, j+1 == M
     for j in row.len ..< M:
       stdout.write(sepOut)
-      pr(null, nNull, wPr[j], aligns[j], pad)
+      pr null, nNull, wPr[j], aligns[j], pad, j+1 == M
     stdout.write('\n')
 
 dispatch(align, help = {
