@@ -72,7 +72,7 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
   while aligns.len < M:
     aligns.add(aligns[^1][0..^1]) #COPY
 
-  var wPr = w                           #PASS2: WIDTHS FOR TEXT TO BE PRINTED
+  var wPr = w                           #PART2: ANALYZE PER-COLUMN METADATA
   if HeadersOnly: zeroMem(addr wPr[0], wPr.len * sizeof wPr[0])
   let hdr = rows[0]
   for j in 0 ..< hdr.len: wPr[j] = max(wPr[j], hdr[j].mpl)  #header widths
@@ -89,7 +89,7 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
           wPr[j] = len($tmp)            #but need to use len of *new* width.
   var pad = strutils.repeat(' ', max(wPr)) #wPr now correct; Create pad buffer
 
-  if widths:                            #PASS3a: PRINT FORMATTED METADATA
+  if widths:                            #PASS2a: PRINT FORMATTED METADATA
     for j in 0 ..< M:                   #print column width header
       if j != 0: stdout.write(sepOut)   #Count w/for separator|NULL
       let o = $(if Widths: w[j] else: wPr[j])
@@ -115,7 +115,7 @@ proc align(delim=",", sepOut=" ", origin0=false, origin1=false, widths=false,
       pr null, nNull, wPr[j], aligns[j], pad, j+1 == M
     stdout.write('\n')
     return 0
-  var blankIx = 0                       #PASS3b: PRINT FORMATTED DATA
+  var blankIx = 0                       #PASS2b: PRINT FORMATTED DATA
   N = 0                                 #This loop basically just reproduces..
   for i in 0 ..< rows.len:              #..the recorded parsing state machine.
     inc(N)                              #bump line number
