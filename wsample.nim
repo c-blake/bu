@@ -79,6 +79,7 @@ iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
 
 when isMainModule:
   when defined(release): randomize()
+  when not declared(stdout): import std/syncio
   proc wsample(weights, tokens: string; n=4000, m=3, dir=".",
                explain=false, stdize=false) =
     ## Print `n`-sample of tokens {nl-delim file `tokens`} weighted by path
