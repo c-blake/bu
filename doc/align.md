@@ -61,11 +61,17 @@ sed "s/\(  *\)\($e\[[0-9a-f;]*m\)\(  *\)/\2\1\3/g"
 script/shell function/alias.  With [lc](https://github.com/c-blake/lc)'s
 provided config and the above definition, one can do:
 ```
-lc -1sL | sgr-bunch | align -dw -m8 -s\| +7 -
+lc -1sL tests | sgr-bunch | align -dw -m8 -s\| +7 -
 ```
 which will right- rather than left-align the first 7 columns (4th & 5th columns,
-Usr & Grp, are left-aligned by `lc`).  It also left align the final column and
+Usr & Grp, are left-aligned by `lc`).  It also left aligns the final column and
 for kicks puts a bunch of `|` pipe symbols to make vertical bars in the output.
+i.e.:
+```
+%o|perm|N|Usr|Grp|ByDv|Mtm|NmLn
+99|0775|1| cb| cb| 486|15w|fage.sh
+99|0775|1| cb| cb|5291|15w|strench.sh
+```
 
 Very Involved Numeric Example[^1]
 ---------------------------------
