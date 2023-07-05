@@ -125,5 +125,5 @@ numbers of columns. (GNU `column` surely has many features that `align` lacks,
 of course.)  While there is probably some Perl tool to do the decimal alignment
 bits, this Nim tool works ~6X faster than `less` and so is more "for free".
 
-[^1] This feature does not yet work well with utf8/SGR inside numeric columns,
+[^1]: This feature does not yet work well with utf8/SGR inside numeric columns,
 but that is hopefully a rare use case.
