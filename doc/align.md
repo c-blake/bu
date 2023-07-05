@@ -19,8 +19,8 @@ stdInOut filter to align an ASCII table & optionally emit colNo header row.
 Zero or more alignSpecs control output alignment:
 
   -[(emptyCode|aByte|classCode)][<R(1)>] Left Align (default) R columns
-  +[(emptyCode|aByte|classCode)][<R(1)>] Right Align  R columns
   0[(emptyCode|aByte|classCode)][<R(1)>] Center R columns
+  +[(emptyCode|aByte|classCode)][<R(1)>] Right Align  R columns
 
 where
 
@@ -113,7 +113,9 @@ Note that to avoid remembering order / delimiters or id tags all chars after
 the alignment character are on an equal footing except the repetition integer
 which must be last (and goes to the end of the argument slot).  This mostly
 just means that codes like 'e' and 'd' cannot collide with each other or with
-radix point characters (which seems unlikely in practice).
+alignment/radix point characters (which seems easily avoided in practice).  The
+only ordering constraint is "alignment indicator first" and repeat integer last
+(and the "02" in the involved example shows how "both" are interpreted).
 
 Related Work
 ------------
