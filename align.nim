@@ -48,8 +48,8 @@ proc init(cms: var seq[ColMeta]; alignSpecs, aclass, empties: seq[string];
     cms[^1].emp = emDef
     cms[^1].al = case asp[0]            #<AL>[(emptyCode|aByte|classCode)*][<R>]
       of '-': alLeft
-      of '+': alRight
       of '0': alCenter
+      of '+': alRight
       else: raise newException(IOError, "unknown alignment: " & asp[0])
     for j, ch in asp[1 ..< min(5, asp.len)]: # Digit for <R> must occur by [4]
       if   (let i=emKey.find(ch); i>=0): cms[^1].emp = emVal[i]
@@ -76,8 +76,8 @@ proc pr(str: MSlice; sWidth, width, bc, ci: int; al: AMent; last: bool) =
     let extra = max(1, width) - sWidth
     case al                             # pad w/space to left|right|center align
     of alLeft  : outu str; (if not last: prPad extra)
-    of alRight : prPad extra; outu str
     of alCenter: (let nL = extra div 2; prPad nL; outu str; prPad extra - nL)
+    of alRight : prPad extra; outu str
   else:                                 # ch-aligned; this field char ix is `ci`
     let leading = max(0, bc - ci)
     prPad leading; outu str; prPad width - str.len - leading
@@ -88,8 +88,8 @@ proc align(input="-", delim=",", maxCol=0, prLen=f, aclass = @["d0-9"],
   ## stdInOut filter to align an ASCII table & optionally emit colNo header row.
   ## Zero or more alignSpecs control output alignment:
   ##   -[(emptyCode|aByte|classCode)*][<R(1)>] Left Align (default) R columns
-  ##   +[(emptyCode|aByte|classCode)*][<R(1)>] Right Align  R columns
   ##   0[(emptyCode|aByte|classCode)*][<R(1)>] Center R columns
+  ##   +[(emptyCode|aByte|classCode)*][<R(1)>] Right Align  R columns
   ## where
   ##   `emptyCode` Names the empty string for a column; absent => 'e'
   ##   `aByte`     Specifies '.'|','-like alignment byte; cannot be 'e'
