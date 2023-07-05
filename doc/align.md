@@ -105,7 +105,7 @@ If you deal with inputs from Western Europe where `,` not `.` is used as decimal
 radix point then you can say `+,d` (though you likely have a different than
 default `-d,` delimiter).
 
-You can add new character classes with `align -ah0-9a-hA-H` to make `+.h` align
+You can add new character classes with `align -ah0-9a-fA-F` to make `+.h` align
 hexadecimal digits even without a '.' (e.g. for mixed hex & hex float).  You can
 save such fancy definitions in your `~/.config/align` if you like.
 
