@@ -102,8 +102,8 @@ mistake, but rather the default unless overridden by a columns alignSpec.  You
 can override that default with `-e=eNA` (or similar) if desired.
 
 If you deal with inputs from Western Europe where `,` not `.` is used as decimal
-radix, you can say `+,d` (though you likely have a different than default `-d,`
-delimiter).
+radix point then you can say `+,d` (though you likely have a different than
+default `-d,` delimiter).
 
 You can add new character classes with `align -ah0-9a-hA-H` to make `+.h` align
 hexadecimal digits even without a '.' (e.g. for mixed hex & hex float).  You can
