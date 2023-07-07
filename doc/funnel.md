@@ -77,7 +77,7 @@ assumptions (e.g. temp space, bash, EPOCHREALTIME) it could also be much
 simpler, not even requiring `funnel`.  I tried to strike a balance.
 
 The e.g. in the doc blurb of `xa` above can be used, e.g., to compare perf of
-something like `ripgrep` & GNU `grep`, using `bu/ru` & `bu/cstats`:
+something like `ripgrep` & GNU `grep`, using [ru](ru.md) & [cstats](cstats.md):
 ```
 cd /dev/shm
 export LC_ALL=C # Below clone fetches GiB! Adapt to your own extant, if possible
