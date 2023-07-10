@@ -96,11 +96,12 @@ proc nrel(vsn="", bump=patch, upDeps=false, msg="", stage=push, title="",
   let msg = if msg.len != 0: msg else: "Bump versions pre-release"
   let newV = nimbleUp(vsn, bump, upDeps, dryRun)
   if stage == nimble: quit()
-  run "git commit -am \'" & msg & "\'", "error committing version bump",5,dryRun
+  run "git commit -m \'" & msg & "\' " & nimblePath(),
+      "Error committing version bump",5,dryRun
   if stage == commit: quit()
-  run "git tag " & newV, "error adding " & newV & " tag", 6, dryRun
+  run "git tag " & newV, "Error adding " & newV & " tag", 6, dryRun
   if stage == tag: quit()
-  run "git push; git push --tags", "error pushing to main GH branch", 7, dryRun
+  run "git push; git push --tags", "Error pushing to main GH branch", 7, dryRun
   if stage == push: quit()
   run "gh release create \'"&newV&"\' -t '"&title&"' -F '"&rNotes&"'",
       "Error running gh release create; Manually do it on github", 8, dryRun
