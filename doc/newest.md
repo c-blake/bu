@@ -34,9 +34,10 @@ Options:
 Related Work
 ------------
 `find -printf` does not support the new-ish Linux b-time.  Even if it did one
-would need to pipe its output to something like `topn 3` (which also does not
-exist) that maintained a heap sorted by the desired time (in the desired order)
-to be as memory efficient.  `sort` is highly wasteful for this use case.
+would need to pipe its output to something like `topn 3` (see [topn](topn.md))
+that maintained a heap sorted by the desired time (in the desired order) to be
+as memory efficient.  `sort` is highly wasteful for this use case, as is `topn`
+really considering all the binary -\> ASCII -\> binary that must happen.
 
 This also uses my `cligen/dents` tree walker to be faster than `find` (much
 faster with `-d:batch` & a custom kernel module) on Linux.  GNU `find` worries
