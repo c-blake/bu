@@ -59,7 +59,7 @@ proc relTo(ms: MSlice, base: pointer): MSlice = # Make input ms relative to base
 proc cInterPrint(why, cmd0: string, prs: seq[MacroCall]; iPath, oPath: MSlice;
                  iQ, oQ: EsQuo) =
   for (id, arg, call) in prs:
-    if id == 0..0: stdout.urite cmd0, arg
+    if id.idIsLiteral: stdout.urite cmd0, arg
     else:       # Only test 1st char on purpose so user can say %in or %output.
       case cmd0[id.a]
       of 'i': stdout.emit iPath, iQ

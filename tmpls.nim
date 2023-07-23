@@ -3,7 +3,7 @@ import std/sugar, cligen, cligen/[strUt, mslice, mfile, osUt], bu/esquo
 
 proc interPrint(f: File; tmpl: string, prs: seq[MacroCall]; str: SomeString) =
   for (id, arg, call) in prs:
-    if id == 0..0: f.urite tmpl, arg
+    if id.idIsLiteral: f.urite tmpl, arg
     elif tmpl[id.a] == 's': f.urite str
     elif tmpl[id.a] == 'n': (if needQuo in str: f.sQuote str else: f.urite str)
     elif tmpl[id.a] == 'q': f.sQuote str
