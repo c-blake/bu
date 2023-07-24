@@ -70,6 +70,8 @@ proc nimbleUp(vsn: string, bump=patch, upDeps=false, dryRun=false): string =
   dvF.write """template after(action: untyped, body: untyped): untyped = discard
 template before(action: untyped, body: untyped): untyped = discard
 template task(name:untyped; description:string; body:untyped): untyped = discard
+proc getPkgDir(): string = getCurrentDir()
+proc thisDir(): string = getPkgDir()
 import strutils""", "\n", nb, """echo version
 for d in requiresData: (for dd in d.split(","): echo dd.strip)
 """; dvF.close
