@@ -65,11 +65,14 @@ proc nimbleUp(vsn: string, bump=patch, upDeps=false, dryRun=false): string =
   let nbPath = nimblePath()
   let (_, pknm, _) = nbPath.splitFile
   if nbPath.len == 0: quit "could not find nimble file", 2
-  let nb = if nbPath.len > 0: nbPath.readFile else: ""
-  let (dvF, dvPath) = createTempFile("dumpVsn", ".nims") # Generality=>add echos
-  dvF.write nb, "\necho version\nimport strutils\n"      #..to .nimble & nim e.
-  dvF.write "for d in requiresData: (for dd in d.split(\",\"): echo dd.strip)\n"
-  dvF.close
+  let nb = if nbPath.len > 0: nbPath.readFile else: ""   # Generality=>add echos
+  let (dvF, dvPath) = createTempFile("dumpVsn", ".nims") #..to .nimble & nim e.
+  dvF.write """template after(action: untyped, body: untyped): untyped = discard
+template before(action: untyped, body: untyped): untyped = discard
+template task(name:untyped; description:string; body:untyped): untyped = discard
+import strutils""", "\n", nb, """echo version
+for d in requiresData: (for dd in d.split(","): echo dd.strip)
+"""; dvF.close
   let (outp, xs) = execCmdEx("nim e " & dvPath)
   let outps = outp.splitLines
   let curV = outps[0]
