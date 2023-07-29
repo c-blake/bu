@@ -8,8 +8,8 @@ Emit to `stdout` an escape string activating text colors/styles, honoring
 
 Regular/ANSI dim color keywords are in lower case while the bright bank is in
 UPPER CASE.  This is the list of both:
- * dim   black, red, green, yellow, blue, purple, cyan, white
- * lite  BLACK, RED, GREEN, YELLOW, BLUE, PURPLE, CYAN, WHITE
+ * dim   black red green yellow blue purple cyan white
+ * lite  BLACK RED GREEN YELLOW BLUE PURPLE CYAN WHITE
 
 Colors are foreground by default.  Pre-pend the string "on_" for Background.
 So, e.g. `YELLOW on_red` will be bright yellow text on dark red background.
@@ -18,14 +18,14 @@ You can use this to e.g.
 ```sh
 echo "$(tattr WHITE on_blue)some$(tattr WHITE on_blue)other$(tattr plain)"
 ```
-{ If you do things like this often, you probably want your shell `PS1` prompt
+{ If you do things like this often, you may want your shell `PS1` prompt
 variable to contain an `\\e[m` ANSI SGR Escape color deactivation substring
 so that it's ok to forget the `tattr off` at the end. }
 
 More colors when supported by the terminal
 ------------------------------------------
 
-256-color terminals like xterm-256|st|kitty also support:
+256-color terminals like xterm-256|st|kitty|alacritty also support:
 
  * {fbu}[0..23] for F)ORE/B)ACKground grey scale (1..2 decimal digits)
  * {fbu}RGB where each of R, G, B is in 0..5 (3 decimal digits)
@@ -43,7 +43,7 @@ as in:
 echo "$(tattr f28FFA0 b303030)hello in green-on-gray"
 ```
 For both of the above, a "u" refers to the foreground color of underline or
-undercurl or under*.
+undercurl (or any underfoo, really).
 
 More styles when supported by the terminal
 ------------------------------------------
@@ -64,18 +64,24 @@ Non-color styles are:
 
 These can be prefixed with '-' for the turn off esc sequence.
 
-Related Work
-------------
+Rationale/Related Work
+----------------------
 
-The main rationale of this utility is to "fit well" with other cligen tools and
-configurations like `lc`, `procs`, `hldiff`, `cligen` help tables, etc.  While
-you can do things like:
+The main rationale of this utility is to "fit well" with other
+[cligen](https://github.com/c-blake/cligen) tools and related configurations
+like [lc](https://github.com/c-blake/lc),
+[procs](https://github.com/c-blake/procs),
+[hldiff](https://github.com/c-blake/hldiff), `cligen` help output, etc.
+While you can do things like:
 ```
 echo $(tput setaf 214)256 $(tput setaf 202)colors
 ```
 they will not honor `.config/cligen/$LC_THEME` switching or any color aliases
 stored in said themes.  Meanwhile, if you have a 6 color hue range defined
 on-top of the 8-ANSI color scheme you can say `tattr fhue0` or `tattr fhue5`.
+Or maybe you prefer the whole English word style for attribute naming which
+is usually less abbreviated than terminfo/termcap, culturally.
 
 It is also more|less a 1-line proc and a locus for documenting my very compact
-syntax for SGR ANSI terminal attribute specification.
+syntax for SGR ANSI terminal attribute specification.  As a simple side-effect
+it also lets you use all these terminal attributes easily from shell scripts.
