@@ -45,6 +45,18 @@ echo "$(tattr f28FFA0 b303030)hello in green-on-gray"
 For both of the above, a "u" refers to the foreground color of underline or
 undercurl (or any underfoo, really).
 
+Even more ways to specify color
+-------------------------------
+An element of color scale NAME {viridis hue wLen gray pm3d} can be chosen via:
+
+  {fbu}sNAME<0.-1>[,..]
+
+where only `hue` and `wLen` take [,sat,val] optionally.  "wLen" is for
+"waveLength" - (yes, I know RGB light is a mixture; terms are just to contrast
+with "frequency order" or hot..cold / cold..hot).  This can be useful in making
+[1-1 mappings between numerical ranges and
+colors](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html).
+
 More styles when supported by the terminal
 ------------------------------------------
 
@@ -68,7 +80,8 @@ Rationale/Related Work
 ----------------------
 
 The main rationale of this utility is to "fit well" with other
-[cligen](https://github.com/c-blake/cligen) tools and related configurations
+[cligen](https://github.com/c-blake/cligen) tools and [related
+configurations](https://github.com/c-blake/cligen/wiki/Text-Attributes-supported-in-Config-files)
 like [lc](https://github.com/c-blake/lc),
 [procs](https://github.com/c-blake/procs),
 [hldiff](https://github.com/c-blake/hldiff), `cligen` help output, etc.
