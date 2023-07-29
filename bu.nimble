@@ -1,5 +1,5 @@
 # Package
-version     = "0.9.3"
+version     = "0.9.4"
 author      = "Charles Blake"
 description = "B)asic|But-For U)tility Code/Programs (Usually Nim & With Unix/POSIX/Linux Context)"
 license     = "MIT/ISC"
