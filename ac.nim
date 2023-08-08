@@ -73,7 +73,7 @@ proc parseRules(pf: (string, File), cmd: string, verbose: bool): seq[ApeRule] =
     of cfgSectionStart: doing = cmd in e.section.split
     of cfgKeyValuePair, cfgOption:
       if doing:
-        let byte = e.value[0]
+        let byte = e.value[0]   # User-chosen delimiter byte
         let cols = e.value[1..^1].split(byte)
         result.add (parseEnum[AcKind](e.key), cols[0].re, cols[1])
     of cfgError: echo e.msg
