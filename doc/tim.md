@@ -44,8 +44,8 @@ scaling up is "enough" anyway or what the residual noise scale is, this can
 Maybe we can do better.  While statistical strategies (like [eve](eve.md) or
 MLEs for "sampling cast" Weibull distributions) exist, a low sophistication way
 to estimate reproducibly Eq.1's `t0`, in spite of noise hostility, is a simple
-sample minimum which is what `tim` is about.  This **filters out all but the
-minimum noise** - better behaved than average noise.
+sample minimum which is what `tim` is about.  This **filters out all but
+noise(minimum)** - better behaved than average noise.[^4]
 
 However, this gives no estimate of estimator error.  That error estimate matters
 since one needs an **infinite** number of trials to get the true minimum.  We
@@ -166,14 +166,15 @@ just 10% of his benchmark.  Beyond this, hash table sizes become non-reflective
 of natural language vocabulary scaling.  How much this degrades his prog.lang
 comparisons is hard to say, but it's better to avoid it than guess at it.
 
-[^4]: The distribution of the sample minimum (noise) itself is the N-th power of
-the base hostile distribution.  This makes, e.g., median(min(nTimes)) the
+[^4]: For *independent* samples, which is of course *NOT* really true here, the
+distribution of the sample minimum (noise) itself is the N-th power of the base
+hostile distribution.  This makes, e.g., median(min(nTimes)) the
 [0.5^n](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
 quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
 quite variable on most systems!  The "`tim` estimate" is just an asymmetric or
 semi-[truncated mean](https://en.wikipedia.org/wiki/Truncated_mean) with params
-under user-control.  (It may be best to report the min, using the min-tail only
-for error estimates.)
+under user-control.  (It may be best to report the global over all samples min,
+using min-tail only to estimate the error of the estimate.)
 
 [^5]: My /bin/sh -> dash, not bash.  Statically linked dash is 3..4X faster than
 bash for this.  Automatically measuring & subtracting shell overhead/optionally
