@@ -37,9 +37,9 @@ Examples (most need data):
   rp 'echo s[1]," ",s[0]'                     # Swap field order
   rp -b'var t=0' t+=nf -e'echo t'             # Print total field count
   rp -b'var t=0' -w'0.i>0' t+=0.i -e'echo t'  # Total >0 field0 ints
-  rp -p'import stats' -b'var r: RunningStat' 'r.push 0.f' -e'echo r'
   rp 'let x=0.f' 'echo (1+x)/x'               # cache field 0 parse
   rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'    # named fields (CSV)
+  rp -pimport\ stats -bvar\ r:RunningStat r.push\ 0.f -eecho\ r
 
 Add niceties (eg. import lenientops) to prelude in ~/.config/rp.
 
