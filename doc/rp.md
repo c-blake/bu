@@ -87,10 +87,8 @@ The point of key press analysis is only to roughly estimate interactive
 ergonomics in a "write something quickly" mode.[^2]  Repeated constructs can &
 should surely be saved in files / abstracted.  Nim shines *brighter* then (as
 should most prog.langs with abstraction beyond `awk` & *any* ecosystem).  Said
-shining manifests in the final e.g. using Nim's `std/stats.RunningStat` type to
-get skewness & kurtosis stats which would require much more work in `awk`.  And
-with `rp` you are a small hop away from a maybe-throwaway 1-liner to a perhaps
-more enduring program with potentially much higher performance & safety.[^3]
+shining manifests in the e.g. using Nim's `std/stats.RunningStat` type to get
+skewness & kurtosis stats which would require much more work in `awk`.
 
 Future/User Work
 ----------------
@@ -113,11 +111,11 @@ bindings in `--begin` code manually if per input row `Table` lookup actually
 hurts performance.
 
 Some `--path` tweaks, a `-p"import such"` maybe in your `~/.config/rp`, and you
-can cover almost any awk use case with a fully strongly type-checked, compilable
+can cover any `awk` use case with a fully strongly type-checked, compilable
 prog.lang with terse but general syntax.  You can also use this as a prototyping
 environment, copying generated code away from `/tmp/rp\*.nim` to be the basis
 for new, standalone programs (yes, with `cligen/[mfile,mslice]`-dependency as
-currently written).
+currently written).[^3]
 
 Related Discussion
 ------------------
@@ -152,4 +150,4 @@ E.g., Caps-Lock can be a thing.  Better methodology might start with X event
 logging over long, realistic sessions and use real-time metrics, but things then
 become rather user-idiosyncratic and you need pools of users.
 
-[^3]: For me that hop is maybe just `mv $(newest -n2 /t/|g nim) x.nim`.
+[^3]: For me that is maybe just `mv $(newest -n2 /t/|g nim) x.nim`.
