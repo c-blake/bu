@@ -64,6 +64,34 @@ Options:
   -W=, --Warn=     string ""           "": --warning[CannotOpenFile]=off
 ```
 
+Comparing Examples To `awk`
+---------------------------
+Corresponding to our first 6 examples are these `awk` commands:
+```
+seq 0 1000000 | awk 'length<2'               # (17 v. 15) short rows
+awk '{print $2," ",$1}'                      # (25 v. 29) Swap fields
+awk '{t+=NF}END{print t}'                    # (32 v. 29) total fields
+awk '{if($1>0)t+=$1}END{print t}'            # (44 v. 35) Total >0 field0
+awk '{x=0+$1;print(1+x)/x}'                  # (32 v. 33) cache parse
+awk -F, 'BEGIN{a=1;b=2;c=3}{print $a,$b+$c}' # (41 v. 51) named CSV fields
+```
+The numbers in ()s are (`rp` v. `awk` key presses) *counting* SHIFTs totaling
+191 for `rp` vs. 192 for `awk`.  That is with *minimal* SHIFT use (ie. ***one***
+SHIFT down to enter "}END{") for US keyboard layouts.  `awk` needs much more
+shifting and minimal ways may feel "unnatural" (most folks I know would not
+stay shifted through that "}END{" sequence).  Press counts for the Nim eg.s can
+also be better trimmed with `\` instead of `'`.[^1]  So, even biased towards
+`awk` a couple ways, `awk` is *still* more program entry work (barely).
+
+The point of key press analysis is only to roughly estimate interactive
+ergonomics in a "write something quickly" mode.[^2]  Repeated constructs can &
+should surely be saved in files / abstracted.  Nim shines *brighter* then (as
+should most prog.langs with abstraction beyond `awk` & *any* ecosystem).  Said
+shining manifests in the final e.g. using Nim's `std/stats.RunningStat` type to
+get skewness & kurtosis stats which would require much more work in `awk`.  And
+with `rp` you are a small hop away from a maybe-throwaway 1-liner to a perhaps
+more enduring program with potentially much higher performance & safety.[^3]
+
 Future/User Work
 ----------------
 
@@ -109,3 +137,19 @@ discussed (at least) here
 Not all prog.langs have both easy to enter/terse expressions and fast compiles.
 For a comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
 base-code language.
+
+[^1]: Down to 16+25+30+41+30+41=183 for `rp` and similar backslash optimizing
+for `awk` saves only 1 stroke at 192 for *5% less pressing work* than `awk`.
+But sure, there may be shells not needing braces protected, single quotes need
+less inline thought than backslash, etc.
+
+[^2]: Ben's `prig` article (linked later) uses chars not key presses.  Visual
+length is easier to measure and a more appropriate metric for code reading vs.
+key presses for code entry.  Which matters more all depends.  Entry seems more
+common when selling 1-liners in my experience.  Once one considers shell history
+/ command edit analysis, finger reach/strain/etc., comparison gets complex fast.
+E.g., Caps-Lock can be a thing.  Better methodology might start with X event
+logging over long, realistic sessions and use real-time metrics, but things then
+become rather user-idiosyncratic and you need pools of users.
+
+[^3]: For me that hop is maybe just `mv $(newest -n2 /t/|g nim) x.nim`.
