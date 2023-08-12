@@ -120,21 +120,14 @@ currently written).[^3]
 Related Discussion
 ------------------
 
-Some more discussion is here:
+Some more discussion [is here](https://news.ycombinator.com/item?id=30190436)
+which inspired Ben to write [Prig](https://github.com/benhoyt/prig/) and [an
+article about it](https://benhoyt.com/writings/prig/) discussed (at least)
+[here](https://news.ycombinator.com/item?id=30498735).
 
-    https://news.ycombinator.com/item?id=30190436
-
-which inspired Ben to write an article here
-
-    https://benhoyt.com/writings/prig/
-
-discussed (at least) here
-
-    https://news.ycombinator.com/item?id=30498735
-
-Not all prog.langs have both easy to enter/terse expressions and fast compiles.
-For a comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
-base-code language.
+Few prog.langs have both easy to enter/terse expressions & fast compiles.  For a
+comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
+base-code language or Ben's Go examples.
 
 [^1]: Down to 16+25+30+41+30+41=183 for `rp` and similar backslash optimizing
 for `awk` saves only 1 stroke at 192 for *5% less pressing work* than `awk`.
