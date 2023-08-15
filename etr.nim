@@ -40,9 +40,9 @@ proc etr*(pid=0,did="",total="",age="",scaleAge=1.0,measure=0.0,op="",relTo="")=
   ##   `did`   parses as int => /proc/PID/fdinfo/FD (default `total` to FD.size)
   ##   `total` parses as int => /proc/PID/fd/FD.size
   ## Some examples (each assumes only 1 matching pid found by ``pf``):
-  ##   ``etr -p$(pf x) -d3 -a'fage SOME-LOG'``
-  ##   ``etr -p$(pf ffmpeg) -d3 -o4 -m2 -r0``  # Also estim. final compr.ratio
-  ##   ``etr -p$(pf stripe) -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
+  ##   ``etr -p "$(pf x)" -d3 -a'fage SOME-LOG'``
+  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m2 -r0`` # Also estim. final compr.ratio
+  ##   ``etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
   ## Estimation assumes a constant work rate, equal to the average so far.  If
   ## you give a `measure > 0.0` seconds that will instead use the present rate
   ## (unless there is no change in `did` across the measurement).  If you give a
