@@ -149,8 +149,9 @@ Related Work
 Ole Tange might advise using his 15,000 line GNU parallel Perl with its nagware
 license and need for a special, threads-enabled Perl5 to work fully, not 1..3
 100-line simple programs in a faster prog.lang.  His overhead is near 2 orders
-of magnitude bigger than need be (see `bu/execstr.nim`).  This kills performance
-on fully file cached parallel grep workloads, being slower than serial grep.
+of magnitude bigger than need be (see `bu/execstr.nim` & `tests/strench.sh`).
+This kills performance on fully file cached parallel grep workloads, being
+slower than serial grep.
 
 [^1]: Heavy-tailed noise in `tMeasured = t0 + noise` is a tricky thing, but most
 would agree `t0` is more interesting than noise dependent upon everything going
