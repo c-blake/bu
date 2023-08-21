@@ -10,7 +10,7 @@ $c -static -Os $t/true.c -o $t/true && rm $t/true.c || exit 3
 
 tm() { # Now measure dispatch overhead
     (for i in {1..20}; do $@ < $t/w; done) |&
-      sort -g | head -n5 | cstats -t,   # NOTE: cstats.nim is in adix/util
+      sort -g | head -n5 | cstats -t,   # NOTE: github.com/c-blake/bu/cstats.nim
 }
 (tm env -i PATH=$PATH ru -hut stripe 1  # stripe 1 w/1 envar
  tm ru -hut stripe 1                    # stripe 1 w/~50 envars
@@ -79,4 +79,5 @@ tm() { # Now measure dispatch overhead
 # attempt at reliable timing numbers in the face of system noise, but needs more
 # stats bkgd/a paper to explain.  There is also quantile &| density estimation
 # &| interpolation & more.  TLDR: start w/at least local reproduction within
-# some kind of estimated range of variation.
+# some kind of estimated range of variation.  This core idea is expanded a bit
+# in `tim`: https://github.com/c-blake/bu/blob/main/doc/tim.md
