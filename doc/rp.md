@@ -129,8 +129,8 @@ Few prog.langs have both easy to enter/terse expressions & fast compiles.  For a
 comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
 base-code language or Ben's Go examples.
 
-[^1]: Down to 16+25+30+41+30+41=183 for `rp` and similar backslash optimizing
-for `awk` saves only 1 stroke at 192 for *5% less pressing work* than `awk`.
+[^1]: Down to 16+25+30+41+30+41=183 for `rp`.  Similar backslash optimizing for
+`awk` saves only 1 stroke at 192 for ***5% less key pressing work*** than `awk`.
 But sure, there may be shells not needing braces protected, single quotes need
 less inline thought than backslash, etc.
 
