@@ -11,8 +11,8 @@ Part of the culture of Nim is to be sufficiently general purpose/nice enough to
 use the language everywhere - as its own macro language, for compiler config via
 NimScript .nims files, etc.  But command prompts are still a thing.  Sometimes
 you want to easily just run some calculation on some data in a file.  Applying
-the insight of the first paragraph, we get something like `rp` in < 100 LoC,
-with an extra named field extension even.
+the insight of the first paragraph, we get something like `rp` in < 100 LoC
+(with an extra auto-from-CSV headers named field extension!).
 
 The `rp --help` usage message (slightly reformatted) covers the basics.
 
