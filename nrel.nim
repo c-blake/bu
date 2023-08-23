@@ -1,5 +1,5 @@
 when not declared(stderr): import std/syncio
-import std/[os, osproc, strutils, parseutils, tempfiles, json, tables]
+import std/[os, osproc, strutils, parseutils, tempfiles, json, tables, strscans]
 
 proc nimblePath(): string =             # nicked from nimp.nim
   for k, path in ".".walkDir(true):
@@ -28,13 +28,18 @@ proc newVsn(curV: string, bump=patch): string =
 proc latestVersion(repoURI: string): string =   # Get tags for some git repo
   let cmd = "git ls-remote --tags \"" & repoURI & "\""
   let (outp, xs) = cmd.execCmdEx; if xs != 0: quit "could not run: " & cmd, 5
+  var vmax: (int, int, int)                     # Max version seen
   for row in outp.splitLines:
     var row = row
     if row.endsWith("^{}"): row.setLen row.len - 3
     if (let ix = row.find("refs/tags/"); ix != -1):
       row = row[ix+10 .. ^1]
       if row.startsWith("v"): row = row[1 .. ^1]
-      if row > result: result = row             #TODO: Careful "version-compare"
+      var res: (int, int, int)                  # Build a version; missing => 0
+      if row.scanf("$i.$i.$i", res[0], res[1], res[2]) or
+         row.scanf("$i.$i", res[0], res[1]) or  # Also allow "1.2"
+         row.scanf("$i", res[0]):               # and even "17"
+        if res > vmax: vmax = res; result = row
 
 proc getNm2URI(): Table[string, string] =       # pkgNm -> repo URI
   proc n(x: string): string = x.toLower.multiReplace(("_", ""))
