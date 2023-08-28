@@ -129,7 +129,7 @@ About all that is lost via this approach vs. a new PL is fast interpreter
 start-up time and *automatic* lifting of `Table` lookups into variables.
 
 Populating global namespaces with such features has trade-offs, in compile-time
-duration if nothing else.  So, it is deferred to ~/.config/rp author.
+duration if nothing else.  So, it is deferred to ~/.config/rp authors.
 
 Some nim.cfg `--path` tweaks and `~/.config/rp` hacking, and you can cover any
 `awk` use case with a fully strongly type-checked, compilable prog.lang with
