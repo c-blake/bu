@@ -95,27 +95,48 @@ Future/User Work
 
 There are easy ideas to round out functionality whose value depends upon your
 use case.  It may be nice to automatically open files like `print 1 > "myPath"`
-does in `awk`, for example, with:
+does in `awk`, for example, with some tiny `autorp.nim` module like this added
+as an import in `~/.config/rp` as `prelude = "import autorp"`:
 ```Nim
-var awTab: Table[string, File]  # Auto-Write-file table
-proc aw(fnm: string): File =
-  try: awTab[fnm] except: (let f = open(fnm, fmReadWrite); awTab[fnm] = f; f)
-```
-Then you can just say `"myPath".aw.write "1\n"` in per input row action clauses.
-This is barely any more key-stroking (.aw is only 2 more chars than '>').  You
-can write a tiny library of such things - say, `ar` for `fmRead`, `aa` for
-`fmAppend`, a similar `rx` automatic reg.expr compile-once but match-many, etc.
-About all that is lost via this approach is fast interpreter start-up time and
-*automatic* lifting of `Table` lookups into variables.  You can always put such
-bindings in `--begin` code manually if per input row `Table` lookup actually
-hurts performance.
+import std/[re, tables], cligen/mslice; export re
+# NOTE: more imports => slower compiles
+template af(nm, openMode) =         # Auto-File tables
+  var `nm Tab`: Table[string, File]
+  proc nm*(fNm: string): File =
+    try: `nm Tab`[fNm] except: (let f = open(fNm, openMode); `nm Tab`[fNm]=f; f)
+af ar, fmRead; af aw, fmReadWrite; af aa, fmAppend
 
-Some `--path` tweaks, a `-p"import such"` maybe in your `~/.config/rp`, and you
-can cover any `awk` use case with a fully strongly type-checked, compilable
-prog.lang with terse but general syntax.  You can also use this as a prototyping
-environment, copying generated code away from `/tmp/rp\*.nim` to be the basis
-for new, standalone programs (yes, with `cligen/[mfile,mslice]`-dependency as
-currently written).[^3]
+var cpTab: Table[string, Regex]     # cached pattern: compiled expression
+proc cp*(pat: string): Regex =
+  try: cpTab[pat] except: (let f = pat.re; cpTab[pat] = f; f)
+
+proc `=~`*(s: MSlice, p: Regex): bool = # match operator
+  findBounds(cast[cstring](s.mem), p, 0, s.len)[0] > -1
+```
+you can then just say with 54 keydowns (including "rp ")[^3]:
+```sh
+printf "%s\n" "brown bread mat hair 42" \
+              "blue cake mug shirt -7"  \
+              "yellow banana window shoes 3.14" |
+  rp -w'row=~cp"w"' '"myPath".aw.write 4.f,"\n"'
+```
+where only table lookups occur on a per-row basis.  Even more efficient is to
+use 72 key downs to elide those lookups with instead:
+```sh
+rp -b'let p=cp"w";let o=aw"myPath"' -wrow=\~p 'o.write 4.f,"\n"'
+```
+About all that is lost via this approach vs. a new PL is fast interpreter
+start-up time and *automatic* lifting of `Table` lookups into variables.
+
+Populating global namespaces with such features has trade-offs, in compile-time
+duration if nothing else.  So, it is deferred to ~/.config/rp author.
+
+Some nim.cfg `--path` tweaks and `~/.config/rp` hacking, and you can cover any
+`awk` use case with a fully strongly type-checked, compilable prog.lang with
+terse but general syntax.  You can also use this as a prototyping environment,
+copying generated code away from `/tmp/rp\*.nim` to be the basis for new,
+standalone programs (yes, with `cligen/[mfile,mslice]`-dependency as currently
+written).[^4]
 
 Related Discussion
 ------------------
@@ -143,4 +164,7 @@ E.g., Caps-Lock can be a thing.  Better methodology might start with X event
 logging over long, realistic sessions and use real-time metrics, but things then
 become rather user-idiosyncratic and you need pools of users.
 
-[^3]: For me that is maybe just `mv $(newest -n2 /t/|g nim) x.nim`.
+[^3]: Equivalent awk might be `awk '/w/{print$5>"myPath"}'` - only 33 keydowns,
+winning by quite a bit in this fancier case, at the cost of its bespoke syntax.
+
+[^4]: Using bu/newest that can be just `mv $(newest -n2 /t/|g nim) x.nim`.
