@@ -136,7 +136,7 @@ Some nim.cfg `--path` tweaks and `~/.config/rp` hacking, and you can cover any
 terse but general syntax.  You can also use this as a prototyping environment,
 copying generated code away from `/tmp/rp\*.nim` to be the basis for new,
 standalone programs (yes, with `cligen/[mfile,mslice]`-dependency as currently
-written).[^4]
+written), probably instead compiled slowly with full optimizations.[^4]
 
 Related Discussion
 ------------------
