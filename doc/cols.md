@@ -29,5 +29,5 @@ Write just some columns of input to output; Memory map input if possible.
   -b, --blanksOk bool   false         allow blank output rows
   -c, --cut      bool   false         cut/censor specified columns, not keep
   --origin=      int    1             origin for colNums; 0=>signed indexing
-  -t=, --term=   char   '\n'          set record terminator (e.g. \0)
+  -t=, --term=   char   '\n'          set row terminator (e.g. \0)
 ```
