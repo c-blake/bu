@@ -10,11 +10,11 @@ proc cols(input="/dev/stdin", delim="white", output="/dev/stdout", sepOut=" ",
   if cut:
     for r in colRanges:
       for c in r: colSet.incl c
-  let sep = initSep(delim)
+  let sep = initSep delim
   var cols: seq[MSlice] = @[ ]
-  for line in mSlices(input, eat='\0'):   #RO mmap | slices from stdio
+  for line in mSlices(input, eat='\0'): # RO mmap | slices from stdio
     var wrote = false                   # wrote something &so need sepOut|\n
-    sep.split(line, cols)
+    sep.split line, cols
     if cut:
       for j, f in cols:
         if (origin + j) in colSet or (origin + j - cols.len) in colSet:
@@ -33,7 +33,7 @@ proc cols(input="/dev/stdin", delim="white", output="/dev/stdout", sepOut=" ",
           wrote = true
     if wrote or blanksOk: outFile.urite term
 
-when isMainModule: dispatch(cols, help = {
+when isMainModule: dispatch cols, help={
   "colRanges": "colNums or A..B | X:Y (in|ex)clusive ranges thereof",
   "input"   : "path to mmap|read as input",
   "delim"   : "inp delim chars; Any repeats => fold",
@@ -42,4 +42,4 @@ when isMainModule: dispatch(cols, help = {
   "blanksOk": "allow blank output rows",
   "cut"     : "cut/censor specified columns, not keep",
   "origin"  : "origin for colNums; 0=>signed indexing",
-  "term"    : "set row terminator (e.g. \\\\0)" })
+  "term"    : "set row terminator (e.g. \\\\0)"}
