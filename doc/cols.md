@@ -74,6 +74,6 @@ advanced examples I can think of is :
 ```
 ls -l --zero | cols -cr\\0 1..4 -t\\0
 ```
-to produce a 0-terminated list where (for GNU ls) the first 4 columns are
-guaranteed to be space separated and any newlines are from path names.  The
+to produce a list of 0-terminated rows where (for GNU ls) the first 4 columns
+are guaranteed to be space separated and any newlines are from path names.  The
 consumer of that output data needs to remain careful, of course.
