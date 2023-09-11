@@ -43,5 +43,5 @@ when isMainModule: dispatch cols, short={"O0": '0'}, help={
   "blanksOk" : "allow blank output rows",
   "cut"      : "cut/censor specified columns, not keep",
   "origin"   : "origin for colNums; 0=>signed indexing",
-  "O0"       : "zero origin shorthand",
+  "O0"       : "shorthand for `--origin=0`",
   "term"     : "set row terminator (e.g. \\\\0)"}
