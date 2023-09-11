@@ -3,8 +3,9 @@ import std/sets, cligen, cligen/[mfile, mslice, osUt] # mSlices MSlice Sep
 
 type Ranges = seq[Slice[int]] # cg wants `seq[T]` syntax *OR* its semantics
 proc cols(input="/dev/stdin", delim="white", output="/dev/stdout", sepOut=" ",
-          blanksOk=false, cut=false, origin=1, term='\n', colRanges: Ranges) =
+  blanksOk=false, cut=false, origin=1, O0=false, term='\n', colRanges: Ranges) =
   ## Write just some columns of input to output; Memory map input if possible.
+  let origin = if O0: 0 else: origin
   var outFile = open(output, fmWrite)
   var colSet = initHashSet[int](colRanges.len)
   if cut:
@@ -33,7 +34,7 @@ proc cols(input="/dev/stdin", delim="white", output="/dev/stdout", sepOut=" ",
           wrote = true
     if wrote or blanksOk: outFile.urite term
 
-when isMainModule: dispatch cols, help={
+when isMainModule: dispatch cols, short={"O0": '0'}, help={
   "colRanges": "colNums or A..B | X:Y (in|ex)clusive ranges thereof",
   "input"    : "path to mmap|read as input",
   "delim"    : "inp delim chars; Any repeats => fold",
@@ -42,4 +43,5 @@ when isMainModule: dispatch cols, help={
   "blanksOk" : "allow blank output rows",
   "cut"      : "cut/censor specified columns, not keep",
   "origin"   : "origin for colNums; 0=>signed indexing",
+  "O0"       : "zero origin shorthand",
   "term"     : "set row terminator (e.g. \\\\0)"}
