@@ -15,6 +15,10 @@ Things it provides over both `awk` & GNU coreutils `cut` are the ability to:
  - allows numbers < 0 to mean from-the-end (like Python) { use `--` or \\-escape
    (or quote) whitespace before `'-'` to avoid treatment as an option }.
 
+Over just `cut` it provides:
+ - default to keep; more terse CL syntax than "--complement"
+ - ability to split 1 column on repeated bytes (like `awk`)
+
 Usage
 -----
 ```
@@ -31,3 +35,36 @@ Write just some columns of input to output; Memory map input if possible.
   --origin=      int    1             origin for colNums; 0=>signed indexing
   -t=, --term=   char   '\n'          set row terminator (e.g. \0)
 ```
+
+Examples
+--------
+After:
+```
+(echo 1 2 3 4; echo; echo 4 5 6 7) > /tmp/d
+```
+you get:
+```
+cols 2 4 < /tmp/d
+```
+producing
+```
+2 4
+5 7
+```
+With `cols -c0 -- -4..-3` you get:
+```
+3 4
+6 7
+```
+since you are cutting 0-origin 4th from end & 3rd from end.
+Meanwhile with `cols -0 1:3` you get:
+```
+2 3
+5 6
+```
+since you are keeping the exclusive slice indicating 0-origin 1 & 2.
+
+With all of them if you add `-b4` the blank row propagates, or you can make the
+output separated TAB or terminator NUL, etc.
+
+That's it, really.  This intends to be a very simple utility.
