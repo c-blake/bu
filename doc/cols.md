@@ -64,7 +64,7 @@ Meanwhile with `cols -0 1:3` you get:
 ```
 since you are keeping the exclusive slice indicating 0-origin 1 & 2.
 
-With all of them if you add `-b4` the blank row propagates, or you can make the
+With all of them if you add `-b` the blank row propagates, or you can make the
 output separated TAB or terminator NUL, etc.
 
 That's it, really.  This intends to be a very simple utility.
