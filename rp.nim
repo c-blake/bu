@@ -53,7 +53,7 @@ proc rp(prelude=es, begin=es, where="true",match="",stmts:seq[string],epilog=es,
     if nr == 0:
       if row == rpNmFields: inc nr; continue # {fields} {!uncheck}
       else: stderr.write "row0 \"",row,"\" != \"",rpNmFields,"\"\n"; quit 1
-    """ else: "    ") & (if amatch: "if row !=~ rpRx: continue\n    " else:"")
+    """else:"    ")&(if amatch:"if row !=~ rpRx: inc nr; continue\n    "else:"")
   var program = """when not declared(stdout): import std/syncio
 import cligen/[mfile, mslice]
 $1 # {pre}
