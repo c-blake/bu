@@ -33,6 +33,7 @@ Write just some columns of input to output; Memory map input if possible.
   -b, --blanksOk bool   false         allow blank output rows
   -c, --cut      bool   false         cut/censor specified columns, not keep
   --origin=      int    1             origin for colNums; 0=>signed indexing
+  -0, --O0       bool   false         zero origin shorthand
   -t=, --term=   char   '\n'          set row terminator (e.g. \0)
 ```
 
