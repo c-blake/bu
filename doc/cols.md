@@ -27,14 +27,15 @@ Usage
 Write just some columns of input to output; Memory map input if possible.
 
   -i=, --input=  string "/dev/stdin"  path to mmap|read as input
-  -d=, --delim=  string "white"       inp delim chars; Any repeats => fold
+  -r=, --rowDlm= char   '\n'          inp row delimiter character
+  -d=, --delim=  string "white"       inp field dlm chars; len>0 => fold
   -o=, --output= string "/dev/stdout" path to write output file
   -s=, --sepOut= string " "           output field separator
   -b, --blanksOk bool   false         allow blank output rows
   -c, --cut      bool   false         cut/censor specified columns, not keep
   --origin=      int    1             origin for colNums; 0=>signed indexing
-  -0, --O0       bool   false         zero origin shorthand
-  -t=, --term=   char   '\n'          set row terminator (e.g. \0)
+  -0, --O0       bool   false         shorthand for --origin=0
+  -t=, --term=   char   '\n'          set output row terminator (e.g. \0)
 ```
 
 Examples
@@ -68,4 +69,11 @@ since you are keeping the exclusive slice indicating 0-origin 1 & 2.
 With all of them if you add `-b` the blank row propagates, or you can make the
 output separated TAB or terminator NUL, etc.
 
-That's it, really.  This intends to be a very simple utility.
+That's it, really.  This intends to be a very simple utility.  Among the most
+advanced examples I can think of is :
+```
+ls -l --zero | cols -cr\\0 1..4 -t\\0
+```
+to produce a 0-terminated list where (for GNU ls) the first 4 columns are
+guaranteed to be space separated and any newlines are from path names.  The
+consumer of that output data needs to remain careful, of course.
