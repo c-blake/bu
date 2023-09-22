@@ -43,7 +43,7 @@ when defined(Windows):
   "cstats",     # Preserve Context/Compute Column stats filter
 
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
-  "tw",         # terminal-width clip/cropper
+  "tw",         # terminal-width clip/cropper with m-row bounding capability
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
@@ -114,7 +114,7 @@ else:
   "cstats",     # Preserve Context/Compute Column stats filter
 
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
-  "tw",         # terminal-width clip/cropper
+  "tw",         # terminal-width clip/cropper with m-row bounding capability
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
