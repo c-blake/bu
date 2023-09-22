@@ -15,7 +15,7 @@ Usage (***NOT*** a `cligen` utility)
 -----
 
 With no argument, this roughly reproduces what many VTXXX compatible terminals
-can do with `printf '\e[?7l'; command; printf '\e[?7h'`:
+can do with `printf '\033[?7l'; command; printf '\033[?7h'`:
 ```sh
 $ input-generator|tw
 ```
