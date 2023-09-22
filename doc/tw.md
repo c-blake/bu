@@ -18,7 +18,7 @@ $ input-generator|tw
 ```
 
 Optionally you can pass a first argument which is an integer number of rows to
-limit wrapping to.  For the motivating compiler example, this can be useful:
+limit wrapping to.  For the motivating compiler example, this can be useful:[^1]
 ```sh
 $ pd -w|tw 2
 ```
@@ -38,7 +38,7 @@ While I did look, I did not find any one really doing this anywhere, but it is
 hard to make such searches truly exhaustive.  The core of this is just a 30-line
 state machine.  The idea is pretty obvious though - basically the "width-wise"
 version of `head` or `tail`.  In fact, in combination they let you crop to your
-viewable terminal via e.g. `tail -n $LINES|tw`.[^1]
+viewable terminal via e.g. `tail -n $LINES|tw`.[^2]
 
 If you know the input has neither ANSI SGR Color escape sequences nor multi-byte
 utf8 characters then you can, of course, just `cut -c "1-${COLUMNS:-80}"`.
@@ -46,7 +46,7 @@ utf8 characters then you can, of course, just `cut -c "1-${COLUMNS:-80}"`.
 If you are willing to depend upon regex and terminal libraries as well as do
 terminal manipulation (like alternate screen buffers etc.) and you never want
 bounded but multiple rows then you can do `less -RES --redraw-on-quit
---rscroll=-`.  That's a lot of IFs, though.[^2]  `tw` is also several times
+--rscroll=-`.  That's a lot of IFs, though.[^3]  `tw` is also several times
 faster due to its more limited scope.
 
 Future Work
@@ -55,6 +55,8 @@ The current impl does handle Unicode combining characters (including as the
 final non-clipped character) but not double wide or grapheme extension type
 renders.
 
-[^1]: For me this is just `|t|tw` which may become `|ttw` or `|crop` someday.
+[^1]: `pd` here is `procs display` as per https://github.com/c-blake/procs
 
-[^2]: [noc](doc/noc.md) lets you enforce no escape sequence part of the IFs.
+[^2]: For me this is just `|t|tw` which may become `|ttw` or `|crop` someday.
+
+[^3]: [noc](noc.md) lets you enforce no escape sequence part of the IFs.
