@@ -13,12 +13,16 @@ nice.
 
 Usage (***NOT*** a `cligen` utility)
 -----
+
+With no argument, this roughly reproduces what many VTXXX compatible terminals
+can do with `printf '\e[?7l'; command; printf '\e[?7h'`:
 ```sh
 $ input-generator|tw
 ```
 
-Optionally you can pass a first argument which is an integer number of rows to
-limit wrapping to.  For the motivating compiler example, this can be useful:[^1]
+Unlike the VTXXX approach, though, with `tw` you can optionally pass a first
+argument which is an integer number of rows to limit wrapping to.  For the
+motivating compiler example, this can be useful:[^1]
 ```sh
 $ pd -w|tw 2
 ```
@@ -29,8 +33,8 @@ by $COLUMNS and ioctls, as in
 ```sh
 $ pd -w|tw 2 40
 ```
-One application of the last might be useful to "re-format" a table given easily
-split leading and trailing text per row.
+One application of this last mode might be useful to "re-format" a table given
+easily split leading & trailing text per row for re-assembly fitting in bounds.
 
 Related Work
 ------------
