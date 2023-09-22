@@ -49,7 +49,7 @@ utf8 characters then you can, of course, just `cut -c "1-${COLUMNS:-80}"`.
 
 If you are willing to depend upon regex and terminal libraries as well as do
 terminal manipulation (like alternate screen buffers etc.) and you never want
-bounded but multiple rows then you can do `less -RES --redraw-on-quit
+bounded-but-multiple rows then you can do `less -RES --redraw-on-quit
 --rscroll=-`.  That's a lot of IFs, though.[^3]  `tw` is also several times
 faster due to its more limited scope.
 
