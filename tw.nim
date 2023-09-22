@@ -51,7 +51,7 @@ proc putClipped(line: cstring; n, w: int) =
         if   b == '[': ps = csi; put b  #..This is inexact since several vtXXX
         elif b == ']': ps = osc; put b  #..codes can reset/move cursors, BUT we
         else: ps = start; put b         #..cannot be a full TEmulator *though*
-      of csi:                           #..TEms COULD have a "no wrap" mode.
+      of csi:                           #..some TEms DO have "no wrap" modes.
         if ord(b) in 0x40..0x7E: ps = start
         put b
       of osc:
