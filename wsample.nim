@@ -17,7 +17,9 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
   result.wtab = initTable[MSlice, Weight](tokens.len)
   let empty: Weight = (0, false, 0)
   for line in mopen(weights).mSlices:       # Keep open to keep `label` valid
-    if line.len == 0 or line[0] == '#': continue
+    var line = line
+    if line.len > 0: line.clipAtFirst '#'
+    if line.len == 0: continue
     var cols = line.msplit(0)
     if cols.len != 3: continue
     let path = $cols[0]                     # Format is: PATH WEIGHT LABEL
@@ -29,6 +31,7 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
         if result.labs.len==64: raise newException(IOError, "too many sources")
         let bit = 1u64 shl result.labs.len
         for token in mf.mSlices:            #..adds a novel `token`.
+          if token.len == 0: continue
           var cell = addr result.wtab.mgetOrPut(token, empty)
           cell.w += amt
           if (cell.why and bit) != 0:       # Bit already on: inc multiples
@@ -63,7 +66,7 @@ proc print*(wts: Weights, stdize=false) =
 
 iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
   ## Weighted sample of size ``n`` capping to ``m`` copies of any given token.
-  ## This can be useful if to weight but bound the skew.  This does bias to make
+  ## This can be useful to weight but bound the skew.  This does bias to make
   ## more heavily weighted tokens earlier in a sample.  Algo does not inf.loop,
   ## but slows down for ``n >~ m*tokens.len``.
   let nEffective = min(n, m * tokens.len)
