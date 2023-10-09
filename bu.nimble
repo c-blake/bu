@@ -65,6 +65,7 @@ when defined(Windows):
   "tattr",      # Terminal attribute access (like cligen/humanUt)
 # "wsz",        # Report terminal size in cells, pixels, and cell size
 
+  "noa",        # "--"-aware Python-like indexing of non-option arguments
   "okpaths",    # Validate/trim PATH-like vars by probing the system
   "nrel",       # Edit .nimble version, commit, tag, push & maybe release
   "dirq",       # Kind of its own system-building atom thing
@@ -136,6 +137,7 @@ else:
   "tattr",      # Terminal attribute access (like cligen/humanUt)
   "wsz",        # Report terminal size in cells, pixels, and cell size
 
+  "noa",        # "--"-aware Python-like indexing of non-option arguments
   "okpaths",    # Validate/trim PATH-like vars by probing the system
   "nrel",       # Edit .nimble version, commit, tag, push & maybe release
   "dirq",       # Kind of its own system-building atom thing

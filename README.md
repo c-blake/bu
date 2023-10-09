@@ -140,6 +140,8 @@ Tty Handling
 Miscellaneous/Islands Unto Themselves
 -------------------------------------
 
+[noa - "--"-aware Python-like indexing of non-option arguments](doc/noa.md)
+
 [okpaths - Validate/trim PATH-like vars by probing the system](doc/okpaths.md)
 
 [nrel - Edit .nimble version, commit, tag, push & maybe release](doc/nrel.md)
