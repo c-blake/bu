@@ -7,7 +7,7 @@ proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
 type
   Weight* {.packed.} = object       ## Size=8B
     w*    {.bitsize: 15.}: int16    ## weight: up to 32767
-    aMul* {.bitsize:  8.}: bool     ## lookup-avoidance-flag: >1 multiplicity
+    aMul* {.bitsize:  1.}: bool     ## lookup-avoidance-flag: >1 multiplicity
     why*  {.bitsize: 48.}: uint64   ## explanation mask
   WeightTab* = Table[MSlice, Weight]
   Weights* = object
