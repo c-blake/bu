@@ -1,125 +1,83 @@
-import math, sugar, algorithm, stats, random, cligen/strUt
+import std/[math, algorithm, random, stats], cligen/[osUt, strUt]
+const ln2 = ln 2.0
 
-proc eMax(x: seq[float], k: int): (float, float) =
-  let top = x[^k .. ^1]
-  let xL  = collect(for e in top: ln(e))
-  let m1  = sum(collect(for e in xL[1..^1]:  e - xL[0]    )) / xL.len.float
-  let m2  = sum(collect(for e in xL[1..^1]: (e - xL[0])^2 )) / xL.len.float
-  let g   = m1 + 1 - 0.5/(1 - m1*m1/m2)
-  if g >= 0:
-    raise newException(ValueError, "g >= 0")
-  let a   = top[0] * m1 * (1 - min(0, g))
-  let b   = top[0]
-  let bnd = b - a / g
-  var v = (1-g)^2 * (1 - 3*g + 4*g^2) / (g^4 * (1 - 2*g)*(1 - 3*g)*(1 - 4*g))
-  v *= a / sqrt(k.float)
-  if v < 0:
-    raise newException(ValueError, "v < 0")
-  (sqrt(v), bnd)
+proc ere*(k: int, x: seq[float]): float = 
+  ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
+  ## This needs sorted `x` and at least upper 2*k-1 elements to exist.
+  if x.len - (k + k - 1) < 0:
+    raise newException(ValueError, "k=" & $k & " too large for x.len=" & $x.len)
+  for i in 0..<k: result += ln(1.0 + 1.0/float(k + i))*x[^(k + i)]
+  result = x[^1] + x[^k] - result/ln2
 
-proc aveSmallest2nd*(ves: seq[(float, float)], m: int): float =
-  var ves = ves
-  ves.sort
-  var e: RunningStat
-  for i, ve in ves:
-    if i >= m: break
-    e.push ve[1]
-  e.mean
+proc gNk(xF: float, k: int, x: seq[float]): float = 
+  (xF - x[^k])/(x[^k] - x[^(2*k)])
 
-proc eMaxCB(vals: var seq[float], qmax=0.5, amax=20, m=5): float =
-  vals.sort
-  var ves: seq[(float, float)]
-  for k in 2 ..< min(int(qmax * vals.len.float + 0.5), amax):
-    try                  : ves.add eMax(vals, k)
-    except CatchableError: discard
-  ves.aveSmallest2nd(m)
+proc gNk0*(xF: float, k: int, x: seq[float]): float = 
+  ## Is short-tailed test passes if gNk0 < -ln(-ln(-pFinite/2)) else long-tail.
+  ln2*gNk(xF, k, x) - (ln(k.float) + 0.5*ln2)
 
-proc eve1(vals: seq[float], n=false, qmax=0.5, amax=20, m=5, low=2.0, geom=true,
-          verbose=false): float =
-  var vs = vals
-  var offset: float                     # Force values onto [low,inf)
-  if n:                                 # minimum estimation mode
-    if geom:
-      offset = vs.max
-      for i, x in vs: vs[i] = low * offset / x
-    else:
-      offset = vs.max + low
-      for i, x in vs: vs[i] = offset - x
-  else:                                 # maximum estimation mode
-    if geom:
-      offset = vs.min
-      for i, x in vs: vs[i] = low * x / offset
-    else:
-      offset = vs.min - low
-      for i, x in vs: vs[i] = x - offset
-  let e = eMaxCB(vs, qmax, amax, m)
-# if verbose: stderr.write "xfmSort: ", vs, "\n"
-  if n:
-    if geom: low * offset / e
-    else   : offset - e
-  else:
-    if geom: low / (offset * e)
-    else   : e + offset
+# Fraga Alves & Neves give a formula for an approx. "- not +-" conf.interval,
+#   proc h(g: float): float = (1.0/g)*(1.0 + (pow(2.0, -g) - 1)/(g*ln2))
+#   proc qa(p, g: float): float = pow(-ln(p), -g)/g
+#   proc ci(k, p, g, a0: float): float = a0*(h(g) + pow(k.float, g)*qa(p, g))
+# but that must estimate g=gamma & a0.  This code does sample extreme-retaining
+# bootstrapped variance instead.  Such retention helps near-estimate clustering.
+# Samples can fail finite tail tests. Such are dropped (cf importance sampling).
+proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
+  var warned = false
+  if int(ln(boot.float)/ln2 + 0.99) > k - 1:
+    erru "eve: warning: tiny sample saturates bootstrap\n"
+  var st: RunningStat
+  let tThresh = -ln(-ln(1.0 - aFinite))
+  let o = x.len - 1 - (2*k - 1)
+  var b = x
+  for trial in 1..boot:
+    for subTry in 1..BLimit:
+      for i in 0 ..< 2*k-1: b[o+i] = x[o + rand(2*k-2)] # k-2: Leave sample max
+      b.sort
+      let xF = ere(k, b)
+      let tFinite = gNk0(xF, k, x)
+      if tFinite > tThresh:
+        if subTry == BLimit and not warned:
+          erru "eve: hit BLimit: close to long-tailed\n"; warned = true
+      else:
+        st.push xF
+        break
+  st.standardDeviationS
 
-proc evs(vals: seq[float], batch=30, n=false): seq[float] =
-  var c = 0; var ex = if n: float.high else: float.low
-  for v in vals:
-    inc c
-    ex = if n: min(ex, v) else: max(ex, v)
-    if c == batch:
-      result.add ex
-      c = 0; ex = if n: float.high else: float.low
-  # Ignore any short batch `ex` here in favor of constant sample size.
+type Emit = enum eTail="tail", eBound="bound"
+proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
+          kPow: range[0.0..1.0]=0.75, x: seq[float]) =
+  ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
+  ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
+  ## This only assumes IID samples (which can FAIL for sequential timings!) and
+  ## checks that spacings are not consistent with an infinite tail.
+  if x.len < 16: raise newException(ValueError, $x.len & " is too few samples")
+  var x = x; x.sort
+  let off = x[^1] + (x[^1] - x[0]) # Should keep all x[] >= 0 (but not needed)
+  if low: (x.reverse; for e in x.mitems: e = off - e)
+  let k = min(x.len div 2 - 1, int(pow(x.len.float, kPow)))
+  var xF = ere(k, x)
+  let tFinite = gNk0(xF, k, x)
+  let tThresh = -ln(-ln(1.0 - aFinite))
+  if tFinite > tThresh:
+    if eTail in emit: echo "tFinite: ",tFinite," > ",tThresh," => long-tailed"
+  if low: xF = off - xF
+  if eBound in emit:
+    echo fmtUncertain(xF, x.ese(k, boot, BLimit, aFinite), e0= -2..5)
 
-proc eve2(vals: seq[float], batch=30, trials=2000, n=false, qmax=0.5, amax=20,
-          m=5, low=2.0, geom=false, verbose=false): (float,float)=
-  var eves: seq[float]
-  var vals = vals
-  for t in 1..trials:
-    vals.shuffle
-    let e = eve1(vals.evs(batch, n), n, qmax, amax, m, low, geom, verbose)
-    if e.classify in {fcNormal, fcSubnormal, fcZero, fcNegZero}:
-      eves.add e
-  eves.sort
-  var ev: RunningStat
-  let clip = max(1, int(0.05 * trials.float))
-  for e in eves[clip..^(clip+1)]: ev.push e
-  (ev.mean, ev.standardDeviationS)
-
-proc eve*(batch=30, n=false, qmax=0.5, amax=20, m=5, sig=0.05, low=2.0,
-          geom=false, verbose=false, vals: seq[float]) =
-  ## Extreme Value Estimator a la Einmahl2010.  Einmahl notes that for low `k`
-  ## variance is high but bias is low & this swaps as `k` grows.  Rather than
-  ## trying to minimize asymptotic MSE averaging `gamma` over `k`, we instead
-  ## average EV estimates for `<=m` values of `k` with the least var estimates.
-  ## Averaging only low bias estimates *should* lower estimator var w/o raising
-  ## bias, but simulation study is warranted. Eg: `eve -ng $(repeat 720 tmIt)`.
-  if vals.len < 16: echo "Need at least 16 samples! -h for help"; quit(1)
-  var sigSig  = float.high
-  var lastSig = 0.0
-  var trials  = 32
-  var em, ev: RunningStat
-  while sigSig > sig * lastSig:
-    trials = trials * 3 div 2
-    if trials > 100000:
-      break
-    ev.clear                            # keep accumulating em
-    for i in 1..10:
-      let tup = eve2(vals, batch, trials, n, qmax, amax, m, low, geom, verbose)
-      em.push tup[0]
-      ev.push tup[1]
-    lastSig = ev.mean
-    sigSig  = ev.standardDeviationS
-  echo fmtUncertain(em.mean, ev.mean, e0= -2..5), " with trials=", trials
-
-when isMainModule: randomize(); import cligen; dispatch eve, help={
-  "batch"  : "block size for min/max passes",
-  "n"      : "estimate minimum, not maximum",
-  "qmax"   : "max quantile used for average over `k`",
-  "amax"   : "absolute max `k`",
-  "m"      : "max number of `k` to average",
-  "sig"    : "fractional sigma(sigma)",
-  "low"    : "positive transformed lower bound",
-  "geom"   : "geometric (v. location) [low,inf) cast; >0!",
-  "verbose": "operate verbosely",
-  "vals"   : "values"}
+when isMainModule:
+  import cligen; when defined(release): randomize()
+  dispatch eve, help={
+    "low"      : "flip input to estimate *Left* Endpoint",
+    "boot"     : "number of bootstrap replications",
+    "BLimit"   : "re-tries per replication to get not-long",
+    "emit":"""`tail`  - verbose long-tail test
+`bound` - bound when short-tailed""",
+    "aFinite"  : "tail index > 0 acceptance significance",
+    "kPow"     : "order statistic threshold k = n^kPow",    # Other k(n) rules?
+    "x": "1-D / univariate data ..."}
+# Bücher&Jennessen 2022 - Stats for Heteroscedastic Time Series Extremes has an
+# approach for the more general case of serial autocorrelation with time varying
+# fluctuation scale. That'd need something like `pIndep`, `pHetero`, but would
+# be more appropriate for "analyze many sequential run-times" non-IID use cases.

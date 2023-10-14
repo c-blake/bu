@@ -1,42 +1,60 @@
 Motivation
-----------
-One often wants to extrapolate from a finite sample to the true min|max.  In a
-benchmarking context one might want to filter out system noise { which has some
-unknown distributional shape, but is even worse non-stationary/not IID :-( }.
-While nothing can really solve foundational problems like non-IID noise, it does
-seem possible to estimate true min|max's better than simply taking mins of
-larger and larger samples.  One ideally would also like some kind of estimate of
-the error of such an extrapolation.
+==========
+One often wants to extrapolate from a finite sample to the true max|min.  When
+benchmarking, one might want to [filter out system noise](doc/tim.md) { which
+has some unknown distribution, but is even worse non-stationary/not IID :-( }.
+Another example is in density estimation such as the "clip" or "cut off" values
+for a simple histogram or KDE.
 
-While it is not necessarily frozen in time, the paper initially inspiring this
-utility is openly available at
+Solving foundational problems like "What background activity competes on time
+sharing systems, how stationary is it, etc.?", is hard.  However, it is not so
+hard to estimate true max|min's (& errors of said estimates) better than sample
+extremes of ginormous samples (if one views this as a performance optimization).
+Also, one cannot always sample more data - sometimes that is crazy expensive &
+limited by "dollars or years per sample" effects.
 
+Approach
+========
+The paper initially inspiring this utility is openly available at:
     https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1433242
 
-It is definitely more of a work-in-progress even just statistically than some
-of the other utilities, but it does seem to work ok.
+That block maxima idea (& implementation) has been superceded by the *far* more
+reliable more peaks-over-threshold (POT) school of Portuguese Extremists:
+    https://arxiv.org/abs/1412.3972
+
+Standard errors are estimated by the bootstrap which should make them fairly
+accurate.
 
 Usage
------
+=====
 ```
-Usage:
+  eve [optional-params] 1-D / univariate data ...
 
-  eve [optional-params] values
-
-Extreme Value Estimator a la Einmahl2010.  Einmahl notes that for low k variance
-is high but bias is low & this swaps as k grows.  Rather than trying to minimize
-asymptotic MSE averaging gamma over k, we instead average EV estimates for <=m
-values of k with the least var estimates.  Averaging only low bias estimates
-should lower estimator var w/o raising bias, but simulation study is warranted.
-Eg: eve -ng $(repeat 720 tmIt).
-
-  -b=, --batch= int   30    block size for min/max passes
-  -n, --n       bool  false estimate minimum, not maximum
-  -q=, --qmax=  float 0.5   max quantile used for average over k
-  -a=, --amax=  int   20    absolute max k
-  -m=, --m=     int   5     max number of k to average
-  -s=, --sig=   float 0.05  fractional sigma(sigma)
-  -l=, --low=   float 2.0   positive transformed lower bound
-  -g, --geom    bool  false geometric (v. location) [low,inf) cast; >0!
-  -v, --verbose bool  false operate verbosely
+Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
+method with bootstrapped standard error.  E.g.: eve -l $(repeat 99 tmIt).  This
+only assumes IID samples (which can FAIL for sequential timings!) and checks
+that spacings are not consistent with an infinite tail.
+Options:
+  -l, --low       bool      false flip input to estimate Left Endpoint
+  -b=, --boot=    int       100   number of bootstrap replications
+  -e=, --emit=    set(Emit) bound tail  - verbose long-tail test
+                                  bound - bound when short-tailed
+  -a=, --aFinite= float     0.05  tail index > 0 acceptance significance
+  -k=, --kPow=    0.0..1.0  0.75  order statistic threshold k = n^kPow
 ```
+
+Some Subtleties
+===============
+The idea here does not make sense if extreme data spacings suggest an infinite
+rather than finite tail.  So, we are careful to rule this out at alpha level
+`aFinite` in both the main estimator and the bootstrap re-sampling.
+
+The bootstrap preserves the sample-max to aid clustering of new estimates around
+that best known limit.  It also re-samples only the data that contributes to the
+estimate - and also only from that portion of the tail.  This seems to me the
+most coherent approach.
+
+POT methods require that k/n->0 as n grows.  But we want a good estimate.  So,
+we want k big.  However, for the estimator formula, k cannot be > n/2.  So,
+internally, `eve` uses `k = min(n/2 - 1, n^kPow)`.  This should discard most
+data above (below for `-l`) the median or much more if you use a lower `kPow`.

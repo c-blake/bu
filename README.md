@@ -68,7 +68,7 @@ Benchmarking Related Utilities (How Long)
 
 [tim - Sanity checking benchmark timer using only basic statistics](doc/tim.md)
 
-[eve - Extreme Value Estimator (e.g. *true* min time of an infinite sample)](doc/eve.md)
+[eve - Extreme Value Estimator (e.g. *true* max|min of an infinite sample)](doc/eve.md)
 
 Row/Column/Text Table Things
 ----------------------------
