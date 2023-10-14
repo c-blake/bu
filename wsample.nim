@@ -18,7 +18,6 @@ var emptyA: array[48, uint8]
 
 proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
   result.wtab = initTable[MSlice, Weight](tokens.len)
-  const empty = Weight()
   for line in mopen(weights).mSlices:       # Keep open to keep `label` valid
     var line = line
     if line.len > 0: line.clipAtFirst '#'
@@ -28,14 +27,14 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
     let path = $cols[0]                     # Format is: PATH WEIGHT LABEL
     let amt  = parseInt($cols[1]).int16
     if path == "BASE":
-      for token in tokens: result.wtab.mgetOrPut(token, empty).w += amt
+      for token in tokens: result.wtab.mgetOrPut(token, Weight()).w += amt
     else:
       if (let mf = mopen(path); mf != nil): # No close in case mgetOrPut
         if result.labs.len==48: raise newException(IOError, "too many sources")
         let bit = 1u64 shl result.labs.len
         for token in mf.mSlices:            #..adds a novel `token`.
           if token.len == 0: continue
-          var cell = addr result.wtab.mgetOrPut(token, empty)
+          var cell = addr result.wtab.mgetOrPut(token, Weight())
           cell.w += amt
           if (cell.why and bit) != 0:       # Bit already on: inc multiples
             cell.aMul = true                # Avoids lookup-to-test in `print`
