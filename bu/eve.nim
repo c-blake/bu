@@ -47,14 +47,14 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
 
 type Emit = enum eTail="tail", eBound="bound"
 proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
-          kPow: range[0.0..1.0]=0.75, x: seq[float]) =
+          kPow: range[0.0..1.0] = 0.7, shift=2.0, x: seq[float]) =
   ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and
   ## checks that spacings are not consistent with an infinite tail.
   if x.len < 16: raise newException(ValueError, $x.len & " is too few samples")
   var x = x; x.sort
-  let off = x[^1] + (x[^1] - x[0]) # Should keep all x[] >= 0 (but not needed)
+  let off = x[^1] + (x[^1] - x[0])  # Should keep all x[] >= 0 (but not needed)
   if low: (x.reverse; for e in x.mitems: e = off - e)
   let k = min(x.len div 2 - 1, int(pow(x.len.float, kPow)))
   var xF = ere(k, x)
@@ -62,9 +62,11 @@ proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
   let tThresh = -ln(-ln(1.0 - aFinite))
   if tFinite > tThresh:
     if eTail in emit: echo "tFinite: ",tFinite," > ",tThresh," => long-tailed"
-  if low: xF = off - xF
   if eBound in emit:
-    echo fmtUncertain(xF, x.ese(k, boot, BLimit, aFinite), e0= -2..5)
+    let es = x.ese(k, boot, BLimit, aFinite)
+    xF = xF - shift*es              # Correct finite sample too big bias a bit
+    if low: xF = off - xF           # ~Centers for U[-1,1],Triangle,Epanechnikov
+    echo fmtUncertain(xF, es, e0= -2..5)
 
 when isMainModule:
   import cligen; when defined(release): randomize()
@@ -76,6 +78,7 @@ when isMainModule:
 `bound` - bound when short-tailed""",
     "aFinite"  : "tail index > 0 acceptance significance",
     "kPow"     : "order statistic threshold k = n^kPow",    # Other k(n) rules?
+    "shift"    : "shift by this many sigma (finite bias)",
     "x": "1-D / univariate data ..."}
 # Bücher&Jennessen 2022 - Stats for Heteroscedastic Time Series Extremes has an
 # approach for the more general case of serial autocorrelation with time varying
