@@ -160,7 +160,7 @@ least!) upon what users want (e.g. 10%, 1%, 0.1% or some such target error).
 However, to validate the methodology itself we can do something as simple as
 the overhead calibration measurement (as root):
 ```sh
-for n in 10 30 100 300 1000; env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''
+for n in 10 30 100 300 1000; do env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''; done
 ```
 and examine two properties - internal consistency with estimated errors at a
 given `n` and convergence as `n` increases.  (The empty string corresponds to
