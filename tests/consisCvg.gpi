@@ -1,0 +1,12 @@
+#!/usr/bin/gnuplot
+set term png size 1920,1080 font "Helvetica,20"
+set output "consisCvg.png"
+set title 'Consistency-Convergence Plot'
+set xrange [9:1003]
+set log x
+set xlab 'sample size (staggered only for plotting)'
+set ylab "1e-4 seconds of overhead ('')"
+# Manually hacked data files to be like n=10.1,10.2,..
+plot 1.88 t '60kRunSampleMin', \
+     'consisCvg'  u 1:2:4 w yerror t 'Low Tech', \
+     'consisCvgB' u ($1+2):2:4 w yerror t 'EVT-Boot'
