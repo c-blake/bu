@@ -1,3 +1,4 @@
+when not declared(addFloat): import std/formatFloat
 import std/[math, algorithm, random, stats], cligen/[osUt, strUt]
 const ln2 = ln 2.0
 
@@ -56,7 +57,7 @@ proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
   var x = x; x.sort
   let off = x[^1] + (x[^1] - x[0])  # Should keep all x[] >= 0 (but not needed)
   if low: (x.reverse; for e in x.mitems: e = off - e)
-  let k = min(x.len div 2 - 1, int(pow(x.len.float, kPow)))
+  let k = min(x.len div 4 - 1, int(pow(x.len.float, kPow)))
   var xF = ere(k, x)
   let tFinite = gNk0(xF, k, x)
   let tThresh = -ln(-ln(1.0 - aFinite))
