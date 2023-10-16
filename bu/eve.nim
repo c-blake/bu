@@ -48,7 +48,7 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
 
 type Emit = enum eTail="tail", eBound="bound"
 proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
-          kPow: range[0.0..1.0] = 0.7, shift=2.0, x: seq[float]) =
+          kPow: range[0.0..1.0] = 0.5, shift=2.0, x: seq[float]) =
   ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and

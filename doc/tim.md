@@ -149,6 +149,40 @@ more likely to be productive of better measurements.[^10]  `tim` does support
 In light of all this, this best n of m idea twice is only a "something is better
 than nothing" thing.
 
+Convergence / Consistency
+=========================
+The idea of `tim` is fundamentally a sort of "optimization of benchmarking".
+Specifically, we want to **repeat as few times as possible** while getting a
+vaguely credible measurement error estimate.  A natural next question is "How
+many iterations is 'enough'".  Answer to any "enough" question depends (at
+least!) upon what users want (e.g. 10%, 1%, 0.1% or some such target error).
+
+However, to validate the methodology itself we can do something as simple as
+the overhead calibration measurement (as root):
+```sh
+for n in 10 30 100 300 1000; env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''
+```
+and examine two properties - internal consistency with estimated errors at a
+given `n` and convergence as `n` increases.  (The empty string corresponds to
+`sh -c ''` which for me is a statically linked `/bin/dash -c ''`.)  We can go
+a bit further and try to use [Extreme Value
+Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this is the max-
+operation version of the Central Limit Theorem for summations) as currently
+encoded in [eve](eve.md).  What we get is summarized (at least the first 3
+points) by: ![tim consistency-convergence plot](consisCvg.png)
+
+The plot artificially staggers the `n` ordinate on the x-axis to make error bars
+visible (in a points not overlaying sense, but data is at discrete, round `n`).
+
+A few things are apparent.  First, the estimator seems to be convergent from
+above (what stats folk call "consistent") as `n` grows.
+
+Second, the "error of the error" is large.  I.e., at both small & large `n`,
+estimated errors are easily 2-3X too small, *but also* sometimes too large by
+similar factors.  So, estimating errors here is a real challenge (as is, by
+extension, "iterating until an estimate reaches an accuracy target).  Pseudo
+T-tests also remain suspect out to very non-Gaussian distances.
+
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
 like security vulnerabilities play out.
