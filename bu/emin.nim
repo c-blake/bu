@@ -1,4 +1,6 @@
-import std/[stats, math, algorithm]
+when not declared(stderr): import std/syncio
+when not declared(addFloat): import std/formatFloat
+import std/[stats, math, algorithm], bu/eve
 
 type MinEst* = object               ## Holds state for 2-stage minimum estimate
   r1*, r2*, r*: seq[float]          ## stage1, stage2, combined data
@@ -11,8 +13,25 @@ type MinEst* = object               ## Holds state for 2-stage minimum estimate
 proc distance(s1, s2: RunningStat; r1, r2: seq[float]): float = # Could be KS-
   abs(s1.mean - s2.mean) / sqrt(s1.variance + s2.variance)      # test(near min)
 
-proc stage2(s: RunningStat, r: seq[float]): (float, float) = # Stage 2 estimator
-  (s.mean, s.standardDeviation) #TODO stg2==stg1 now; (r[0], (r[1]-r[0])/3.0)?
+# Stage 2 estimator combining all data
+proc stage2(s: RunningStat; r: var seq[float]; boot=100, BLimit=5, aFinite=0.05,
+            kPow: range[0.0..1.0] = 0.7, shift=2.0): (float, float) =
+  if boot < 1: (s.min - s.standardDeviation, s.standardDeviation)
+  else: # Apply `eve` estimator to `r` (ignoring `s`)
+    if r.len < 16:
+      raise newException(ValueError, $r.len & " is too few samples")
+    let off = r[^1] + (r[^1] - r[0])  # Keep all r[] >= 0 (but not needed)
+    r.reverse; for e in r.mitems: e = off - e
+    let k = min(r.len div 2 - 1, int(pow(r.len.float, 0.7)))
+    var xF = ere(k, r)
+    let tFinite = gNk0(xF, k, r)
+    let tThresh = -ln(-ln(1.0 - aFinite))
+    if tFinite > tThresh:
+      stderr.write "tFinite: ",tFinite," > ",tThresh," => long-tailed\n"
+    let es = r.ese(k, boot, BLimit, aFinite)
+    xF = xF - shift*es              # Correct finite sample too big bias a bit
+    xF = off - xF                   # ~Centers for U[-1,1],Triangle,Epanechnikov
+    (xF, es)
 
 template measureSortSummarize(rx, sx, sample1) =
   for it in 1..n:                       # Measure n trials
@@ -20,7 +39,7 @@ template measureSortSummarize(rx, sx, sample1) =
   rx.sort                               # Sort
   sx.push rx[0..<best]                  # Summarize
 
-template eMin*(n=10, best=3, dist=7.5, sample1): untyped =
+template eMin*(n=10, best=3, dist=7.5, boot=100, BLimit=5, aFinite=0.05, kPow: range[0.0..1.0] = 0.7, shift=2.0, sample1): untyped =
   ## This template takes as its final parameter any block of Nim code that
   ## produces a single `float`, probably a delta time.  `doc/tim.md` explains
   ## while `bu/tim.nim` is a fully worked example to time programs reliably.
@@ -32,7 +51,7 @@ template eMin*(n=10, best=3, dist=7.5, sample1): untyped =
     result.r = result.r1 & result.r2
     result.r.sort
     result.s.push result.r[0..<best]
-    (result.est, result.err) = stage2(result.s, result.r)
+    (result.est, result.err) = stage2(result.s, result.r, boot, BLimit, aFinite, kPow, shift)
     result.measured = true              # !measured => (est,err)==(0.0,0.0)
   result
 #IDEAS:
