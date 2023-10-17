@@ -181,10 +181,10 @@ consistency-convergence plot](consisCvg.png)
 The plot artificially staggers the `n` ordinate on the x-axis to make error bars
 visible (in a points not overlaying sense, but data is at discrete, round `n`).
 
-What we ideally want is an estimator that converges to at least a symmetric and
-hopefully near Gaussian-around-its mode (which should match 60,000 = approximate
-infinite run limit).  Though `tim` seems far less off track than more common
-practices, it does not quite realize the dream (yet).
+What we ideally want is an estimator that converges to a distribution roughly
+symmetric and near Gaussian-around-its mode (which should match 60,000 =
+approximate infinite run limit).  Though `tim` seems far less off track than
+more common practices, it does not quite realize the dream (yet).
 
 First, the estimator seems to be converge (what stats folk call "consistent"),
 but from above  as `n` grows, not symmetrically.  I.e., the error on t0hat is
