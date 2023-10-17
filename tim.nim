@@ -11,7 +11,7 @@ proc tim(n=10, best=3, dist=9.0, write="", Boot=0, limit=5, aFinite=0.05,
          shift=4.0, kPow: range[0.0..1.0] = 0.7, cmds: seq[string]) =
   ## Run shell cmds (maybe w/escape|quoting) `2*n` times.  Finds mean,"err" of
   ## the `best` twice and, if stable at level `dist`, merge results for a final
-  ## time & error estimate.  `doc/tim.md` explains.
+  ## time & error estimate (-B>0 => EVT estimate).  `doc/tim.md` explains.
   if n < best:
     raise newException(HelpError, "Need n >= best; Full ${HELP}")
   if cmds.len == 0:
