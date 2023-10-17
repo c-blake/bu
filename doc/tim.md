@@ -175,8 +175,8 @@ statically linked `/bin/dash -c ''`.)  We can go a bit further and try to use
 [Extreme Value Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this
 is the max-operation version of the Central Limit Theorem for summations) as
 currently encoded in [eve](eve.md) (which uses the Fraga Alves method with a
-more heuristic threshold selection).  What we get is summarized (at least the
-first 3 points) by: ![tim consistency-convergence plot](consisCvg.png)
+more heuristic threshold selection).  What we get is summarized by: ![tim
+consistency-convergence plot](consisCvg.png)
 
 The plot artificially staggers the `n` ordinate on the x-axis to make error bars
 visible (in a points not overlaying sense, but data is at discrete, round `n`).
