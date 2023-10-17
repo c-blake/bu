@@ -1,4 +1,3 @@
-when not declared(stderr): import std/syncio
 import std/cmdline {.all.} # cmdCount, cmdLine
 from std/strutils   import strip
 from std/parseutils import parseInt
