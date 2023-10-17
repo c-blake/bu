@@ -91,12 +91,18 @@ Usage
 
 Run shell cmds (maybe w/escape|quoting) 2n times.  Finds mean,"err" of the
 best twice and, if stable at level dist, merge results for a final time & error
-estimate.
+estimate (-B>0 => EVT estimate).  doc/tim.md explains.
 
-  -n=, --n=     int    10  number of outer trials; 1/2 total
-  -b=, --best=  int    3   number of best times to average
-  -d=, --dist=  float  7.5 max distance to decide stable samples
-  -w=, --write= string ""  also write times to this file
+  -n=, --n=       int      10   number of outer trials; 1/2 total
+  -b=, --best=    int      3    number of best times to average
+  -d=, --dist=    float    9.0  max distance to decide stable samples
+  -w=, --write=   string   ""   also write times to this file
+  -B=, --Boot=    int      0    bootstrap replications for final err estim
+                                <1 => simpler sample min estimate & error
+  -l=, --limit=   int      5    re-try limit to get finite tail replication
+  -a=, --aFinite= float    0.05 alpha/signif level to test tail finiteness
+  -s=, --shift=   float    4.0  shift by this many sigma (finite bias)
+  -k=, --kPow=    0.0..1.0 0.7  order statistic threshold k = n^kPow
 ```
 
 Example: Measuring Dispatch Overhead
@@ -162,26 +168,42 @@ the overhead calibration measurement (as root):
 ```sh
 for n in 10 30 100 300 1000; do env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''; done
 ```
-and examine two properties - internal consistency with estimated errors at a
-given `n` and convergence as `n` increases.  (The empty string corresponds to
-`sh -c ''` which for me is a statically linked `/bin/dash -c ''`.)  We can go
-a bit further and try to use [Extreme Value
-Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this is the max-
-operation version of the Central Limit Theorem for summations) as currently
-encoded in [eve](eve.md).  What we get is summarized (at least the first 3
-points) by: ![tim consistency-convergence plot](consisCvg.png)
+and similarly but with `tim -B100`.  Using this, we can examine two features -
+internal consistency with estimated errors at a given `n` and convergence as `n`
+increases.  (The empty string corresponds to `sh -c ''` which for me is a
+statically linked `/bin/dash -c ''`.)  We can go a bit further and try to use
+[Extreme Value Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this
+is the max-operation version of the Central Limit Theorem for summations) as
+currently encoded in [eve](eve.md) (which uses the Fraga Alves method with a
+more heuristic threshold selection).  What we get is summarized (at least the
+first 3 points) by: ![tim consistency-convergence plot](consisCvg.png)
 
 The plot artificially staggers the `n` ordinate on the x-axis to make error bars
 visible (in a points not overlaying sense, but data is at discrete, round `n`).
 
-A few things are apparent.  First, the estimator seems to be convergent from
-above (what stats folk call "consistent") as `n` grows.
+What we ideally want is an estimator that converges to at least a symmetric and
+hopefully near Gaussian-around-its mode (which should match 60,000 = approximate
+infinite run limit).  Though `tim` seems far less off track than more common
+practices, it does not quite realize the dream (yet).
+
+First, the estimator seems to be converge (what stats folk call "consistent"),
+but from above  as `n` grows, not symmetrically.  I.e., the error on t0hat is
+"only '-' not '+/-'".  (This could partly be a very long-term warming-up effect
+of the sampling process, not entirely about the estimator, although experiments
+with `fitl/dists` suggest otherwise.)
 
 Second, the "error of the error" is large.  I.e., at both small & large `n`,
 estimated errors are easily 2-3X too small, *but also* sometimes too large by
 similar factors.  So, estimating errors here is a real challenge (as is, by
 extension, "iterating until an estimate reaches an accuracy target).  Pseudo
 T-tests also remain suspect out to very non-Gaussian distances.
+
+Third, though max likelihood estimator GPD fits might improve the EVT method,
+playing with kPow makes it unlikely to me that it will become much better than
+the very low art in finite samples which is a little disappointing.  Heuristic
+fudge factors on the sdev to try to center the estimate will converge (since
+sdev seems to), but may generalize poorly to other measurement time scales which
+are more costly to "cross-check" with 10s of thousands of runs.
 
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
