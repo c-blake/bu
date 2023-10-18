@@ -158,7 +158,7 @@ The idea of `tim` is fundamentally a sort of "optimization of benchmarking".
 Specifically, we want to **repeat as few times as possible** while getting a
 vaguely credible measurement error estimate.  A natural next question is "How
 many iterations is 'enough'".  Answer to any "enough" question depends (at
-least!) upon what users want (e.g. 10%, 1%, 0.1% or some such target error).
+least!) upon what users want (eg. 10%, 0.1% error, etc.).
 
 However, to validate the methodology itself we can do something as simple as
 the overhead calibration measurement (as root):
