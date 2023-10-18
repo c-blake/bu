@@ -165,14 +165,14 @@ the overhead calibration measurement (as root):
 ```sh
 for n in 10 30 100 300 1000; do env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''; done
 ```
-and similarly but with `tim -B100`.  Using this, we can examine two features -
-internal consistency with estimated errors at a given `n` and convergence as `n`
-increases.  (The empty string corresponds to `sh -c ''` which for me is a
-statically linked `/bin/dash -c ''`.)  We can go a bit further and try to use
-[Extreme Value Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this
-is the max-operation version of the Central Limit Theorem for summations) as
-currently encoded in [eve](eve.md) (which uses the Fraga Alves method with a
-more heuristic threshold selection).  What we get is summarized by: ![tim
+Using this, we can examine two features - internal consistency with estimated
+errors at a given `n` and convergence as `n` increases.  (The empty string
+corresponds to `sh -c ''` which for me is a statically linked `/bin/dash -c
+''`.)  We can go a bit further by switching to `tim -B100` to use [Extreme Value
+Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this is the
+max-operation version of the Central Limit Theorem for summations) as currently
+encoded in [eve](eve.md) (which uses a Fraga Alves method with more heuristic
+threshold selection).  What we get is summarized by: ![tim
 consistency-convergence plot](consisCvg.png)
 
 The plot artificially staggers the `n` ordinate on the x-axis to make error bars
