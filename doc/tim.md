@@ -215,9 +215,12 @@ idle" general purpose system..merely "approximately idle".
 [^3]: Of course, understanding does not ***end*** with reproduction.  Sometimes
 the whole distribution is of interest, not the "luckiest".  Sometimes cold-cache
 (for some value of "cold" and "cache" are more interesting).  `tim` does let you
-write all the times to a file.  Most arguments over such things (eg. hbench vs.
-lmbench) are really about how to compress many numbers into one for purposes of
-comparison when not compressing at all would be the more informative comparison.
+write all the times to a file.  Most debate over such things (eg. hbench vs.
+lmbench) is really about how to compress many numbers into one for purposes of
+comparison.  Not compressing at all (or even nixing time series structure) is
+the more informative comparison.  Since humans are bad at reading such reports,
+views on the debate mostly come down to priors on misinterpretation probability
+(usually with strong subjective experience components).
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
 times***](https://benhoyt.com/writings/count-words/) means that branch
