@@ -26,8 +26,8 @@ proc gNk0*(xF: float, k: int, x: seq[float]): float =
 # Samples can fail finite tail tests. Such are dropped (cf importance sampling).
 proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
   var warned = false
-  if int(ln(boot.float)/ln2 + 0.99) > k - 1:
-    erru "eve: warning: tiny sample saturates bootstrap\n"
+  if int(ln(boot.float)/ln2 + 0.99) > 2*k - 1:
+    erru "eve: warning: tiny 2k-1=",2*k-1," saturates B=",boot,"\n"
   var st: RunningStat
   let tThresh = -ln(-ln(1.0 - aFinite))
   let o = x.len - 1 - (2*k - 1)
