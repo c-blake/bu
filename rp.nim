@@ -80,7 +80,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
     program.add "      discard\n"
   program.add   "    inc nr\n"
   program.add   indent(epilog.jn, 2)
-  program.add   " # {epilogue}\n\nmain()\n"
+  program.add   " # {epilogue}\n\nmain()\nlet junk {.used.} = stdout\n"
   let bke  = if run: "r" else: "c"  # (b)ac(k) (e)nd; TODO cpp as well?
   let args = args.orD("-d:danger ") & " " & cache.orD("--nimcache:/tmp/rp ") &
              " " & Warn.orD("--warning[CannotOpenFile]=off ")
