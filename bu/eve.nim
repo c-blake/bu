@@ -49,7 +49,7 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
 
 type Emit = enum eTail="tail", eBound="bound"
 proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
-          kPow: range[0.0..1.0] = 0.5, shift=0.0, x: seq[float]) =
+          kPow: range[0.0..1.0] = 0.5, KMax=50, shift=0.0, x: seq[float]) =
   ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and
@@ -58,7 +58,7 @@ proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
   var x = x; x.sort
   let off = x[^1] + (x[^1] - x[0])  # Should keep all x[] >= 0 (but not needed)
   if low: (x.reverse; for e in x.mitems: e = off - e)
-  let k = min(x.len div 4 - 1, int(pow(x.len.float, kPow)))
+  let k = min(KMax, min(x.len div 4 - 1, int(pow(x.len.float, kPow))))
   var xF = ere(k, x)
   let tFinite = gNk0(xF, k, x)
   let tThresh = -ln(-ln(1.0 - aFinite))
@@ -80,6 +80,7 @@ when isMainModule:
 `bound` - bound when short-tailed""",
     "aFinite"  : "tail index > 0 acceptance significance",
     "kPow"     : "order statistic threshold k = n^kPow",    # Other k(n) rules?
+    "KMax"     : "biggest k; FA,N2017 suggests ~50..100",
     "shift"    : "shift MAX by this many sigma (finite bias)",
     "x": "1-D / univariate data ..."}
 # Bücher&Jennessen 2022 - Stats for Heteroscedastic Time Series Extremes has an
