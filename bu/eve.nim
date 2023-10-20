@@ -5,7 +5,7 @@ const ln2 = ln 2.0
 proc ere*(k: int, x: seq[float]): float = 
   ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
   ## This needs sorted `x` and at least upper 2*k-1 elements to exist.
-  if x.len - (k + k - 1) < 0:
+  if x.len < 2*k + 1:
     raise newException(ValueError, "k=" & $k & " too large for x.len=" & $x.len)
   for i in 0..<k: result += ln(1.0 + 1.0/float(k + i))*x[^(k + i)]
   result = x[^1] + x[^k] - result/ln2
