@@ -39,16 +39,17 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
       let xF = ere(k, b)
       let tFinite = gNk0(xF, k, x)
       if tFinite > tThresh:
-        if subTry == BLimit and not warned:
-          erru "eve: hit BLimit: close to long-tailed\n"; warned = true
+        if subTry == BLimit:
+          if not warned:
+            erru "eve: hit BLimit: close to long-tailed\n"; warned = true
+        else: st.push xF; break
       else:
-        st.push xF
-        break
+        st.push xF; break
   st.standardDeviationS
 
 type Emit = enum eTail="tail", eBound="bound"
 proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
-          kPow: range[0.0..1.0] = 0.5, shift=2.0, x: seq[float]) =
+          kPow: range[0.0..1.0] = 0.5, shift=0.0, x: seq[float]) =
   ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and
@@ -65,7 +66,7 @@ proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
     if eTail in emit: echo "tFinite: ",tFinite," > ",tThresh," => long-tailed"
   if eBound in emit:
     let es = x.ese(k, boot, BLimit, aFinite)
-    xF = xF - shift*es              # Correct finite sample too big bias a bit
+    xF = xF + shift*es              # Correct finite sample too big bias a bit
     if low: xF = off - xF           # ~Centers for U[-1,1],Triangle,Epanechnikov
     echo fmtUncertain(xF, es, e0= -2..5)
 
@@ -79,7 +80,7 @@ when isMainModule:
 `bound` - bound when short-tailed""",
     "aFinite"  : "tail index > 0 acceptance significance",
     "kPow"     : "order statistic threshold k = n^kPow",    # Other k(n) rules?
-    "shift"    : "shift by this many sigma (finite bias)",
+    "shift"    : "shift MAX by this many sigma (finite bias)",
     "x": "1-D / univariate data ..."}
 # Bücher&Jennessen 2022 - Stats for Heteroscedastic Time Series Extremes has an
 # approach for the more general case of serial autocorrelation with time varying
