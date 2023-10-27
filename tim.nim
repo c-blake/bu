@@ -8,7 +8,7 @@ proc sample1(cmd: string): float =
   epochTime() - t0
 
 proc tim(n=10, best=3, dist=9.0, write="", Boot=0, limit=5, aFinite=0.05,
-         shift=4.0, kPow: range[0.0..1.0] = 0.7, ohead=0, cmds: seq[string]) =
+         shift=4.0, k = -0.5, KMax=50, ohead=0, cmds: seq[string]) =
   ## Run shell cmds (maybe w/escape|quoting) `2*n` times.  Finds mean,"err" of
   ## the `best` twice and, if stable at level `dist`, merge results for a final
   ## time & error estimate (-B>0 => EVT estimate).  `doc/tim.md` explains.
@@ -18,9 +18,10 @@ proc tim(n=10, best=3, dist=9.0, write="", Boot=0, limit=5, aFinite=0.05,
     raise newException(HelpError, "Need cmds; Full ${HELP}")
   let f = if write.len > 0: open(write, fmWrite) else: nil
   let o = if ohead > 0: eMin(ohead, best, dist, Boot, limit, aFinite,
-                             kPow, shift, sample1("")) else: MinEst()
+                             k, KMax, shift, sample1("")) else: MinEst()
   for cmd in cmds:
-    var e = eMin(n, best, dist, Boot, limit, aFinite, kPow, shift, sample1(cmd))
+    var e = eMin(n, best, dist, Boot, limit, aFinite,
+                 k, KMax, shift, sample1(cmd))
     if e.measured:                                    # Got estimate w/error
       if ohead > 0:                                   # Subtract overhead..
         e.est -= o.est; e.err=sqrt(e.err^2 + o.err^2) #..propagating errors.
@@ -45,6 +46,7 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "limit"  : "re-try limit to get finite tail replication",
   "aFinite": "alpha/signif level to test tail finiteness",
   "shift"  : "shift by this many sigma (finite bias)",
-  "kPow"   : "order statistic threshold k = n^kPow",    # Other k(n) rules?
+  "k"      : "2k=num of order statistics; <0 => = n^|k|",
+  "KMax"   : "biggest k; FA,N2017 suggests ~50..100",
   "ohead": """number of \"\" overhead runs;  If > 0, value
 (measured same way) is offset from each item"""}
