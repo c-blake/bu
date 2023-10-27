@@ -2,13 +2,12 @@ when not declared(addFloat): import std/formatFloat
 import std/[math, algorithm, random, stats], cligen/[osUt, strUt]
 const ln2 = ln 2.0
 
-proc ere*(k: int, x: seq[float]): float = 
+proc ere*(x: seq[float], k: int): float =
   ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
   ## This needs sorted `x` and at least upper 2*k-1 elements to exist.
-  if x.len < 2*k + 1:
-    raise newException(ValueError, "k=" & $k & " too large for x.len=" & $x.len)
+  if x.len<2*k: raise newException(ValueError,"2*k(" & $k & ")>x.len=" & $x.len)
   for i in 0..<k: result += ln(1.0 + 1.0/float(k + i))*x[^(k + i)]
-  result = x[^1] + x[^k] - result/ln2
+  x[^1] + x[^k] - result/ln2
 
 proc gNk(xF: float, k: int, x: seq[float]): float = 
   (xF - x[^k])/(x[^k] - x[^(2*k)])
@@ -25,41 +24,41 @@ proc gNk0*(xF: float, k: int, x: seq[float]): float =
 # bootstrapped variance instead.  Such retention helps near-estimate clustering.
 # Samples can fail finite tail tests. Such are dropped (cf importance sampling).
 proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
-  var warned = false
-  if int(ln(boot.float)/ln2 + 0.99) > 2*k - 1:
-    erru "eve: warning: tiny 2k-1=",2*k-1," saturates B=",boot,"\n"
+  var wnd = false
+  let boo = min(boot, int(pow(2.0, float(2*k - 1))))
+  if boo < boot: erru "eve: warning: tiny 2k-1=",2*k-1," saturates B=",boot,"\n"
   var st: RunningStat
   let tThresh = -ln(-ln(1.0 - aFinite))
   let o = x.len - 1 - (2*k - 1)
   var b = x
-  for trial in 1..boot:
-    for subTry in 1..BLimit:
+  for trial in 1..boo:                  # This resamples from *only* upper tail.
+    for subTry in 1..BLimit:            # Nim rand(m) is 0..m inclusive of m.
       for i in 0 ..< 2*k-1: b[o+i] = x[o + rand(2*k-2)] # k-2: Leave sample max
-      b.sort
-      let xF = ere(k, b)
+      b.sort                            # Only b[o..^2] can be out of order..
+      let xF = b.ere(k)
       let tFinite = gNk0(xF, k, x)
       if tFinite > tThresh:
         if subTry == BLimit:
-          if not warned:
-            erru "eve: hit BLimit: close to long-tailed\n"; warned = true
+          if not wnd: erru "eve: hit BLimit: close to long-tailed\n"; wnd = true
         else: st.push xF; break
       else:
         st.push xF; break
   st.standardDeviationS
 
 type Emit = enum eTail="tail", eBound="bound"
-proc eve*(low=false, boot=100, BLimit=5, emit={eBound}, aFinite=0.05,
-          kPow: range[0.0..1.0] = 0.5, KMax=50, shift=0.0, x: seq[float]) =
+proc eve*(low=false, boot=32, BLimit=5, emit={eBound}, aFinite=0.05,
+          k = -0.5, KMax=50, shift=0.0, x: seq[float]) =
   ## Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and
   ## checks that spacings are not consistent with an infinite tail.
-  if x.len < 16: raise newException(ValueError, $x.len & " is too few samples")
+  if x.len < 4: raise newException(ValueError, $x.len & " is too few samples")
   var x = x; x.sort
   let off = x[^1] + (x[^1] - x[0])  # Should keep all x[] >= 0 (but not needed)
   if low: (x.reverse; for e in x.mitems: e = off - e)
-  let k = min(KMax, min(x.len div 4 - 1, int(pow(x.len.float, kPow))))
-  var xF = ere(k, x)
+  let k = if k > 0.0: k.int
+          else: min(KMax, min(x.len div 2, int(pow(x.len.float, k.abs))))
+  var xF = x.ere(k)
   let tFinite = gNk0(xF, k, x)
   let tThresh = -ln(-ln(1.0 - aFinite))
   if tFinite > tThresh:
@@ -79,7 +78,7 @@ when isMainModule:
     "emit":"""`tail`  - verbose long-tail test
 `bound` - bound when short-tailed""",
     "aFinite"  : "tail index > 0 acceptance significance",
-    "kPow"     : "order statistic threshold k = n^kPow",    # Other k(n) rules?
+    "k"        : "2k=num of order statistics; <0 => = n^|k|",
     "KMax"     : "biggest k; FA,N2017 suggests ~50..100",
     "shift"    : "shift MAX by this many sigma (finite bias)",
     "x": "1-D / univariate data ..."}
