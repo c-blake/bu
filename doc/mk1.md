@@ -22,8 +22,8 @@ Usage
 
 A fast build tool for a special but common case when, for many pairs, just 1 inp
 makes just 1 out by just 1 rule.  file has nl-terminated back to back even-odd
-IO paths.  If ages indicate updating, mk1 prints cmd with %[io] interpolated.
-To run, pipe to /bin/sh, xargs -n1, ..  E.g.:
+IO paths (perhaps made by tmpl).  IF ages imply updating, mk1 prints cmd with
+%[io] interpolated.  To run, pipe to /bin/sh, xargs -n1, stripe 16 ..  E.g.:
 
   touch a.x b.x; printf 'a.x\na.y\nb.x\nb.y\n' | mk1 'touch %o'
 
