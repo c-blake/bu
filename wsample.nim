@@ -2,7 +2,7 @@ import std/[os, tables, strutils, math, random],
        cligen, cligen/[mfile, mslice, osUt, sysUt]
 
 proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
-  for token in mopen(tokens).mSlices: result.add(token)
+  for token in mopen(tokens).mSlices: result.add token
 
 type
   Weight* {.packed.} = object       ## Size=8B
@@ -77,7 +77,7 @@ iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
     var s {.noinit.}: MSlice
     while true:                 #Becomes slow after n >=~ (m-1)*tokens.len
       s = sample(tokens, cdf)
-      count.inc(s)
+      count.inc s
       if count[s] <= m: break
     yield s
 
@@ -90,7 +90,7 @@ when isMainModule:
     ## `weights` which has fmt: SRC W LABEL\\n where each SRC file is a set of
     ## nl-delimited tokens.  BASE in `weights` = `tokens` (gets no label).
     var b = newSeq[char](8192); discard c_setvbuf(stdout, b[0].addr, 0, 8192)
-    setCurrentDir(dir)
+    setCurrentDir dir
     let tokens = loadTokens(tokens)
     let wts = loadWeights(weights, tokens)
     if explain: wts.print stdize; quit 0
