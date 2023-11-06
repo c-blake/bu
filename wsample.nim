@@ -1,20 +1,17 @@
 import std/[os, tables, strutils, math, random],
-       cligen, cligen/[mfile, mslice, osUt, sysUt]
+       cligen, cligen/[mfile, mslice, osUt]
 
 proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
   for token in mopen(tokens).mSlices: result.add token
 
 type
   Weight* {.packed.} = object       ## Size=8B
-    w*    {.bitsize: 15.}: int16    ## weight: up to 32767
-    aMul* {.bitsize:  1.}: bool     ## lookup-avoidance-flag: >1 multiplicity
+    w*    {.bitsize: 16.}: uint16   ## weight: up to 65535
     why*  {.bitsize: 48.}: uint64   ## explanation mask
   WeightTab* = Table[MSlice, Weight]
   Weights* = object
-    wtab: WeightTab
-    labs: seq[MSlice]
-    cnt: Table[MSlice, array[48, uint8]]    # token -> (cnt[labIx] tab for mults
-var emptyA: array[48, uint8]
+    wtab: WeightTab     # {Token: Weight}
+    labs: seq[MSlice]   # Names of files for the bit slots
 
 proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
   result.wtab = initTable[MSlice, Weight](tokens.len)
@@ -25,7 +22,7 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
     var cols = line.msplit(0)
     if cols.len != 3: continue
     let path = $cols[0]                     # Format is: PATH WEIGHT LABEL
-    let amt  = parseInt($cols[1]).int16
+    let amt  = parseInt($cols[1]).uint16
     if path == "BASE":
       for token in tokens: result.wtab.mgetOrPut(token, Weight()).w += amt
     else:
@@ -36,9 +33,8 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
           if token.len == 0: continue
           var cell = addr result.wtab.mgetOrPut(token, Weight())
           cell.w += amt
-          if (cell.why and bit) != 0:       # Bit already on: inc multiples
-            cell.aMul = true                # Avoids lookup-to-test in `print`
-            result.cnt.mgetOrPut(token, emptyA)[result.labs.len].incSat # Updt>1
+          if (cell.why and bit) != 0:       # Bit already on
+            erru "wsample: warning: ",token," appears > once in ",path,"\n"
           else:
             cell.why = cell.why or bit      # Turn bit on for labs[^1]
         cols[2].mem = cols[2].mem +! -1; cols[2].len += 1 # extend to delim
@@ -58,11 +54,8 @@ proc print*(wts: Weights, stdize=false) =
     if stdize: ws = formatFloat(v.w.float/meanW, ffDefault, 4)
     else: ws.setLen 0; ws.addInt v.w
     ws.add " "; ws.add tok; outu ws     # 1 outu faster than outu ws, " ", tok
-    let cnt = if v.aMul: wts.cnt[tok] else: emptyA # Good C compiler skips cpy..
-    for i, lab in wts.labs:                        #..unless cnt[i] needed below
-      if (v.why and (1u64 shl i)) != 0:
-        outu lab
-        if v.aMul and cnt[i] > 0: outu "*", $(cnt[i] + 1) # `cnt` counts > 1
+    for i, lab in wts.labs:
+      if (v.why and (1u64 shl i)) != 0: outu lab
     outu "\n"
 
 iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
