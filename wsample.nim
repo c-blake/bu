@@ -6,8 +6,8 @@ proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
 
 type
   Weight* {.packed.} = object       ## Size=8B
-    w*    {.bitsize: 16.}: uint16   ## weight: up to 65535
-    why*  {.bitsize: 48.}: uint64   ## explanation mask
+    w*   {.bitsize: 16.}: uint16    ## weight: up to 65535
+    why* {.bitsize: 48.}: uint64    ## explanation mask
   WeightTab* = Table[MSlice, Weight]
   Weights* = object
     wtab: WeightTab     # {Token: Weight}
@@ -37,22 +37,29 @@ proc loadWeights*(weights="", tokens: seq[MSlice]): Weights =
             erru "wsample: warning: ",token," appears > once in ",path,"\n"
           else:
             cell.why = cell.why or bit      # Turn bit on for labs[^1]
-        cols[2].mem = cols[2].mem +! -1; cols[2].len += 1 # extend to delim
+        cols[2].mem = cols[2].mem +! -1; cols[2].len += 1 # extend to delim outs
         result.labs.add cols[2]             # @end to avoid earlier -1/^1's
 
 proc weights*(wt: WeightTab, tokens: seq[MSlice]): seq[float] =
   for t in tokens: result.add float(wt[t].w)
 
-proc meanW(wt: WeightTab): float =
-  for wL in wt.values: result += wL.w.float
-  result /= wt.len.float
+proc write*(wts: Weights) =
+  template e() = quit "out of space", 1
+  template wrOb(x) =
+    if (let n = x; stdout.uriteBuffer(n.addr, n.sizeof) != n.sizeof): e()
+  wrOb wts.labs.len.uint8
+  for lab in wts.labs:
+    wrOb uint8(lab.len - 1)
+    if stdout.uriteBuffer(lab.mem +! 1, lab.len - 1) != lab.len - 1: e()
+  wrOb wts.wtab.len.int64
+  for tok, v in wts.wtab:
+    wrOb v; wrOb tok.len.uint8
+    if stdout.uriteBuffer(tok.mem, tok.len) != tok.len: e()
 
-proc print*(wts: Weights, stdize=false) =
+proc print*(wts: Weights) =
   var ws: string
-  let meanW = if stdize: wts.wtab.meanW else: 1.0
   for tok, v in wts.wtab:   # hash-order; Maybe novel keys in SRC notin `tokens`
-    if stdize: ws = formatFloat(v.w.float/meanW, ffDefault, 4)
-    else: ws.setLen 0; ws.addInt v.w
+    ws.setLen 0; ws.addInt v.w
     ws.add " "; ws.add tok; outu ws     # 1 outu faster than outu ws, " ", tok
     for i, lab in wts.labs:
       if (v.why and (1u64 shl i)) != 0: outu lab
@@ -77,8 +84,8 @@ iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
 when isMainModule:
   when defined(release): randomize()
   when not declared(stdout): import std/syncio
-  proc wsample(weights, tokens: string; n=4000, m=3, dir=".",
-               explain=false, stdize=false) =
+  proc wsample(weights, tokens: string; n=4000, m=3, dir=".", explain=false,
+               binary=false) =
     ## Print `n`-sample of tokens {nl-delim file `tokens`} weighted by path
     ## `weights` which has fmt: SRC W LABEL\\n where each SRC file is a set of
     ## nl-delimited tokens.  BASE in `weights` = `tokens` (gets no label).
@@ -86,7 +93,7 @@ when isMainModule:
     setCurrentDir dir
     let tokens = loadTokens(tokens)
     let wts = loadWeights(weights, tokens)
-    if explain: wts.print stdize; quit 0
+    if explain: (if binary: wts.write else: wts.print); quit 0
     if m > 0:
       for s in wts.wtab.cappedSample(tokens, n, m): outu s, "\n"
     else:
@@ -98,4 +105,4 @@ when isMainModule:
                          "m"      : "max duplicates for any given token",
                          "dir"    : "path to directory to run in",
                          "explain": "print WEIGHT TOKEN SOURCE(s) & exit",
-                         "stdize" : "divide explain weight by mean weight"}
+                         "binary" : "write binary LabelsWeightSrcTokens & exit"}
