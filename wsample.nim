@@ -1,5 +1,5 @@
-import std/[os, tables, strutils, math, random],
-       cligen, cligen/[mfile, mslice, osUt]
+import std/[os,tables,strutils,math,random], cligen, cligen/[mfile,mslice,osUt]
+when not declared(stdout): import std/syncio
 
 proc loadTokens*(tokens: string): seq[MSlice] = # no close to keep result valid
   for token in mopen(tokens).mSlices: result.add token
@@ -83,7 +83,6 @@ iterator cappedSample*(wt: WeightTab, tokens: seq[MSlice], n=1, m=3): MSlice =
 
 when isMainModule:
   when defined(release): randomize()
-  when not declared(stdout): import std/syncio
   proc wsample(weights, tokens: string; n=4000, m=3, dir=".", explain=false,
                binary=false) =
     ## Print `n`-sample of tokens {nl-delim file `tokens`} weighted by path
