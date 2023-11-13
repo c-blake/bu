@@ -56,6 +56,7 @@ when defined(Windows):
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
+# "holes",      # Show maps of data & in-FS-allocation holes
 # "fsids",      # file system user & group id histogram
 # "chom",       # Enforce group owner & segregated perms in file trees
 # "thermctl",   # Thermal Control for before CPU makers thermally throttled
@@ -128,6 +129,7 @@ else:
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
+  "holes",      # Show maps of data & in-FS-allocation holes
   "fsids",      # file system user & group id histogram
   "chom",       # Enforce group owner & segregated perms in file trees
   "thermctl",   # Thermal Control for before CPU makers thermally throttled

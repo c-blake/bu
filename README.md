@@ -120,6 +120,8 @@ Pipeline Calculation Tools
 System Administration on Unix/POSIX/Linux
 -----------------------------------------
 
+[holes - count/map hole & data segments of files](doc/holes.md)
+
 [fsids - file system user & group id histogram](doc/fsids.md)
 
 [chom - Enforce group owner & segregated perms in file trees](doc/chom.md)
