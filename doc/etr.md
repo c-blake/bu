@@ -15,25 +15,26 @@ common use cases:
 
 Some examples (each assumes only 1 matching pid found by pf):
 
-  etr -p$(pf x) -d3 -a'fage SOME-LOG'
-  etr -p$(pf ffmpeg) -d3 -o4 -m2 -r0``  # Also estim. final compr.ratio
-  etr -p$(pf stripe) -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
+  etr -p "$(pf x)" -d3 -a'fage SOME-LOG'
+  etr -p "$(pf ffmpeg)" -d3 -o4 -m2 -r0 # Also estim. final compr.ratio
+  etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
 
 Estimation assumes a constant work rate, equal to the average so far.  If you
 give a measure > 0.0 seconds that will instead use the present rate (unless
-there is no change in did across the measurement).  If you give a non-empty op
-then the report will include expected total output bytes.
+there is no change in did across the measurement).  If you give a non-empty op,
+the report includes expected total output byte/byte ratio.
 
 Options:
-  -p=, --pid=      int    0   pid of process in question
-  -d=, --did=      string ""  int fd->fd of pid; string-> cmd for did
-  -t=, --total=    string ""  int fd->size(fd); string-> cmd for all work
-  -a=, --age=      string ""  cmd for age (age of pid if not given)
-  -s=, --scaleAge= float  1.0 re-scale output of age cmd as needed
-  -m=, --measure=  float  0.0 measure rate NOW across this given delay
-  -o=, --op=       string ""  int fd of pid; str->cmd saying out used
-  -r=, --relTo=    string ""  ratio of exp.size to {this float|<=0 to total}|
-                              str cmd giving such a float
+  -p=, --pid=      int    0     pid of process in question
+  -d=, --did=      string ""    int fd->fd of pid; string-> cmd for did
+  -t=, --total=    string ""    int fd->size(fd); string-> cmd for all work
+  -a=, --age=      string ""    cmd for age (age of pid if not given)
+  -s=, --scaleAge= float  1.0   re-scale output of age cmd as needed
+  -m=, --measure=  float  0.0   measure rate NOW across this given delay
+  -o=, --op=       string ""    int->size(fd(pid)); str->cmd giving out used
+  -r=, --relTo=    string ""    ratio of exp.size to {this float|<=0 to total}|
+                                str cmd giving such a float
+  -R=, --RatMin=   float  1e+17 exit 1 (i.e. "fail") for ratios > this
 ```
 
 Naming Note

@@ -30,7 +30,8 @@ proc processAge(pfs: string): float =
   let start = parseInt((pfs & "/stat").readFile.split[21])
   0.01 * float(uptime - start)
 
-proc etr*(pid=0,did="",total="",age="",scaleAge=1.0,measure=0.0,op="",relTo="")=
+proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="",
+          relTo="", RatMin=1e17): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
   ## processing (age of `pid` or that produced by the `age` command).  Commands
@@ -70,7 +71,8 @@ proc etr*(pid=0,did="",total="",age="",scaleAge=1.0,measure=0.0,op="",relTo="")=
     let rTo = try: relTo.strip.parseFloat except Ce: (try:
                 relTo.execProcess.strip.parseFloat except Ce:
                   stderr.write relTo, " output did not parse as a float\n"; 1.0)
-    echo r, " ", r.expSize(osz, if rTo > 0.0: rTo else: tot.float)
+    echo r, " ", r.expSize(osz, if rTo > 0.0: rTo else: tot)
+    return (osz / r.done / (if rTo > 0.0: rTo else: tot) > RatMin).int
   else: echo r
 
 when isMainModule:
@@ -83,4 +85,5 @@ when isMainModule:
                  "measure" : "measure rate NOW across this given delay",
                  "op"      : "int->`size(fd(pid))`; str->cmd giving out used",
                  "relTo" :"""ratio of exp.size to {this float|<=0 to total}|
-str cmd giving such a float"""}
+str cmd giving such a float""",
+                 "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this"}
