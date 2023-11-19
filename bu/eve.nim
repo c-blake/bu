@@ -9,10 +9,10 @@ proc ere*(x: seq[float], k: int): float =
   for i in 0..<k: result += ln(1.0 + 1.0/float(k + i))*x[^(k + i)]
   x[^1] + x[^k] - result/ln2
 
-proc gNk(xF: float, k: int, x: seq[float]): float = 
+proc gNk(xF: float, k: int, x: seq[float]): float =
   (xF - x[^k])/(x[^k] - x[^(2*k)])
 
-proc gNk0*(xF: float, k: int, x: seq[float]): float = 
+proc gNk0*(xF: float, k: int, x: seq[float]): float =
   ## Is short-tailed test passes if gNk0 < -ln(-ln(-pFinite/2)) else long-tail.
   ln2*gNk(xF, k, x) - (ln(k.float) + 0.5*ln2)
 

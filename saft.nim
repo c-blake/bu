@@ -51,7 +51,7 @@ proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
   of -1: quit "saft:vfork: "&eStr, 2
   of 0: (if execvp(cmd[0].cstring, cL)!=0: quit "saft:execvp: "&eStr&"\n", 126)
   else:
-    var xst: cint                    
+    var xst: cint
     if waitpid(pid, xst, 0) != pid: quit "saft:waitpid: "&eStr&"\n", 3
     if xst.WEXITSTATUS.int == 126: quit "saft:waitpid: kid exec failed\n", 4
 

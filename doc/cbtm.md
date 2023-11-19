@@ -53,7 +53,7 @@ where {SUBCMD} is one of:
 
 save [optional-params] [roots: string...]
   Save all statx metadata for all paths under roots to output.
-  
+
   Output format is back-to-back (statx, 2B-pathLen, NUL-term path) records.
   To be more selective than full recursion on roots, you can use the output of
   find -print[0] if you like (& file=/dev/stdin to avoid temp files).
@@ -62,7 +62,7 @@ save [optional-params] [roots: string...]
     -o=, --output= string "/dev/stdout" output file
     -q, --quiet    bool   false         suppress most OS error messages
 
-print [optional-params] 
+print [optional-params]
   Print metadata stored in input in a human-readable format.
     -i=, --input= string "/dev/stdin" metadata archive/backup path
     -d=, --delim= string "\t"         set delim
@@ -77,7 +77,7 @@ filter [optional-params] PCRE path patterns to *INCLUDE*
                                             owner,links,mtime,timeSame, re
     -d=, --drop=   string     ""            PCRE path pattern to EXCLUDE
 
-restore [optional-params] 
+restore [optional-params]
   Generate commands to restore [cb]time input
     -i=, --input= string "/dev/stdin" metadata archive/backup path
     -k=, --kind=  FSKind xfs          xfs: gen for xfs_db -x myImage

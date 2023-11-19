@@ -12,7 +12,7 @@ penalize non-uniformity more.
 Usage
 -----
 ```
-  ww [optional-params] 
+  ww [optional-params]
 Multi-paragraph with indent=>pre-formatted optimal line wrapping using badness
 metric sum excess space^power.
   -h, --help             print this cligen-erated help

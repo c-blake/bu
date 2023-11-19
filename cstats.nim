@@ -46,7 +46,7 @@ proc cstats*(delim="white", table="", hsep="strip", pm=" +- ", exp = -2..4,
       $x.quantile(q)                    # TODO precision/format controls?
     else: # Could pre-parse expressions, but many columns seem unlikely
       let se = bs.sdev/bs.n.float.sqrt  # en.wikipedia.org/wiki/Standard_error
-      case ex 
+      case ex
       of "mn": fmtUncertain(bs.mean, se, "$val0", "$valMan$valExp", exp, nd)
       of "sd": $bs.sdev                 # TODO should do only nd digits
       of "se": fmtUncertain(bs.mean, se, "$err0", "$errV$valExp", exp, nd)

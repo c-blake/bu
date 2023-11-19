@@ -11,7 +11,7 @@ proc julian*(date: Date): int =
   ## Get Julian Days for a given Gregorian date
   let a = (14 - date.month) div 12      # See calendar FAQ$2.15.1
   let y = date.year + 4800 - a
-  let m = date.month + 12 * a - 3 
+  let m = date.month + 12 * a - 3
   result = (date.day + (153 * m + 2) div 5 +
             y * 365 + y div 4 - y div 100 + y div 400 - 32045)
 

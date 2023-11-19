@@ -20,7 +20,7 @@ cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency \
 Usage
 -----
 ```
-  unfold [optional-params] 
+  unfold [optional-params]
 Join blocks of stdin lines into one line sent to stdout.
   -h, --help                  print this cligen-erated help
   --help-syntax               advanced: prepend,plurals,..

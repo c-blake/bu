@@ -8,7 +8,7 @@ produces a nice little histogram of file(1)/libmagic(3) file types.  See the
 Usage
 -----
 ```
-  fkindc [optional-params] 
+  fkindc [optional-params]
 
 Use gen and dlr1 to generate paths and histogram by file(1) type.
 

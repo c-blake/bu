@@ -101,10 +101,10 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
     mnF = if pad: &"{r minflt:>6} minF" else: &"{r minflt} minF"
     swp = &"{r nswap} swap"
   if fSwSh:
-    vsw = if pad: &"{r nvcsw:>11} vCSw"  else: &"{r nvcsw} vCSw" 
+    vsw = if pad: &"{r nvcsw:>11} vCSw"  else: &"{r nvcsw} vCSw"
     isw = if pad: &"{r nivcsw:>10} iCSw" else: &"{r nivcsw} iCSw"
-    isr = if pad: &"{r isrss:>9} stck"   else: &"{r isrss} stck"  
-    ixr = if pad: &"{r ixrss:>6} tRS"    else: &"{r ixrss} tRS"   
+    isr = if pad: &"{r isrss:>9} stck"   else: &"{r isrss} stck"
+    ixr = if pad: &"{r ixrss:>6} tRS"    else: &"{r ixrss} tRS"
     idr = &"{r idrss} dRS"
   if fComm:
     nsg = if pad: &"{r nsignals:>11} sigs" else: &"{r nsignals} sigs"

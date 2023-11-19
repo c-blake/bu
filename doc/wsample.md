@@ -22,7 +22,7 @@ this to create a sampling of tokens weighted however.
 Usage
 -----
 ```
-  wsample [NEED,optional-params] 
+  wsample [NEED,optional-params]
 
 Print n-sample of tokens {nl-delim file tokens} weighted by path weights which
 has fmt: SRC W LABEL\n where each SRC file is a set of nl-delimited tokens.

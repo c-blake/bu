@@ -118,7 +118,7 @@ proc stripe(jobs: File, secs = 0.0, load = -1): int =
         while nKid + 1 > n:             # nKid usually starts @nSlot-1, but SIG
           rs.delete i                   # ..can hit while still ramping up kids.
           i = wait()                    # ..Either way wait until nKid=n is ok.
-      nSlot = rs.len   
+      nSlot = rs.len
     maybeSleep(secs, seqNo, load)       # MAYBE SLEEP BEFORE LAUNCH
     rs[i].pid = bg(cmd, seqNo, i, tot)
     nKid += 1                           # Count kid as spawned
@@ -130,12 +130,12 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
          irupt="", posArgs: seq[string]) =
   ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
   ## job lines from *stdin* and keeps up to `N` | `M` running at once.
-  ## 
+  ##
   ## In sub mode, each job has **$STRIPE_SUB** set, in turn, to `subJ`.  Eg.:
   ##   ``find . -printf "ssh $STRIPE_SUB FileJob \'%P\'\\n" | stripe X Y``
   ## runs `FileJob`\s first on host X then on host Y then on whichever finishes
   ## first.  Repeat `X` or `Y` to keep more jobs running on each host.
-  ## 
+  ##
   ## **$STRIPE_SLOT** (arg slot index) & optionally **$STRIPE_SEQ** (job seqNum)
   ## are also provided to jobs.  In `N`-mode `SIGUSR[12]` (in|de)creases `N`.
   ## If `before` uses `$tot`, job lines are read upfront to provide that count.
