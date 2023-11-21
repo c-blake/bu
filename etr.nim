@@ -1,4 +1,4 @@
-import times, strformat, osproc, strutils, os, cligen, cligen/osUt
+import std/[times,strformat,osproc,strutils,os,posix],cligen,cligen/[osUt,puSig]
 when not declared(readFile): import std/[syncio, formatfloat]
 
 type ETR* = tuple[done, rate, left: float; etc: DateTime]
@@ -30,8 +30,8 @@ proc processAge(pfs: string): float =
   let start = parseInt((pfs & "/stat").readFile.split[21])
   0.01 * float(uptime - start)
 
-proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="",
-          relTo="", RatMin=1e17): int =
+proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
+          relTo="", RatMin=1e17, estMin=0.0, kill="NIL"): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
   ## processing (age of `pid` or that produced by the `age` command).  Commands
@@ -42,12 +42,14 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="",
   ##   `total` parses as int => /proc/PID/fd/FD.size
   ## Some examples (each assumes only 1 matching pid found by ``pf``):
   ##   ``etr -p "$(pf x)" -d3 -a'fage SOME-LOG'``
-  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m2 -r0`` # Also estim. final compr.ratio
+  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m2 -r0 -R.9 -e.01 -kint`` # Test ratio
   ##   ``etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
-  ## Estimation assumes a constant work rate, equal to the average so far.  If
-  ## you give a `measure > 0.0` seconds that will instead use the present rate
-  ## (unless there is no change in `did` across the measurement).  If you give a
-  ## non-empty `op`, the report includes expected total output byte/byte ratio.
+  ## Estimation assumes a constant work rate, equal to average rate so far.  If
+  ## `measure>0.0` seconds `etr` instead sleeps that long & uses the rate across
+  ## the interval (unless `did` doesn't change across the sleep).  If `outp` is
+  ## given, report includes expected total output byte/byte ratio.  Exit status
+  ## is 1 if *output:input > RatMin* after `estMin` progress.
+  let sigNo = kill.parseUnixSignal      # Early to fail on misspecification
   if did.len == 0:
     stderr.write "Need at least `did` & likely `pid`; --help says more\n"
     raise newException(ParseError, "")
@@ -65,25 +67,28 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, op="",
     did2 = if did.notInt: parseFloat(execProcess(did).strip)
            else: parseFloat(readFile(pfs & "fdinfo/" & did).split()[1])
   let r = etc(now(), age, tot, did1, did2, measure)
-  if op.len > 0:
-    let osz = if op.notInt: op.execProcess.strip.parseFloat
-              else: (try: (pfs & "fd/" & op).getFileSize.float except Ce: 0.0)
+  if outp.len > 0:
+    let osz = if outp.notInt: outp.execProcess.strip.parseFloat
+              else: (try: (pfs & "fd/" & outp).getFileSize.float except Ce: 0.0)
     let rTo = try: relTo.strip.parseFloat except Ce: (try:
                 relTo.execProcess.strip.parseFloat except Ce:
                   stderr.write relTo, " output did not parse as a float\n"; 1.0)
     echo r, " ", r.expSize(osz, if rTo > 0.0: rTo else: tot)
-    return (osz / r.done / (if rTo > 0.0: rTo else: tot) > RatMin).int
+    result = (r.done >= estMin and
+              osz > RatMin*r.done*(if rTo>0.0: rTo else: tot)).int
+    if result != 0: discard posix.kill(pid.Pid, sigNo)
   else: echo r
 
-when isMainModule:
-  dispatch etr,
-           help={"pid"     : "pid of process in question",
-                 "did"     : "int fd->fd of `pid`; string-> cmd for did",
-                 "total"   : "int fd->size(fd); string-> cmd for all work",
-                 "age"     : "cmd for `age` (age of pid if not given)",
-                 "scaleAge": "re-scale output of `age` cmd as needed",
-                 "measure" : "measure rate NOW across this given delay",
-                 "op"      : "int->`size(fd(pid))`; str->cmd giving out used",
-                 "relTo" :"""ratio of exp.size to {this float|<=0 to total}|
-str cmd giving such a float""",
-                 "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this"}
+when isMainModule: dispatch etr,
+  help={"pid"     : "pid of process in question",
+        "did"     : "int fd->fd of `pid`; string-> cmd for did",
+        "total"   : "int fd->size(fd); string-> cmd for all work",
+        "age"     : "cmd for `age` (age of pid if not given)",
+        "scaleAge": "re-scale output of `age` cmd as needed",
+        "measure" : "measure rate NOW across this given delay",
+        "outp"    : "int->size(fd(pid)); str->cmd giving out used",
+        "relTo" :"""emit exp.size : {this float | <=0 to-total}
+      | str cmd giving such a float""",
+        "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this",
+        "estMin"  : "require > this much progress for RatMin",
+        "kill"    : "send this sigNum/Name to `pid` if >ratio"}
