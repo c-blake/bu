@@ -1,5 +1,5 @@
 Basics
-------
+======
 
 This tool mostly works like `df` as in `df <NOTHING>` gives a brief table while
 `df <PATH>` will scope to the filesystem hosting that <PATH>.  It's basically
@@ -21,7 +21,7 @@ Print disk free stats for paths in user-specified units (GiB by default).
 ```
 
 More Motivation
----------------
+===============
 
 The default report is a bit nicer than usual `df` fare.  It looks like:
 ```
@@ -52,7 +52,7 @@ in a single table (though, yes, some FSes can dynamically grow space for
 such)..No need for `df -i`.
 
 Configuration
--------------
+=============
 
 I also wanted to embellish rows by how critically full file systems are.  My
 personal `~/.config/dfr/darkBG` looks like:
@@ -64,16 +64,65 @@ color = "pct10  fsw0.091"               # Dark Indigo
 color = "pct20  fsw0.182"               # Light Blue
 color = "pct30  fsw0.273"               # Cyan
 color = "pct40  fsw0.364"               # Seafoam Grue
-color = "pct50  fsw0.455"               # Green; cf. FargoS1/Marvo query
+color = "pct50  fsw0.455"               # Green; cf. FargoS1/Malvo Query
 color = "pct60  fsw0.545"               # Grellow
-color = "pct75  fsw0.636"               # Yellow
-color = "pct85  fsw0.750 bold"          # Light Orange; Start to worry
-color = "pct92  fsw0.818 bold"          # Dark Orange
-color = "pct94  fsw0.909 bold italic"   # Red; Worry more
-color = "pct97  fsw1.000 bold inverse"  # Pink; Worry a lot
+color = "pct70  fsw0.680"               # Yellow
+color = "pct80  fsw0.750 bold"          # Light Orange; Start to worry
+color = "pct85  fsw0.818 bold"          # Dark Orange; Concerning
+color = "pct90  fsw0.909 bold italic"   # Red; Worry more
+color = "pct95  fsw1.000 bold inverse"  # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
+A `dd` filling up /dev/shm makes comes out like [this](doc/dfrDark.png).
+
 The percentage levels can be any integers you like.  You can, of course, have
 different `~/.config/dfr/lightBG`, `~/.config/dfr/linuxVT` with other color
 schemes or else just do something like the above in a `~/.config/dfr` file
 (instead of a `dfr/` directory).
+
+A `~/.config/dfr/lightBG` analogue is:
+```
+color = "header inverse"
+color = "pct0   fsw0.000,0.7,0.75"              # Dark Violet
+color = "pct10  fsw0.091,0.7,0.75"              # Dark Indigo
+color = "pct20  fsw0.182,0.7,0.75"              # Light Blue
+color = "pct30  fsw0.273,0.7,0.75"              # Cyan
+color = "pct40  fsw0.364,0.7,0.75"              # Seafoam Grue
+color = "pct50  fsw0.455,0.7,0.75"              # Green; cf. FargoS1/Malvo Query
+color = "pct60  fsw0.545,0.7,0.75"              # Grellow
+color = "pct70  fsw0.680,0.7,0.75"              # Yellow
+color = "pct80  fsw0.750,0.7,0.75 bold"         # Light Orange; Start to worry
+color = "pct85  fsw0.818,0.7,0.75 bold"         # Dark Orange; Concerning
+color = "pct90  fsw0.909,0.7,0.75 bold italic"  # Red; Worry more
+color = "pct95  fsw1.000,0.7,0.75 bold inverse" # Pink; Worry a lot
+color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
+```
+The same `dd` test looks like [this](doc/dfrLight.png).
+
+Color & Origin Function Continuity
+==================================
+This kind of application sits in a notable place thinking about smooth color
+scales.  The above configs use only 12, not 100 elements of the cligen
+f)oreground s)cale w)avelength colors.  This relates to `df` reports appearing
+in `${MTAB:-/proc/mounts}`-order, not fraction-full-order.  The latter would
+more be the analogue of the continuous "surfaces" that color scales like Viridis
+are designed against.
+
+We want "discontinuous order" for a few reasons.  Hanging network file systems
+remain "a thing" even in 2023 (although I personally tend to avoid them).
+Device order or mount point order are also maybe more natural.
+
+This is not an isolated situation.  Similar things arise in spacetime categories
+of [`lc`](https://github.com/c-blake/lc) or
+[`procs`](https://github.com/c-blake/procs) where file name / type order or
+kernel scheduling order all randomize "other amount-order" for amounts which are
+otherwise near-continuous and nice to have a little color and nice to map to a
+numerical-like range.  Though the variable space is very fine-grained and though
+side-by-side gradations can be very fine and distinguished, I think humans are
+only good at "naming | back mapping" 7..-14 "ordered colors", and the latter
+matters in "out of order" presentations.[^1]
+
+[^1]: I am pretty sure I am not just *personally* bad at this, but too lazy at
+the moment to try to track down studies which not only handle categorical names,
+but categorical names with linear orderings.  In fact, I think the 12 I do use
+is arguably too many, taxing my ability.
