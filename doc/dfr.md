@@ -124,5 +124,5 @@ matters in "out of order" presentations.[^1]
 
 [^1]: I am pretty sure I am not just *personally* bad at this, but too lazy at
 the moment to try to track down studies which not only handle categorical names,
-but categorical names with linear orderings.  In fact, I think the 12 I do use
+but color names embedded in a linear ordering.  In fact, I think the 12 I do use
 is arguably too many, taxing my ability.
