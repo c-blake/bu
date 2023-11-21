@@ -10,8 +10,8 @@ proc etc*(t0: DateTime; age, total, did1, did2, measure: float): ETR =
   result.left = (total - did2) / result.rate
   result.etc  = t0 + initDuration(milliseconds = int(result.left * 1000))
 
-func `$`*(a: ETR): string =
-  &"{100.0*a.done:.2f} %done {a.rate:.2f} /sec {a.left:.1f} secLeft {a.etc}"
+func `$`*(r: ETR): string =
+  &"{100.0*r.done:.2f} %done {r.rate:.2f} /sec {r.left:.1f} secLeft {r.etc}"
 
 proc expSize(r: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/r.done) & " B"
