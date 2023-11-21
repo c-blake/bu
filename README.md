@@ -171,7 +171,7 @@ some man pages starting with help2man, but AFAICT, nimble, will not install them
 anyway (there's no mention of the whole word "man" on any issue, PR, or anywhere
 in the VC history of nimble, nor any default target one could add to `MANPATH` |
 `/etc/man*.conf`).  Many doc/TOOLNAME.md's should grow more complete/better
-example usages.  I tried to keep the source code scrutable, but also to the
-point and doc PRs are always very welcome.  Though we all try, there is no real
-substitute for initial confusion.  Some packaging meta-commentary is
-[here](doc/METAPKG.md).
+examples.  I tried to keep the source code scrutable, but also to the point.
+Doc PRs are always welcome.  Though we all try, there is no substitute for
+initial confusion resolving at improving docs).  Some packaging meta-commentary
+is [here](doc/METAPKG.md).
