@@ -220,7 +220,11 @@ lmbench) is really about how to compress many numbers into one for purposes of
 comparison.  Not compressing at all (or even nixing time series structure) is
 the more informative comparison.  Since humans are bad at reading such reports,
 views on the debate mostly come down to priors on misinterpretation probability
-(usually with strong subjective experience components).
+(usually with strong subjective experience components).  In any event, if one
+*does* care about the whole distribution, not merely `t0`, to be scientific one
+should check that ***the whole distro reproduces*** via a K-S test or similar
+(unlikely but not impossible for most noise of my personal experience).  This
+may be Future Work for `tim`.
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
 times***](https://benhoyt.com/writings/count-words/) means that branch
