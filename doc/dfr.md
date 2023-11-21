@@ -73,7 +73,7 @@ color = "pct90  fsw0.909 bold italic"   # Red; Worry more
 color = "pct95  fsw1.000 bold inverse"  # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-A `dd` filling up /dev/shm makes comes out like [this](doc/dfrDark.png).
+A `dd` filling up /dev/shm makes comes out like ![dfr dark](dfrDark.png).
 
 The percentage levels can be any integers you like.  You can, of course, have
 different `~/.config/dfr/lightBG`, `~/.config/dfr/linuxVT` with other color
@@ -97,7 +97,7 @@ color = "pct90  fsw0.909,0.7,0.75 bold italic"  # Red; Worry more
 color = "pct95  fsw1.000,0.7,0.75 bold inverse" # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-The same `dd` test looks like [this](doc/dfrLight.png).
+The same `dd` test looks like ![dfr light](dfrLight.png).
 
 Color & Origin Function Continuity
 ==================================
