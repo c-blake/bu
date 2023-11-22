@@ -73,7 +73,9 @@ color = "pct90  fsw0.909 bold italic"   # Red; Worry more
 color = "pct95  fsw1.000 bold inverse"  # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-A `dd` filling up /dev/shm makes comes out like ![dfr dark](dfrDark.png).
+A `dd` filling up `/dev/shm` makes (with a little manual editing) the above
+color scheme and `(while {sleep 0.25} {df /dev/shm})>colors` produce ![dfr
+dark](dfrDark.png).
 
 The percentage levels can be any integers you like.  You can, of course, have
 different `~/.config/dfr/lightBG`, `~/.config/dfr/linuxVT` with other color
@@ -97,32 +99,69 @@ color = "pct90  fsw0.909,0.7,0.75 bold italic"  # Red; Worry more
 color = "pct95  fsw1.000,0.7,0.75 bold inverse" # Pink; Worry a lot
 color = "pct100 FHUE+ bold inverse"     # >100%: NO COLOR; White hot
 ```
-The same `dd` test looks like ![dfr light](dfrLight.png).
 
 Color & Origin Function Continuity
 ==================================
 This kind of application sits in a notable place thinking about smooth color
 scales.  The above configs use only 12, not 100 elements of the cligen
 f)oreground s)cale w)avelength colors.  This relates to `df` reports appearing
-in `${MTAB:-/proc/mounts}`-order, not fraction-full-order.  The latter would
+in `${MTAB:-/proc/mounts}`-order, not fraction-full-order.[^1]  The latter would
 more be the analogue of the continuous "surfaces" that color scales like Viridis
 are designed against.
 
-We want "discontinuous order" for a few reasons.  Hanging network file systems
-remain "a thing" even in 2023 (although I personally tend to avoid them).
-Device order or mount point order are also maybe more natural.
+`dfr` wants "order discontinuous in used-ness" for a few reasons.  Even if it
+weren't for its ASAP mode of operation and it did wait for all file systems to
+report to sort in various orders, it is highly likely a user would want orders
+that differed by the order being colored.  E.g., by device order or by total
+size or file system type or multi-level with local first then remote or etc.
 
-This is not an isolated situation.  Similar things arise in spacetime categories
-of [`lc`](https://github.com/c-blake/lc) or
+This is not an isolated situation.  Similar arises in spacetime categories of
+[`lc`](https://github.com/c-blake/lc) or
 [`procs`](https://github.com/c-blake/procs) where file name / type order or
 kernel scheduling order all randomize "other amount-order" for amounts which are
 otherwise near-continuous and nice to have a little color and nice to map to a
 numerical-like range.  Though the variable space is very fine-grained and though
 side-by-side gradations can be very fine and distinguished, I think humans are
-only good at "naming | back mapping" 7..-14 "ordered colors", and the latter
-matters in "out of order" presentations.[^1]
+good at "back mapping" only 7..14 "ordered colors", and the latter matters in
+"discontinuous" / "out of order" / "scrambled" presentations.  You need to back
+map to something to "read" and names are easier than numbers for most.
 
-[^1]: I am pretty sure I am not just *personally* bad at this, but too lazy at
-the moment to try to track down studies which not only handle categorical names,
-but color names embedded in a linear ordering.  In fact, I think the 12 I do use
-is arguably too many, taxing my ability.
+A simple heuristic for this skill is looking at a scrambled list and being able
+to assign names accurately, even if they are self-invented / made up names like
+"grellow" or "low/middle/high" green instead of Mr. [Roy G.
+Biv](https://en.wikipedia.org/wiki/ROYGBIV).  This kind of ability must vary a
+lot across populations, but I can personally do this one quite well:[^2]
+![scrambled lightBG](dfrLight.png)
+
+The color scheme is simply what the lightBG config above describes but with bold
+/ italic / inverse redundant cues disabled.  Note that more pixels obviously
+helps the signal/noise ratio.  So, background colors are easier.  In the case of
+`dfr`, this is why the entire row of foreground text is the same color instead
+of output being even more kaleidoscopic with per-column colors.  If you are into
+this sort of thing, you might run the
+[colorScl](https://github.com/c-blake/cligen/blob/master/cligen/colorScl.nim)
+test program (which could profitably grow a randomizing mode).
+
+Other Ideas
+===========
+There are other whole theories of "layered" scales one can use here.  One can
+lean more heavily on fonts.  For example, lighter weight fonts for <25%, regular
+for 25-50, bold for 50-75 and bold-italic for 75-100.  That alone may be enough
+for many people.  If you want more granularity, *within* each font bank you can
+use 6 instantly nameable colors giving you a range of 24 bins.  Or color could
+be the primary level and font moves a secondary gradation.  Either way you must
+then read *two* things to guide your eye toward important numbers and what works
+best is subjective.  A terminal with `blink` can use that for 100% { unless that
+is a routine situation which may annoy you :-) }.  There is really a lot of
+[CHOICE](https://github.com/c-blake/cligen/wiki/Text-Attributes-supported-in-Config-files).
+
+[^1]: Hanging network file systems remain "a thing" even in 2023 (though I
+personally often avoid them). 
+
+[^2]: No, I have not stopwatch-timed myself.  Moreover, I have no idea if I am
+better or worse at this than most, but am too lazy at the moment to try to track
+down studies which not only handle categorical names, but color names *embedded
+in linear orderings* which matters modeling "scales".  The 12 I use here feels
+near the limit of my comfort zone.  Finer gradation would make this aspect a
+distracting enough puzzle to defeat niceness of color as a redundant cue.  You
+are free to try 100 level scales in `dfr` configs if you like, though.
