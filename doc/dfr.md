@@ -40,7 +40,7 @@ here get you to 99999.99 GiB = 100 TiB in 8 terminal columns.
 Even with `dfr -u$((1<<40))` for TiB units, the extra 2 decimals reach down to
 10GiB precision while "centering the numbers" on the TiB scale - also nicer.
 Reasonable people can differ, but, at least for this kind of report, my view is
-that one fixed unit scale is more "human readable" than what GNU `df` calls
+that one *fixed* unit scale is more "human readable" than what GNU `df` calls
 `--human-readable`.  Often one does `dfr` just to see "Where is there space?"
 and so there is an implicit "human mind comparison" in play which is aided by
 a consistent scale rather than varying K/M/G/T units.  This even relates to
