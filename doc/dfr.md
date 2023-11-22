@@ -44,12 +44,12 @@ that one *fixed* unit scale is more "human readable" than what GNU `df` calls
 `--human-readable`.  Often one does `dfr` just to see "Where is there space?"
 and so there is an implicit "human mind comparison" in play which is aided by
 a consistent scale rather than varying K/M/G/T units.  This even relates to
-utility of the "percentage" columns.
+utility of the "percentage" columns and also eases to piping to `sort -g`.
 
 You can also see that besides direct data space usage/availability, terminal
 space reclaimed by more centered units can be re-purposed to add i-node usage
-in a single table (though, yes, some FSes can dynamically grow space for
-such)..No need for `df -i`.
+in a single table (though, yes, some FSes can dynamically grow such space)..
+No need for `dfr -i`.
 
 Configuration
 =============
