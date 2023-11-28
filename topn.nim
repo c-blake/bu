@@ -8,8 +8,9 @@ proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, specs: seq[string]) =
   ## Write spec'd cols of topN-rows-by-various-other-cols to outFile's.  A spec
   ## is `<n>[,<sort-key-col>(0)[,outCol(same)[,outFile(stdout)]]]`.  ColNos are
   ## Py-like 0-origin,signed.  Algo is fast one-pass over (mmap|stream) input.
-  ## Eg: ``topn 10,1,-1,x`` writes last col of top 10-by-col-1 rows to file x.
-  ## If `n!=0` then `<n>` can end in % to instead mean *100\*pct/n* rows.
+  ## Simple Eg: ``find . -type f -printf '%C@ %p\\n' | topn -m1 5``.  Fancy Eg:
+  ## ``topn 9,1,-1,x`` writes last col of top 9-by-col-1 rows to file x.  If
+  ## `n!=0` then `<n>` can end in % to instead mean *100\*pct/n* rows.
   let m = specs.len                     # Handle all `m` sort orders in one pass
   if m < 1: stderr.write "No specs requested.  -h for help.\n"; return
   var keyC = newSeq[int](m)

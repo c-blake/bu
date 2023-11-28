@@ -18,10 +18,13 @@ ColNos are Py-like 0-origin,signed.
 
 Algo is fast one-pass over (mmap|stream) input.
 
-Eg: topn 10,1,-1,x writes last col of top 10-by-col-1 rows to file x.
+Simple Eg: find . -type f -printf '%C@ %p\n' | topn -m1 5.
+
+Fancy Eg: topn 9,1,-1,x writes last col of top 9-by-col-1 rows to file x.
 
 If n!=0 then <n> can end in % to instead mean 100*pct/n rows.
 
+Options:
   -i=, --input= string "/dev/stdin" input data path
   -d=, --delim= string " "          delimiting (repeats=>any num; "white")
   -m=, --mxCol= int    0            max columns in input to parse
@@ -37,7 +40,7 @@ curious) and emits the pathnames (0-origin column 2) of each to stdout.
 ```sh
 find . -printf '%Cs %Ts %P\n' | topn  3,0,2  4,1,2
 ```
-(Yes, this specific example is handled by [`newest`](newest.md), but there in 2
+(Yes, this *exact* example is handled by [`newest`](newest.md), but there in 2
 passes over the file tree).
 
 If you want output to separate files (or FIFOs), you can just add `",top3c"` and
