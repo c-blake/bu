@@ -43,8 +43,8 @@ template measureSortSummarize(rx, sx, sample1) =
 template eMin*(n=10, best=3, dist=7.5, boot=100, BLimit=5, aFinite=0.05,
                k = -0.5, KMax=50, shift=2.0, sample1): untyped =
   ## This template takes as its final parameter any block of Nim code that
-  ## produces a single `float`, probably a delta time.  `doc/tim.md` explains
-  ## while `bu/tim.nim` is a fully worked example to time programs reliably.
+  ## produces a single `float`, probably a delta time and produces a `MinEst`.
+  ## `doc/tim.md` explains; `bu/tim.nim` is a worked example to time programs.
   var result: MinEst                    # STAGE 1: assess sampling coherence
   measureSortSummarize(result.r1, result.s1, sample1)
   measureSortSummarize(result.r2, result.s2, sample1)
