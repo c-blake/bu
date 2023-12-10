@@ -90,16 +90,20 @@ Run shell cmds (maybe w/escape|quoting) 2n times.  Finds mean,"err" of the
 best twice and, if stable at level dist, merge results for a final time & error
 estimate (-B>0 => EVT estimate).  doc/tim.md explains.
 
-  -n=, --n=       int      10   number of outer trials; 1/2 total
-  -b=, --best=    int      3    number of best times to average
-  -d=, --dist=    float    9.0  max distance to decide stable samples
-  -w=, --write=   string   ""   also write times to this file
-  -B=, --Boot=    int      0    bootstrap replications for final err estim
-                                <1 => simpler sample min estimate & error
-  -l=, --limit=   int      5    re-try limit to get finite tail replication
-  -a=, --aFinite= float    0.05 alpha/signif level to test tail finiteness
-  -s=, --shift=   float    4.0  shift by this many sigma (finite bias)
-  -k=, --kPow=    0.0..1.0 0.7  order statistic threshold k = n^kPow
+  -n=, --n=       int    10   number of outer trials; 1/2 total
+  -b=, --best=    int    3    number of best times to average
+  -d=, --dist=    float  9.0  max distance to decide stable samples
+  -w=, --write=   string ""   also write times to this file
+  -r=, --read=    string ""   use output of write instead of running
+  -B=, --Boot=    int    0    bootstrap replications for final err estim
+                              <1 => simpler sample min estimate & error
+  -l=, --limit=   int    5    re-try limit to get finite tail replication
+  -a=, --aFinite= float  0.05 alpha/signif level to test tail finiteness
+  -s=, --shift=   float  4.0  shift by this many sigma (finite bias)
+  -k=, --k=       float  -0.5 2k=num of order statistics; <0 => = n^|k|
+  -K=, --KMax=    int    50   biggest k; FA,N2017 suggests ~50..100
+  -o=, --ohead=   int    0    number of "" overhead runs;  If > 0, value
+                              (measured same way) is offset from each item
 ```
 
 Example: Measuring Dispatch Overhead
