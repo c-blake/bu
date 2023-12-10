@@ -7,8 +7,8 @@ type MinEst* = object               ## Holds state for 2-stage minimum estimate
   s1*, s2*, s*: RunningStat         ## std/stats summaries of r1/r2/r
   est1*, err1*, est2*, err2*: float ## stage1 estimates of 2 subsamples
   apart*: float                     ## statistical distance between 2 subsamples
-  measured*: bool                   ## flag indicating successful measurement
-  est*, err*: float                 ## Successfully estimated minimum & its err
+  measured*: bool                   ## flag indicating a successful measurement
+  est*, err*: float                 ## ..of the estimated minimum & its err
 
 proc distance(s1, s2: RunningStat; r1, r2: seq[float]): float = # Could be KS-
   abs(s1.mean - s2.mean) / sqrt(s1.variance + s2.variance)      # test(near min)
