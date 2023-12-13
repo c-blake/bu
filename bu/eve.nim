@@ -1,13 +1,29 @@
 when not declared(addFloat): import std/formatFloat
 import std/[math, algorithm, random, stats], cligen/[osUt, strUt]
 const ln2 = ln 2.0
+proc lg(x: float): float = log(x, 2.0)
 
-proc ere*(x: seq[float], k: int): float =
+proc a_ik*(a: var seq[float], k: int) =
+  a.setLen k
+  for i in 0..<k: a[i] = lg(float(k + i + 1)/float(k + i))
+
+proc a_ik*(k: int): seq[float] = result.a_ik k
+
+proc ere*(x, a_ik: seq[float]): float = #, o=0.0
   ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
-  ## This needs sorted `x` and at least upper 2*k-1 elements to exist.
+  ## This needs `x` to be ascending & `x.len >= 2*k`.
+  let k = a_ik.len
   if x.len<2*k: raise newException(ValueError,"2*k(" & $k & ")>x.len=" & $x.len)
-  for i in 0..<k: result += ln(1.0 + 1.0/float(k + i))*x[^(k + i)]
-  x[^1] + x[^k] - result/ln2
+  result = x[^1]# echo "result: ", result
+  for i in 1..<k: result += a_ik[i]*(x[^k] - x[^(k+i)]) #echo "a_ik: ",a_ik[i],"dx: ",(x[^k] - x[^(k+i)])," H: ",o-x[^k]," L: ",o-x[^(k+i)]
+
+proc ele*(x, a_ik: seq[float]): float =
+  ## The general Fraga Alves & Neves2017 Estimator for Extreme *Left* Endpoint.
+  ## This needs `x` to be ascending & `x.len >= 2*k`.
+  let k = a_ik.len
+  if x.len<2*k: raise newException(ValueError,"2*k(" & $k & ")>x.len=" & $x.len)
+  result = x[0]# echo "result: ", result # 0-origin index => -1
+  for i in 1..<k: result -= a_ik[i]*(x[k+i-1] - x[k-1]) #echo "a_ik: ",a_ik[i]," dx: ",(x[k+i-1] - x[k-1])," H: ",x[k+i-1]," L: ",x[k-1]
 
 proc gNk(xF: float, k: int, x: seq[float]): float =
   (xF - x[^k])/(x[^k] - x[^(2*k)])
@@ -30,12 +46,13 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
   var st: RunningStat
   let tThresh = -ln(-ln(1.0 - aFinite))
   let o = x.len - 1 - (2*k - 1)
+  let a = k.a_ik
   var b = x
   for trial in 1..boo:                  # This resamples from *only* upper tail.
     for subTry in 1..BLimit:            # Nim rand(m) is 0..m inclusive of m.
       for i in 0 ..< 2*k-1: b[o+i] = x[o + rand(2*k-2)] # k-2: Leave sample max
       b.sort                            # Only b[o..^2] can be out of order..
-      let xF = b.ere(k)
+      let xF = b.ere(a)
       let tFinite = gNk0(xF, k, x)
       if tFinite > tThresh:
         if subTry == BLimit:
@@ -58,7 +75,7 @@ proc eve*(low=false, boot=32, BLimit=5, emit={eBound}, aFinite=0.05,
   if low: (x.reverse; for e in x.mitems: e = off - e)
   let k = if k > 0.0: k.int
           else: min(KMax, min(x.len div 2, int(pow(x.len.float, k.abs))))
-  var xF = x.ere(k)
+  var xF = x.ere(k.a_ik)
   let tFinite = gNk0(xF, k, x)
   let tThresh = -ln(-ln(1.0 - aFinite))
   if tFinite > tThresh:

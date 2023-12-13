@@ -1,32 +1,32 @@
-#when not declared(stderr): import std/syncio
-import std/[stats, math, algorithm], bu/eve
+import std/[stats, algorithm], bu/eve
 
 type MinEst* = tuple[est, err: float] ## An uncertain estimate of a minimum
 
-template eMin(x: var seq[float]; k: int): (float, float) =
-  x.sort Descending
-  let off = 2*x[0] + - x[^1]
-  for e in mitems x: e = off - e
-  let xF = off - x.ere(k)
-  let st = gNk0(off - xF, k, x)
-  for e in mitems x: e = off - e        # reflect back
-  (xF, st)
-
-template eMin*(k=3, n=8, m=4, aFinite=0.1, get1): untyped =
+template eMin*(k=3, n=8, m=4, get1): untyped =
   ## This template takes as its final parameter any Nim code block giving one
   ## `float` (probably a delta time) and gives a `MinEst` by a best k/n m-times
   ## approach. `doc/tim.md` has details; `bu/tim.nim` is a CLI utility example.
-# let thresh = -ln(-ln(1.0 - aFinite))
+  #IDEA: Check m-sampling same via Anderson-Darling(minTail-weighted/clipped).
   var xall: seq[float]
   var sest: RunningStat
+  let a = k.a_ik
   for outer in 1..m:
     var samp: seq[float]
     for inner in 1..n: samp.add (block: get1)
-    let (sm, st {.used.}) = samp.eMin(k)
-#   if st > thresh: stderr.write "tFinite: ",st," > ",thresh," => long-tailed\n"
-    sest.push sm
+    samp.sort
+    sest.push samp.ele(a) 
     xall.add samp
-  let (sm, st {.used.}) = xall.eMin(2*k)
-# if st > thresh: stderr.write "tFinite: ",st," > ",thresh," => long-tailed\n"
-  (est: sm, err: sest.standardDeviation) #/sqrt(m.float) for larger m's?
-#IDEA: Check same-sampling w/m-sample Anderson-Darling(minTail-weighted/clipped)
+  (est: xall.ele(a_ik(2*k)), err: sest.standardDeviation) #/sqrt(m.float)4big m?
+
+when isMainModule:
+  when not declared(addFloat): import std/formatFloat
+  import cligen
+  proc minE(k: int, x: seq[float]) =
+    var x = x; x.sort
+    echo ele(x, k.a_ik)
+    x.reverse; echo "flipped method, just basic estimate"
+    let off = 2*x[0] + - x[^1]
+    echo "off: ", off
+    for e in mitems x: e = off - e
+    echo off - x.ere(k.a_ik)          # , off  # for debugging
+  dispatch minE, help={"k": "2k=num of order stats", "x": "1-D / univar data.."}
