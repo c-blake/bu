@@ -15,15 +15,15 @@ limited by "dollars or years per sample" effects.
 
 Approach
 ========
-The paper initially inspiring this utility is openly available at:
-    https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1433242
+The paper initially inspiring this utility is openly available at
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1433242 .  That block maxima
+idea (& implementation) has been superceded by the *far* more reliable more
+peaks-over-threshold (POT) school of Portuguese Extremists:
+https://arxiv.org/abs/1412.3972
 
-That block maxima idea (& implementation) has been superceded by the *far* more
-reliable more peaks-over-threshold (POT) school of Portuguese Extremists:
-    https://arxiv.org/abs/1412.3972
-
-Standard errors are estimated by the bootstrap which should make them fairly
-accurate.
+Standard errors for the estimate of the true population extreme are estimated by
+a bootstrap which should make them ok, but full disclosure I am still working on
+this aspect.
 
 Usage
 =====
