@@ -34,13 +34,16 @@ Extreme Value Estimate by FragaAlves&Neves2017 Estimator for Right Endpoint
 method with bootstrapped standard error.  E.g.: eve -l $(repeat 99 tmIt).  This
 only assumes IID samples (which can FAIL for sequential timings!) and checks
 that spacings are not consistent with an infinite tail.
-Options:
+
   -l, --low       bool      false flip input to estimate Left Endpoint
-  -b=, --boot=    int       100   number of bootstrap replications
+  -b=, --boot=    int       32    number of bootstrap replications
+  -B=, --BLimit=  int       5     re-tries per replication to get not-long
   -e=, --emit=    set(Emit) bound tail  - verbose long-tail test
                                   bound - bound when short-tailed
   -a=, --aFinite= float     0.05  tail index > 0 acceptance significance
-  -k=, --kPow=    0.0..1.0  0.75  order statistic threshold k = n^kPow
+  -k=, --k=       float     -0.5  2k=num of order statistics; <0 => = n^|k|
+  -K=, --KMax=    int       50    biggest k; FA,N2017 suggests ~50..100
+  -s=, --shift=   float     0.0   shift MAX by this many sigma (finite bias)
 ```
 
 Some Subtleties
