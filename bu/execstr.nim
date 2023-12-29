@@ -1,17 +1,10 @@
 when not declared(stderr): import std/syncio
-import posix, parseutils, strformat, os
-include cligen/unsafeAddr
+import posix, parseutils, strformat, os; include cligen/unsafeAddr
 
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex
   Param = tuple[a,b: int]
   Token = tuple[kind: Kind, param: Param, deq: string]
-
-proc init(t: var Token, kind: Kind) {.inline.} =
-  t.kind = kind
-  t.param[0] = -1
-  t.param[1] = 0
-  t.deq.setLen 0
 
 iterator tokens(cmd: string): Token =
   var quoting = false
@@ -28,7 +21,9 @@ iterator tokens(cmd: string): Token =
     elif t.deq.len > 0: yield t
     elif t.kind in {iRedir, oRedir}:        # These need a non-empty `deq`
       stderr.write &"execStr char{i}: no redirect path\n"
-    t.init nextKind
+    t.param = (-1, 0); t.deq.setLen 0       # re-initialize token `t`
+    t.kind = nextKind
+
   for i, c in cmd:
     case c
     of '\\':                                # Add quoted '\\'
@@ -45,7 +40,7 @@ iterator tokens(cmd: string): Token =
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment
           if t.deq.len>0 and t.kind != assign: # ..at least if LHS is non-empty
-            t.kind = assign                 # NOTE: libc putenv takes 1st '=' as
+            t.kind = assign                 # NOTE: libc putEnv takes 1st '=' as
             t.param[0] = t.deq.len          # ..the var name sep, but that was
           t.deq.add c                       # ..failing for me.  So, save spot.
         of '>':                             # [N]>[>]data | N>&M,"".
@@ -150,10 +145,10 @@ when isMainModule:                      # This is for testing against syntax
 ## $ echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
 ## $ musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
 ## $ (for i in {1..32767}; do echo /tmp/true; done) > /tmp/in
-## $ time stripe 1 < /tmp/in
+## $ time stripe 1 < /tmp/in                    # This routine
 ## $ (for i in {1..32767}; do echo \"/tmp/true\"; done) > /tmp/inSh
-## $ time stripe 1 < /tmp/inSh
-## $ time stripe -r/bin/bash 1 < /tmp/inSh
+## $ time stripe 1 < /tmp/inSh                  # /bin/sh (-> dash for me)
+## $ time stripe -r/bin/bash 1 < /tmp/inSh      # bash instead
 ## On Linux, env.vars & argv slots both add around 150 ns / item to execvp time
 ## (on a 4.7GHz i6700k).  `env -i` can eliminate/measure some of that.
 #[ 2.9.1 Simple Commands; NOTE: shell out to anything *with no resulting cmd*.
