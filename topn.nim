@@ -24,6 +24,7 @@ proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, specs: seq[string]) =
     let p0 = params[0]
     nTop[i] = if su.endsWith(p0, '%'): su.parseInt(p0[0..^2]) * n div 100
               else: su.parseInt(p0)
+    nTop[i] = max(1, nTop[i])
     keyC[i] = if params.len > 1: su.parseInt(params[1]) else: 0
     oCol[i] = if params.len > 2: su.parseInt(params[2]) else: keyC[i]
     oFil[i] = if params.len > 3: open(params[3], fmWrite) else: stdout
