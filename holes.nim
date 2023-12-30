@@ -43,9 +43,9 @@ proc sholes(format="", files: seq[string]) =
         stdout.write '\n'
 
 when isMainModule: import cligen; dispatch sholes, cmdName="holes", help={
-  "format": """emit format interpolating:
+  "format": """emit format interpolating (braces ok for flush-text):
   $count : number of data|hole segments
   $path  : path name of REGULAR FILE from $\*
   $map   : map of all data&hole segments
-  $nul   : a NUL byte
+  $zero  : a NUL byte
 \"\" => \"$count\\t$path\\n$holes\\n\""""}
