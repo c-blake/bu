@@ -30,8 +30,8 @@ iterator tokens(cmd: string): Token =
     of ' ', '\t':                           # Add escaped spcTAB|maybe end token
       if esc: esc = false; t.ue.add c
       elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: doYield                                           
-    else:                                   # Non-backslash-white chars
-      if esc: esc = false; t.ue.add c       # Just add escaped
+    else:                                   # A non-backslash|white char
+      if esc: esc = false; t.ue.add c       # Just add if in escape mode
       else:                                 # Unescaped char
         case c
         of '<': doYield iRedir              # -> Input Redirect
