@@ -9,9 +9,10 @@ type
   Token = tuple[kind: Kind, param: Param, ue: string] # ue: un-escaped CL-arg
 
 iterator tokens(cmd: string): Token =
-  var esc, gT: bool         # escaping mode, just saw g)reaterT)han = false
+  var esc, gT, aw: bool   # Escape mode, just saw g)reaterT)han, a)mong words
   var t: Token
   template doYield(nextKind=word) =
+    if t.kind == word: aw = true
     if t.kind == fddup:
       if t.param[0] == -1: er &"char{i}: fd dup LHS non-int; RHS: \"{t.ue}\""
       elif t.ue.len > 0 and parseInt(t.ue, t.param[1]) == t.ue.len:
@@ -36,9 +37,9 @@ iterator tokens(cmd: string): Token =
         case c
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment if LHS is non-empty
-          if t.ue.len>0 and t.kind != assign:       # BUG - should only do when
-            t.kind = assign; t.param[0] = t.ue.len  # have not yielded `word`.
-          t.ue.add c                        # BUG - can try putEnv w/'=' in nm
+          if not aw and t.ue.len>0 and t.kind != assign:
+            t.kind = assign; t.param[0] = t.ue.len
+          t.ue.add c                        # BUG: Can put esc '=' in a varNm
         of '>':                             # [N]>[>]data | N>&M,"".
           if t.kind == iRedir:
             doYield oRedir; gT = true
@@ -122,17 +123,18 @@ proc execStr*(cmd: string): cint =
 
 when isMainModule:                      # This is for testing against syntax
   for token in tokens(paramStr(1)): echo token
-## Overhead benchmarking is easy (replace 0->1,true->false for prog fail path):
-## $ echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
-## $ musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
-## $ (for i in {1..32767}; do echo /tmp/true; done) > /tmp/in
-## $ time stripe 1 < /tmp/in                    # This routine
-## $ (for i in {1..32767}; do echo \"/tmp/true\"; done) > /tmp/inSh
-## $ time stripe 1 < /tmp/inSh                  # /bin/sh (-> dash for me)
-## $ time stripe -r/bin/bash 1 < /tmp/inSh      # bash instead
-## On Linux, env.vars & argv slots both add around 150 ns / item to execvp time
-## (on a 4.7GHz i6700k).  `env -i` can eliminate/measure some of that.
-#[ 2.9.1 Simple Commands; NOTE: shell out to anything *with no resulting cmd*.
+#[ Some correctness tests for to give this file compiled as a program:
+  'a=b=c x\=y=z cmd i=j\ k<in>out 2>&1 &'
+Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
+  echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
+  musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
+  (for i in {1..32767}; do echo /tmp/true; done) > /tmp/in
+  time stripe 1 < /tmp/in                    # This routine
+  (for i in {1..32767}; do echo \"/tmp/true\"; done) > /tmp/inSh
+  time stripe 1 < /tmp/inSh                  # /bin/sh (-> dash for me)
+  time stripe -r/bin/bash 1 < /tmp/inSh      # bash instead
+On Linux-i6700k, env -i can show vars&argv slots each add 135-150ns to execvp.
+Ref 2.9.1 Simple Commands; NOTE: shell out to anything *with no resulting cmd*.
 A "simple command" is a sequence of optional variable assignments and IO
 redirects, in any order, optionally followed by words and redirections,
 terminated by a control operator.  The following expansions, assignments, and
