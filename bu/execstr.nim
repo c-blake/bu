@@ -4,7 +4,7 @@ import posix, parseutils, strformat, os; include cligen/unsafeAddr
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex
   Param = tuple[a,b: int]
-  Token = tuple[kind: Kind, param: Param, deq: string]
+  Token = tuple[kind: Kind, param: Param, ue: string]
 
 iterator tokens(cmd: string): Token =
   var esc, gT: bool         # escaping mode, just saw g)reaterT)han = false
@@ -12,36 +12,36 @@ iterator tokens(cmd: string): Token =
   template doYield(nextKind=word) =
     if t.kind == fddup:
       if t.param[0] == -1:
-        stderr.write &"execStr char{i}: fd dup LHS non-int; RHS: \"{t.deq}\"\n"
-      elif t.deq.len > 0 and parseInt(t.deq, t.param[1]) == t.deq.len:
-        t.deq.setLen 0; yield t
+        stderr.write &"execStr char{i}: fd dup LHS non-int; RHS: \"{t.ue}\"\n"
+      elif t.ue.len > 0 and parseInt(t.ue, t.param[1]) == t.ue.len:
+        t.ue.setLen 0; yield t
       else:
-        stderr.write &"execStr char{i}: fd dup RHS non-int: \"{t.deq}\"\n"
-    elif t.deq.len > 0: yield t
-    elif t.kind in {iRedir, oRedir}:        # These need a non-empty `deq`
+        stderr.write &"execStr char{i}: fd dup RHS non-int: \"{t.ue}\"\n"
+    elif t.ue.len > 0: yield t
+    elif t.kind in {iRedir, oRedir}:        # These need a non-empty `ue`
       stderr.write &"execStr char{i}: no redirect path\n"
-    t.param = (-1, 0); t.deq.setLen 0       # re-initialize token `t`
+    t.param = (-1, 0); t.ue.setLen 0        # re-initialize token `t`
     t.kind = nextKind
 
   for i, c in cmd:
     case c
     of '\\':                                # Add escaped '\\'
-      if esc: esc = false; t.deq.add c
+      if esc: esc = false; t.ue.add c
       else  : esc = true                    # Or activate escape mode
     of ' ', '\t':
-      if esc: esc = false; t.deq.add c                      # Add escaped space
-      elif t.kind notin {iRedir, oRedir} and t.deq.len > 0: # if no arg expected
-        doYield                                             # terminate token
+      if esc: esc = false; t.ue.add c                      # Add escaped space
+      elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: # if no arg expected
+        doYield                                            # terminate token
     else:                                   # Non-backslash-white chars
-      if esc: esc = false; t.deq.add c      # Just add escaped
+      if esc: esc = false; t.ue.add c       # Just add escaped
       else:                                 # Unescaped char
         case c
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment
-          if t.deq.len>0 and t.kind != assign: # ..at least if LHS is non-empty
-            t.kind = assign                 # NOTE: libc putEnv takes 1st '=' as
-            t.param[0] = t.deq.len          # ..the var name sep, but that was
-          t.deq.add c                       # ..failing for me.  So, save spot.
+          if t.ue.len>0 and t.kind != assign: # ..at least if LHS is non-empty.
+            t.kind = assign                 #NOTE: libc putEnv takes 1st '=' as
+            t.param[0] = t.ue.len           # ..the var name sep, but that was
+          t.ue.add c                        # ..failing for me.  So, save spot.
         of '>':                             # [N]>[>]data | N>&M,"".
           if t.kind == iRedir:
             doYield oRedir; gT = true
@@ -49,22 +49,22 @@ iterator tokens(cmd: string): Token =
             gT = false; t.param[1] = 1
           else:                             # First '>'
             gT = true
-            if t.deq.len > 0:               # Convert optional N
-              if t.kind != oRedir and parseInt(t.deq, t.param[0]) == t.deq.len:
+            if t.ue.len > 0:                # Convert optional N
+              if t.kind != oRedir and parseInt(t.ue, t.param[0]) == t.ue.len:
                 t.kind = oRedir             # Purely integral; "N>"
-                t.deq.setLen 0
+                t.ue.setLen 0
               else:                         # Not purely integral
                 t.param[0] = -1             #   Reject parse; "prior>"
                 doYield oRedir              #   Yield prior; next kind oRedir
             else: t.kind = oRedir           # Maybe empty before '>'
         of '&':                             # dup2 | background
           if gT: gT = false; t.kind = fddup # ">&" changes t.kind
-          else: doYield bkgd; t.deq.add c   # parser must verify this is last
+          else: doYield bkgd; t.ue.add c    # parser must verify this is last
         of '\'', '"', '`', '(', ')', '{', '}', ';', '\n', '~', '|', '^', '#',
            '*', '?', '[', ']', '$':         # Could handle these one day
           t.kind = complex; yield t         # Too fancy for us!
         else:                               # Unescaped char that needed
-          t.deq.add c; gT = false           #..no escaping; just add.
+          t.ue.add c; gT = false            #..no escaping; just add.
     if i+1 == cmd.len: doYield              # EOString: yield any pending
 
 var binsh = allocCStringArray(["/bin/sh", "-c", " "]) # Reuse 3-slot in fallback
@@ -89,21 +89,21 @@ proc execStr*(cmd: string): cint =
     if execvp("/bin/sh", binsh) != 0:
       stderr.write &"execvp: \"/bin/sh\": {strerror(errno)}\n"
     return      # Do not binsh.deallocCStringArray Retain ready-to-go status.
-  for (kind, param, deq) in tokens(cmd):
+  for (kind, param, ue) in tokens(cmd):
     i.inc
     case kind
-    of assign:  # Weirdly c_putenv(deq) exports in gdb system() but not our exec
-      if args.len == 0: putEnv(deq[0..<param[0]], deq[param[0]+1..^1])
-      else: args.add deq
-    of word: args.add deq
+    of assign:  # Weirdly c_putenv(ue) exports in gdb system() but not our exec
+      if args.len == 0: putEnv(ue[0..<param[0]], ue[param[0]+1..^1])
+      else: args.add ue
+    of word: args.add ue
     of iRedir:
       if close(0) != 0:
         stderr.write &"close(0): {strerror(errno)}; Canceled Redirect\n"
         continue
-      if open(deq.cstring, O_RDONLY) == -1:
-        stderr.write &"open: \"{deq}\": {strerror(errno)}; Using /dev/null\n"
+      if open(ue.cstring, O_RDONLY) == -1:
+        stderr.write &"open: \"{ue}\": {strerror(errno)}; Using /dev/null\n"
         if open("/dev/null", O_RDONLY) == -1:
-          stderr.write &"open: \"{deq}\": {strerror(errno)}\n"
+          stderr.write &"open: \"{ue}\": {strerror(errno)}\n"
     of oRedir:
       let (fd, mode) = param
       let flags = if mode == 0: O_WRONLY or O_CREAT or O_TRUNC
@@ -112,9 +112,9 @@ proc execStr*(cmd: string): cint =
       if close(fr) != 0:
         stderr.write &"close({fd}): {strerror(errno)}; Canceled Redirect\n"
         continue
-      let ofd = open(deq.cstring, flags, 0o666)
+      let ofd = open(ue.cstring, flags, 0o666)
       if ofd == -1:
-        stderr.write &"open(\"{deq}\"): {strerror(errno)}\n"
+        stderr.write &"open(\"{ue}\"): {strerror(errno)}\n"
       elif ofd != fr and dup2(ofd, fr) == -1:
         stderr.write &"dup2({ofd}, {fr}): {strerror(errno)}\n"
     of fddup:
