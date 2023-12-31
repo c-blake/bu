@@ -4,7 +4,7 @@ template er(s) =
   let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 
 type
-  Kind = enum word, assign, iDir, oDir, fdDup, bkgd, tooHard
+  Kind = enum word, assign, iDir, oDir, tooHard
   Param = tuple[a,b: int]                   # var assign '=' off|fd,mode|fd1,fd2
   Token = tuple[kind: Kind, param: Param, ue: string] # ue: un-escaped CL-arg
 
@@ -12,13 +12,9 @@ iterator tokens(cmd: string): Token =
   var esc, gT, aw: bool   # Escape mode, just saw g)reaterT)han, a)mong words
   var t: Token
   template doYield(nextKind=word) =
-    if t.kind == word: aw = true
-    if t.kind == fdDup:
-      if t.param[0] == -1: er &"char{i}: fd dup LHS non-int; RHS: \"{t.ue}\""
-      elif t.ue.len > 0 and parseInt(t.ue, t.param[1]) == t.ue.len:
-        t.ue.setLen 0; yield t
-      else: er &"char{i}: fd dup RHS non-int: \"{t.ue}\""
-    elif t.ue.len > 0: yield t
+    if t.ue.len > 0:
+      if t.kind == word: aw = true
+      yield t
     elif t.kind in {iDir, oDir}: er &"char{i}: no redirect path"
     t.param = (-1, 0); t.ue.setLen 0        # re-initialize token `t`
     t.kind = nextKind
@@ -30,7 +26,7 @@ iterator tokens(cmd: string): Token =
       else  : esc = true                    # Or activate escape mode
     of ' ', '\t':                           # Add escaped spcTAB|maybe end token
       if esc: esc = false; t.ue.add c
-      elif t.kind notin {iDir, oDir} and t.ue.len > 0: doYield                                           
+      elif t.ue.len > 0: doYield
     else:                                   # A non-backslash|white char
       if esc: esc = false; t.ue.add c       # Just add if in escape mode
       else:                                 # Unescaped char
@@ -41,52 +37,45 @@ iterator tokens(cmd: string): Token =
             t.kind = assign; t.param[0] = t.ue.len
           t.ue.add c                        # BUG: Can put esc '=' in a varNm
         of '>':                             # [N]>[>]data | N>&M,"".
-          if t.kind == iDir:
-            doYield oDir; gT = true
-          elif t.kind == oDir and gT:       # ">>"; Activate append mode
-            gT = false; t.param[1] = 1
-          else:                             # First '>'
+          if gT: gT = false; t.param[1] = 1 # ">>"; Activate append mode
+          else:                             # First UnEsc '>'
             gT = true
             if t.ue.len > 0:                # Convert optional N
-              if t.kind != oDir and parseInt(t.ue, t.param[0]) == t.ue.len:
-                t.kind = oDir               # Purely integral; "N>"
-                t.ue.setLen 0
-              else:                         # Not purely integral
+              if parseInt(t.ue, t.param[0]) == t.ue.len:
+                t.kind = oDir;t.ue.setLen 0 # Purely integral; "N>"
+              else:                         # Not purely integral; end last tok
                 t.param[0] = -1             #   Reject parse; "prior>"
                 doYield oDir                #   Yield prior; next kind oDir
             else: t.kind = oDir             # Maybe empty before '>'
-        of '&':                             # dup2 | background
-          if gT: gT = false; t.kind = fdDup # ">&" changes t.kind
-          else: doYield bkgd; t.ue.add c    # parser must verify this is last
+            continue                        # skip gT = false @EOLoop
         of '\'', '"', '`', '(', ')', '{', '}', ';', '\n', '~', '|', '^', '#',
-           '*', '?', '[', ']', '$':         # Could handle these one day
+           '*', '?', '[', ']', '$', '&':    # Could handle these one day
           t.kind = tooHard; yield t         # Too fancy for us! TODO $VAR expan
         else:                               # Unescaped char that needed
           t.ue.add c; gT = false            #..no escaping; just add.
+        gT = false
     if i+1 == cmd.len: doYield              # EOString: yield any pending
 
-var binsh = allocCStringArray(["/bin/sh", "-c", " "]) # Reuse 3-slot in fallback
+var sh = allocCStringArray(["/bin/sh", "-c", " "]) # Reuse 3-slot in fallback
 
 proc execStr*(cmd: string): cint =
   ## Nano-shell: named like execv(2) since it replaces calling process with new
-  ## program (client code forks/waits as needed).  Supported syntax: A) pre-cmd
-  ## assigns { A=a B=b [exec] CMD .. } B) IO redirect { <, [N]>[>], N>&M } C) a
-  ## final '&' background D) backslash escapes E) simple $VAR expansion.  This
-  ## covers all 1-cmd needs BUT ${var}expands, globbing, & quoting. $= expands
-  ## to "" for $VAR$=flushText purposes (like Zsh not Bash/Dash).  Unsupported
-  ## syntax causes fall back to /bin/sh -c cmd { 4..20X slower }, but that is
-  ## usually only needed for multi-cmds (pipelines, cmd subst, loops, etc.).
-  result = -1                               # If we ever return, it's a failure
+  ## program (client code forks/waits as needed).  Supported syntax: A) pre-CMD
+  ## assigns { A=a B=b [exec] CMD .. } B) IO redirect { <, [N]>[>] } C) \-escape
+  ## D) simple $VAR expands.  Covers most non-pipeline/logic needs EXCEPT fancy
+  ## ${var}expands, quoting, globbing.  Unsupported syntax causes fall back to
+  ## /bin/sh -c cmd { 4..20X slower }.
+  result = -1                                   # A failure if we ever return
   if cmd.len == 0: return
-  var preFork = false
-  var i, bkgdAt: int
+  var toks: seq[Token]
+  for tok in tokens(cmd):
+    if tok.kind == tooHard:                     # Fall-back when used..
+      sh[2] = cast[cstring](cmd[0].unsafeAddr)  #..cmd is too complex.
+      if execvp("/bin/sh", sh) != 0: er &"exec: \"/bin/sh\": {e}"
+      return    # Do not sh.deallocCStringArray; Retain ready-to-go status.
+    toks.add tok
   var args: seq[string]
-  template fallbackToSh =                       # How to fall-back when the
-    binsh[2] = cast[cstring](cmd[0].unsafeAddr) #..used cmd is too complex.
-    if execvp("/bin/sh", binsh) != 0: er &"exec: \"/bin/sh\": {e}"
-    return      # Do not binsh.deallocCStringArray; Retain ready-to-go status.
-  for (kind, param, ue) in tokens(cmd):
-    i.inc
+  for (kind, param, ue) in toks:
     case kind
     of assign:  # Weirdly c_putenv(ue) exports in gdb system() but not our exec
       if args.len == 0: putEnv(ue[0..<param[0]], ue[param[0]+1..^1])
@@ -105,27 +94,18 @@ proc execStr*(cmd: string): cint =
       let ofd = open(ue.cstring, flags, 0o666)
       if ofd == -1: er &"open(\"{ue}\"): {e}"
       elif ofd != fr and dup2(ofd, fr) == -1: er &"dup2({ofd}, {fr}): {e}"
-    of fdDup:
-      if dup2(param[0].cint, param[1].cint) == -1:
-        er &"dup2({param[0]}, {param[1]}): {e}"
-    of bkgd:
-      if not preFork: bkgdAt = i; preFork = true
-    of tooHard: fallbackToSh
-  if preFork and bkgdAt != i: fallbackToSh # token after 1st unesc/non-fdDup'&'
+    else: discard
   if args.len > 0 and args[0] == "exec":   # Q: support PATH "exec" via \exec?
     args.delete 0
   let prog = if args.len > 0: args[0] else: ""
   let argv = allocCStringArray(args)
-  if preFork:                           # background requested => parent exits
-    if vfork()==0 and execvp(prog.cstring,argv)!=0: er &"exec: \"{prog}\": {e}"
-  elif execvp(prog.cstring, argv) != 0: er &"exec: \"{prog}\": {e}"
+  if execvp(prog.cstring, argv) != 0: er &"exec: \"{prog}\": {e}"
   argv.deallocCStringArray # execvp fail; Dealloc argv BUT likely about to die
 
 when isMainModule:                      # This is for testing against syntax
   for token in tokens(paramStr(1)): echo token
 #[ Some correctness tests for to give this file compiled as a program:
-  'a=b=c x\=y=z cmd i=j\ k<in>out 2>&1&'
-  'a=b=c x\=y=z cmd i=j\ k<in>>out 2>&1&'
+ 'a=b=c x\=y=z cmd n m i=j\ k<in>out 2>err 3>>log< in2 > out2 2> err2 3>> log2'
 Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
   echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
   musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
