@@ -24,13 +24,12 @@ iterator tokens(cmd: string): Token =
 
   for i, c in cmd:
     case c
-    of '\\':                                # Add escaped '\\'
-      if esc: esc = false; t.ue.add c
+    of '\\':
+      if esc: esc = false; t.ue.add c       # Add escaped '\\'
       else  : esc = true                    # Or activate escape mode
-    of ' ', '\t':
-      if esc: esc = false; t.ue.add c                      # Add escaped spcTAB
-      elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: # if no arg expected
-        doYield                                            # terminate token
+    of ' ', '\t':                           # Add escaped spcTAB|maybe end token
+      if esc: esc = false; t.ue.add c
+      elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: doYield                                           
     else:                                   # Non-backslash-white chars
       if esc: esc = false; t.ue.add c       # Just add escaped
       else:                                 # Unescaped char
