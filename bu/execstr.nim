@@ -1,5 +1,7 @@
 when not declared(stderr): import std/syncio
 import posix, parseutils, strformat, os; include cligen/unsafeAddr
+template er(s) =
+  let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 
 type
   Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, tooHard
@@ -11,15 +13,12 @@ iterator tokens(cmd: string): Token =
   var t: Token
   template doYield(nextKind=word) =
     if t.kind == fddup:
-      if t.param[0] == -1:
-        stderr.write &"execStr char{i}: fd dup LHS non-int; RHS: \"{t.ue}\"\n"
+      if t.param[0] == -1: er &"char{i}: fd dup LHS non-int; RHS: \"{t.ue}\""
       elif t.ue.len > 0 and parseInt(t.ue, t.param[1]) == t.ue.len:
         t.ue.setLen 0; yield t
-      else:
-        stderr.write &"execStr char{i}: fd dup RHS non-int: \"{t.ue}\"\n"
+      else: er &"char{i}: fd dup RHS non-int: \"{t.ue}\""
     elif t.ue.len > 0: yield t
-    elif t.kind in {iRedir, oRedir}:        # These need a non-empty `ue`
-      stderr.write &"execStr char{i}: no redirect path\n"
+    elif t.kind in {iRedir, oRedir}: er &"char{i}: no redirect path"
     t.param = (-1, 0); t.ue.setLen 0        # re-initialize token `t`
     t.kind = nextKind
 
@@ -29,7 +28,7 @@ iterator tokens(cmd: string): Token =
       if esc: esc = false; t.ue.add c
       else  : esc = true                    # Or activate escape mode
     of ' ', '\t':
-      if esc: esc = false; t.ue.add c                      # Add escaped space
+      if esc: esc = false; t.ue.add c                      # Add escaped spcTAB
       elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: # if no arg expected
         doYield                                            # terminate token
     else:                                   # Non-backslash-white chars
@@ -37,8 +36,8 @@ iterator tokens(cmd: string): Token =
       else:                                 # Unescaped char
         case c
         of '<': doYield iRedir              # -> Input Redirect
-        of '=':                             # Assignment
-          if t.ue.len>0 and t.kind != assign: # ..at least if LHS is non-empty.
+        of '=':                             # Assignment if LHS is non-empty
+          if t.ue.len>0 and t.kind != assign:
             t.kind = assign                 #NOTE: libc putEnv takes 1st '=' as
             t.param[0] = t.ue.len           # ..the var name sep, but that was
           t.ue.add c                        # ..failing for me.  So, save spot.
@@ -78,17 +77,15 @@ proc execStr*(cmd: string): cint =
   ## to "" for $VAR$=flushText purposes (like Zsh not Bash/Dash).  Unsupported
   ## syntax causes fall back to /bin/sh -c cmd { 4..20X slower }, but that is
   ## usually only needed for multi-cmds (pipelines, cmd subst, loops, etc.).
-  if cmd.len == 0: return
   result = -1                               # If we ever return, it's a failure
+  if cmd.len == 0: return
   var preFork = false
   var i, bkgdAt: int
   var args: seq[string]
-  template fallbackToSh() =                 # How to fall-back to /bin/sh when 
-    let ccmd = cstring(cmd)                 #..given syntax is too hard.
-    binsh[2] = cast[cstring](ccmd[0].unsafeAddr)
-    if execvp("/bin/sh", binsh) != 0:
-      stderr.write &"execvp: \"/bin/sh\": {strerror(errno)}\n"
-    return      # Do not binsh.deallocCStringArray Retain ready-to-go status.
+  template fallbackToSh =                       # How to fall-back when the
+    binsh[2] = cast[cstring](cmd[0].unsafeAddr) #..used cmd is too complex.
+    if execvp("/bin/sh", binsh) != 0: er &"exec: \"/bin/sh\": {e}"
+    return      # Do not binsh.deallocCStringArray; Retain ready-to-go status.
   for (kind, param, ue) in tokens(cmd):
     i.inc
     case kind
@@ -97,44 +94,32 @@ proc execStr*(cmd: string): cint =
       else: args.add ue
     of word: args.add ue
     of iRedir:
-      if close(0) != 0:
-        stderr.write &"close(0): {strerror(errno)}; Canceled Redirect\n"
-        continue
+      if close(0) != 0: er &"close(0): {e}; Canceled Redirect"; continue
       if open(ue.cstring, O_RDONLY) == -1:
-        stderr.write &"open: \"{ue}\": {strerror(errno)}; Using /dev/null\n"
-        if open("/dev/null", O_RDONLY) == -1:
-          stderr.write &"open: \"{ue}\": {strerror(errno)}\n"
+        er &"open: \"{ue}\": {e}; Using /dev/null"
+        if open("/dev/null", O_RDONLY) == -1: er &"open: \"{ue}\": {e}"
     of oRedir:
       let (fd, mode) = param
-      let flags = if mode == 0: O_WRONLY or O_CREAT or O_TRUNC
-                  else: O_WRONLY or O_CREAT or O_APPEND
+      let flags = O_WRONLY or O_CREAT or (if mode == 0: O_TRUNC else: O_APPEND)
       let fr = if fd == -1: 1.cint else: fd.cint
-      if close(fr) != 0:
-        stderr.write &"close({fd}): {strerror(errno)}; Canceled Redirect\n"
-        continue
+      if close(fr) != 0: er &"close({fd}): {e}"; continue
       let ofd = open(ue.cstring, flags, 0o666)
-      if ofd == -1:
-        stderr.write &"open(\"{ue}\"): {strerror(errno)}\n"
-      elif ofd != fr and dup2(ofd, fr) == -1:
-        stderr.write &"dup2({ofd}, {fr}): {strerror(errno)}\n"
+      if ofd == -1: er &"open(\"{ue}\"): {e}"
+      elif ofd != fr and dup2(ofd, fr) == -1: er &"dup2({ofd}, {fr}): {e}"
     of fddup:
       if dup2(param[0].cint, param[1].cint) == -1:
-        stderr.write &"dup2({param[0]}, {param[1]}): {strerror(errno)}\n"
+        er &"dup2({param[0]}, {param[1]}): {e}"
     of bkgd:
-      if not preFork:
-        bkgdAt = i; preFork = true
+      if not preFork: bkgdAt = i; preFork = true
     of tooHard: fallbackToSh
   if preFork and bkgdAt != i: fallbackToSh # token after 1st unesc/non-fddup'&'
-  if args.len > 0 and args[0] == "exec":
+  if args.len > 0 and args[0] == "exec":   # Q: support PATH "exec" via \exec?
     args.delete 0
   let prog = if args.len > 0: args[0] else: ""
   let argv = allocCStringArray(args)
-  template execvpOrMsg() =
-    if execvp(prog.cstring, argv) != 0:
-      stderr.write &"execvp: \"{prog}\": {strerror(errno)}\n"
-  if preFork:                           # background requested =>
-    if vfork() == 0: execvpOrMsg        #   parent exits immediately
-  else: execvpOrMsg
+  if preFork:                           # background requested => parent exits
+    if vfork()==0 and execvp(prog.cstring,argv)!=0: er &"exec: \"{prog}\": {e}"
+  elif execvp(prog.cstring, argv) != 0: er &"exec: \"{prog}\": {e}"
   argv.deallocCStringArray # execvp fail; Dealloc argv BUT likely about to die
 
 when isMainModule:                      # This is for testing against syntax
