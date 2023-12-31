@@ -36,9 +36,9 @@ iterator tokens(cmd: string): Token =
         case c
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment if LHS is non-empty
-          if t.ue.len>0 and t.kind != assign:       # TODO bug - should only do
-            t.kind = assign; t.param[0] = t.ue.len  # until `word` was yielded.
-          t.ue.add c
+          if t.ue.len>0 and t.kind != assign:       # BUG - should only do when
+            t.kind = assign; t.param[0] = t.ue.len  # have not yielded `word`.
+          t.ue.add c                        # BUG - can try putEnv w/'=' in nm
         of '>':                             # [N]>[>]data | N>&M,"".
           if t.kind == iRedir:
             doYield oRedir; gT = true
