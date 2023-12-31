@@ -2,9 +2,9 @@ when not declared(stderr): import std/syncio
 import posix, parseutils, strformat, os; include cligen/unsafeAddr
 
 type
-  Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, complex
-  Param = tuple[a,b: int]
-  Token = tuple[kind: Kind, param: Param, ue: string]
+  Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, tooHard
+  Param = tuple[a,b: int]                   # var assign '=' off|fd,mode|fd1,fd2
+  Token = tuple[kind: Kind, param: Param, ue: string] # ue: un-escaped CL-arg
 
 iterator tokens(cmd: string): Token =
   var esc, gT: bool         # escaping mode, just saw g)reaterT)han = false
@@ -62,7 +62,7 @@ iterator tokens(cmd: string): Token =
           else: doYield bkgd; t.ue.add c    # parser must verify this is last
         of '\'', '"', '`', '(', ')', '{', '}', ';', '\n', '~', '|', '^', '#',
            '*', '?', '[', ']', '$':         # Could handle these one day
-          t.kind = complex; yield t         # Too fancy for us!
+          t.kind = tooHard; yield t         # Too fancy for us! TODO $VAR expan
         else:                               # Unescaped char that needed
           t.ue.add c; gT = false            #..no escaping; just add.
     if i+1 == cmd.len: doYield              # EOString: yield any pending
@@ -83,8 +83,8 @@ proc execStr*(cmd: string): cint =
   var preFork = false
   var i, bkgdAt: int
   var args: seq[string]
-  template fallbackToSh() =
-    let ccmd = cstring(cmd)
+  template fallbackToSh() =                 # How to fall-back to /bin/sh when 
+    let ccmd = cstring(cmd)                 #..given syntax is too hard.
     binsh[2] = cast[cstring](ccmd[0].unsafeAddr)
     if execvp("/bin/sh", binsh) != 0:
       stderr.write &"execvp: \"/bin/sh\": {strerror(errno)}\n"
@@ -123,8 +123,8 @@ proc execStr*(cmd: string): cint =
     of bkgd:
       if not preFork:
         bkgdAt = i; preFork = true
-    of complex: fallbackToSh
-  if preFork and bkgdAt != i: fallbackToSh # token after 1st unquo/non-fddup '&'
+    of tooHard: fallbackToSh
+  if preFork and bkgdAt != i: fallbackToSh # token after 1st unesc/non-fddup'&'
   if args.len > 0 and args[0] == "exec":
     args.delete 0
   let prog = if args.len > 0: args[0] else: ""
@@ -135,12 +135,11 @@ proc execStr*(cmd: string): cint =
   if preFork:                           # background requested =>
     if vfork() == 0: execvpOrMsg        #   parent exits immediately
   else: execvpOrMsg
-  argv.deallocCStringArray # execvp fail; Release argv spc {likely about to die}
+  argv.deallocCStringArray # execvp fail; Dealloc argv BUT likely about to die
 
 when isMainModule:                      # This is for testing against syntax
   for token in tokens(paramStr(1)): echo token
-  discard execStr(paramStr(1))
-## Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
+## Overhead benchmarking is easy (replace 0->1,true->false for prog fail path):
 ## $ echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
 ## $ musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
 ## $ (for i in {1..32767}; do echo /tmp/true; done) > /tmp/in
