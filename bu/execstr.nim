@@ -4,7 +4,7 @@ template er(s) =
   let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 
 type
-  Kind = enum word, assign, iDir, oDir, fddup, bkgd, tooHard
+  Kind = enum word, assign, iDir, oDir, fdDup, bkgd, tooHard
   Param = tuple[a,b: int]                   # var assign '=' off|fd,mode|fd1,fd2
   Token = tuple[kind: Kind, param: Param, ue: string] # ue: un-escaped CL-arg
 
@@ -13,7 +13,7 @@ iterator tokens(cmd: string): Token =
   var t: Token
   template doYield(nextKind=word) =
     if t.kind == word: aw = true
-    if t.kind == fddup:
+    if t.kind == fdDup:
       if t.param[0] == -1: er &"char{i}: fd dup LHS non-int; RHS: \"{t.ue}\""
       elif t.ue.len > 0 and parseInt(t.ue, t.param[1]) == t.ue.len:
         t.ue.setLen 0; yield t
@@ -56,7 +56,7 @@ iterator tokens(cmd: string): Token =
                 doYield oDir                #   Yield prior; next kind oDir
             else: t.kind = oDir             # Maybe empty before '>'
         of '&':                             # dup2 | background
-          if gT: gT = false; t.kind = fddup # ">&" changes t.kind
+          if gT: gT = false; t.kind = fdDup # ">&" changes t.kind
           else: doYield bkgd; t.ue.add c    # parser must verify this is last
         of '\'', '"', '`', '(', ')', '{', '}', ';', '\n', '~', '|', '^', '#',
            '*', '?', '[', ']', '$':         # Could handle these one day
@@ -105,13 +105,13 @@ proc execStr*(cmd: string): cint =
       let ofd = open(ue.cstring, flags, 0o666)
       if ofd == -1: er &"open(\"{ue}\"): {e}"
       elif ofd != fr and dup2(ofd, fr) == -1: er &"dup2({ofd}, {fr}): {e}"
-    of fddup:
+    of fdDup:
       if dup2(param[0].cint, param[1].cint) == -1:
         er &"dup2({param[0]}, {param[1]}): {e}"
     of bkgd:
       if not preFork: bkgdAt = i; preFork = true
     of tooHard: fallbackToSh
-  if preFork and bkgdAt != i: fallbackToSh # token after 1st unesc/non-fddup'&'
+  if preFork and bkgdAt != i: fallbackToSh # token after 1st unesc/non-fdDup'&'
   if args.len > 0 and args[0] == "exec":   # Q: support PATH "exec" via \exec?
     args.delete 0
   let prog = if args.len > 0: args[0] else: ""
@@ -124,7 +124,8 @@ proc execStr*(cmd: string): cint =
 when isMainModule:                      # This is for testing against syntax
   for token in tokens(paramStr(1)): echo token
 #[ Some correctness tests for to give this file compiled as a program:
-  'a=b=c x\=y=z cmd i=j\ k<in>out 2>&1 &'
+  'a=b=c x\=y=z cmd i=j\ k<in>out 2>&1&'
+  'a=b=c x\=y=z cmd i=j\ k<in>>out 2>&1&'
 Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
   echo 'int main(int ac,char**av){return 0;}' > /tmp/true.c
   musl-gcc -static -Os /tmp/true.c -o /tmp/true && rm /tmp/true.c
