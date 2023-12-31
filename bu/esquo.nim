@@ -19,17 +19,18 @@ const needQuo* = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
 var quoHunks: seq[MSlice]
 proc sQuote*(f: File, s: SomeString; hunks: var seq[MSlice] = quoHunks) =
   ## Shell Single-Quoter.  `hunks` is just for MT-safety if you need that.
-  putchar '\''
+  f.urite '\''
   discard s.msplit(hunks, '\'', 0)
   for i, hunk in hunks:
     f.urite hunk
     if i != 0: f.urite "'\\''"
-  putchar '\''
+  f.urite '\''
 
-proc escape*(f: File, s: SomeString, esc='\\') =
+proc escape*(f: File, s: SomeString, esc='\\', need={'\0'..'\x7F'}) =
   ## Escape every byte with `esc`.  Not very unicode-friendly.
   for c in s:
-    putchar esc; putchar c
+    if c in need: f.urite esc
+    f.urite c
 
 proc emit*(f: File, s: SomeString, qmode=eqNeed, esc='\\') =
   ## Emit `s` to `f`, quoting or escaping as specified.

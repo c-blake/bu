@@ -7,7 +7,7 @@ proc interPrint(f: File; tmpl: string, prs: seq[MacroCall]; str: SomeString) =
     elif tmpl[id.a] == 's': f.urite str
     elif tmpl[id.a] == 'n': (if needQuo in str: f.sQuote str else: f.urite str)
     elif tmpl[id.a] == 'q': f.sQuote str
-    elif tmpl[id.a] == 'e': f.escape str
+    elif tmpl[id.a] == 'e': f.escape str, need=needQuo
     else: f.urite tmpl, call
 
 proc tmpls(inp="/dev/stdin", nl='\n', outp="/dev/stdout", term='\n', meta='%',
@@ -24,7 +24,7 @@ proc tmpls(inp="/dev/stdin", nl='\n', outp="/dev/stdout", term='\n', meta='%',
   for ms in mSlices(inp, sep=nl, eat='\0'):
     for i in 0 ..< templates.len:
       f.interPrint templates[i], prs[i], ms
-      putchar term
+      f.urite term
 
 when isMainModule:
   dispatch tmpls, help={"templates": "templates...",
