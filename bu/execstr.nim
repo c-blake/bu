@@ -36,10 +36,9 @@ iterator tokens(cmd: string): Token =
         case c
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment if LHS is non-empty
-          if t.ue.len>0 and t.kind != assign:
-            t.kind = assign                 #NOTE: libc putEnv takes 1st '=' as
-            t.param[0] = t.ue.len           # ..the var name sep, but that was
-          t.ue.add c                        # ..failing for me.  So, save spot.
+          if t.ue.len>0 and t.kind != assign:       # TODO bug - should only do
+            t.kind = assign; t.param[0] = t.ue.len  # until `word` was yielded.
+          t.ue.add c
         of '>':                             # [N]>[>]data | N>&M,"".
           if t.kind == iRedir:
             doYield oRedir; gT = true
