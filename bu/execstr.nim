@@ -7,8 +7,7 @@ type
   Token = tuple[kind: Kind, param: Param, deq: string]
 
 iterator tokens(cmd: string): Token =
-  var quoting = false
-  var greater = false
+  var esc, gT: bool         # escaping mode, just saw g)reaterT)han = false
   var t: Token
   template doYield(nextKind=word) =
     if t.kind == fddup:
@@ -26,16 +25,16 @@ iterator tokens(cmd: string): Token =
 
   for i, c in cmd:
     case c
-    of '\\':                                # Add quoted '\\'
-      if quoting: quoting = false; t.deq.add c
-      else      : quoting = true            # Or activate quote mode
+    of '\\':                                # Add escaped '\\'
+      if esc: esc = false; t.deq.add c
+      else  : esc = true                    # Or activate escape mode
     of ' ', '\t':
-      if quoting: quoting = false; t.deq.add c              # Add quoted space
+      if esc: esc = false; t.deq.add c                      # Add escaped space
       elif t.kind notin {iRedir, oRedir} and t.deq.len > 0: # if no arg expected
         doYield                                             # terminate token
     else:                                   # Non-backslash-white chars
-      if quoting: quoting = false; t.deq.add c  # Just add quoted
-      else:                                 # Unquoted char
+      if esc: esc = false; t.deq.add c      # Just add escaped
+      else:                                 # Unescaped char
         case c
         of '<': doYield iRedir              # -> Input Redirect
         of '=':                             # Assignment
@@ -45,11 +44,11 @@ iterator tokens(cmd: string): Token =
           t.deq.add c                       # ..failing for me.  So, save spot.
         of '>':                             # [N]>[>]data | N>&M,"".
           if t.kind == iRedir:
-            doYield oRedir; greater = true
-          elif t.kind==oRedir and greater:  # ">>"; Activate append mode
-            greater = false; t.param[1] = 1
+            doYield oRedir; gT = true
+          elif t.kind == oRedir and gT:     # ">>"; Activate append mode
+            gT = false; t.param[1] = 1
           else:                             # First '>'
-            greater = true
+            gT = true
             if t.deq.len > 0:               # Convert optional N
               if t.kind != oRedir and parseInt(t.deq, t.param[0]) == t.deq.len:
                 t.kind = oRedir             # Purely integral; "N>"
@@ -59,13 +58,13 @@ iterator tokens(cmd: string): Token =
                 doYield oRedir              #   Yield prior; next kind oRedir
             else: t.kind = oRedir           # Maybe empty before '>'
         of '&':                             # dup2 | background
-          if greater: greater = false; t.kind = fddup # ">&" changes t.kind
+          if gT: gT = false; t.kind = fddup # ">&" changes t.kind
           else: doYield bkgd; t.deq.add c   # parser must verify this is last
         of '\'', '"', '`', '(', ')', '{', '}', ';', '\n', '~', '|', '^', '#',
            '*', '?', '[', ']', '$':         # Could handle these one day
           t.kind = complex; yield t         # Too fancy for us!
-        else:                               # Unquoted char that needed
-          t.deq.add c; greater = false      #..no quoting; just add.
+        else:                               # Unescaped char that needed
+          t.deq.add c; gT = false           #..no escaping; just add.
     if i+1 == cmd.len: doYield              # EOString: yield any pending
 
 var binsh = allocCStringArray(["/bin/sh", "-c", " "]) # Reuse 3-slot in fallback
