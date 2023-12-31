@@ -4,7 +4,7 @@ template er(s) =
   let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 
 type
-  Kind = enum word, assign, iRedir, oRedir, fddup, bkgd, tooHard
+  Kind = enum word, assign, iDir, oDir, fddup, bkgd, tooHard
   Param = tuple[a,b: int]                   # var assign '=' off|fd,mode|fd1,fd2
   Token = tuple[kind: Kind, param: Param, ue: string] # ue: un-escaped CL-arg
 
@@ -19,7 +19,7 @@ iterator tokens(cmd: string): Token =
         t.ue.setLen 0; yield t
       else: er &"char{i}: fd dup RHS non-int: \"{t.ue}\""
     elif t.ue.len > 0: yield t
-    elif t.kind in {iRedir, oRedir}: er &"char{i}: no redirect path"
+    elif t.kind in {iDir, oDir}: er &"char{i}: no redirect path"
     t.param = (-1, 0); t.ue.setLen 0        # re-initialize token `t`
     t.kind = nextKind
 
@@ -30,31 +30,31 @@ iterator tokens(cmd: string): Token =
       else  : esc = true                    # Or activate escape mode
     of ' ', '\t':                           # Add escaped spcTAB|maybe end token
       if esc: esc = false; t.ue.add c
-      elif t.kind notin {iRedir, oRedir} and t.ue.len > 0: doYield                                           
+      elif t.kind notin {iDir, oDir} and t.ue.len > 0: doYield                                           
     else:                                   # A non-backslash|white char
       if esc: esc = false; t.ue.add c       # Just add if in escape mode
       else:                                 # Unescaped char
         case c
-        of '<': doYield iRedir              # -> Input Redirect
+        of '<': doYield iDir                # -> Input Redirect
         of '=':                             # Assignment if LHS is non-empty
           if not aw and t.ue.len>0 and t.kind != assign:
             t.kind = assign; t.param[0] = t.ue.len
           t.ue.add c                        # BUG: Can put esc '=' in a varNm
         of '>':                             # [N]>[>]data | N>&M,"".
-          if t.kind == iRedir:
-            doYield oRedir; gT = true
-          elif t.kind == oRedir and gT:     # ">>"; Activate append mode
+          if t.kind == iDir:
+            doYield oDir; gT = true
+          elif t.kind == oDir and gT:       # ">>"; Activate append mode
             gT = false; t.param[1] = 1
           else:                             # First '>'
             gT = true
             if t.ue.len > 0:                # Convert optional N
-              if t.kind != oRedir and parseInt(t.ue, t.param[0]) == t.ue.len:
-                t.kind = oRedir             # Purely integral; "N>"
+              if t.kind != oDir and parseInt(t.ue, t.param[0]) == t.ue.len:
+                t.kind = oDir               # Purely integral; "N>"
                 t.ue.setLen 0
               else:                         # Not purely integral
                 t.param[0] = -1             #   Reject parse; "prior>"
-                doYield oRedir              #   Yield prior; next kind oRedir
-            else: t.kind = oRedir           # Maybe empty before '>'
+                doYield oDir                #   Yield prior; next kind oDir
+            else: t.kind = oDir             # Maybe empty before '>'
         of '&':                             # dup2 | background
           if gT: gT = false; t.kind = fddup # ">&" changes t.kind
           else: doYield bkgd; t.ue.add c    # parser must verify this is last
@@ -92,12 +92,12 @@ proc execStr*(cmd: string): cint =
       if args.len == 0: putEnv(ue[0..<param[0]], ue[param[0]+1..^1])
       else: args.add ue
     of word: args.add ue
-    of iRedir:
+    of iDir:
       if close(0) != 0: er &"close(0): {e}; Canceled Redirect"; continue
       if open(ue.cstring, O_RDONLY) == -1:
         er &"open: \"{ue}\": {e}; Using /dev/null"
         if open("/dev/null", O_RDONLY) == -1: er &"open: \"{ue}\": {e}"
-    of oRedir:
+    of oDir:
       let (fd, mode) = param
       let flags = O_WRONLY or O_CREAT or (if mode == 0: O_TRUNC else: O_APPEND)
       let fr = if fd == -1: 1.cint else: fd.cint
