@@ -40,8 +40,8 @@ proc tim(warmup=2, k=3, n=8, m=4, ohead=8, save="", read="", cmds: seq[string],
   var o: MinEst                                       # Auto-Init to 0.0 +- 0.0
   if ohead > 0:                                       # Measure overhead
     for t in 1..warmup: discard "".get1
-    o = eMin(k, ohead, m, get1="".get1)
-    echo fmtUncertain(o.est, o.err),"\tOverhead"      # Report overhead
+    o = eMin(k, ohead, m, get1="".get1)               # Measure&Report overhead
+    echo fmtUncertain(o.est, o.err),"\t(AlreadySubtracted)Overhead"
   for i, cmd in cmds:                                 # Measure each cmd
     for t in 1..warmup: discard cmd.get1(i)
     var e = eMin(k, n, m, get1=cmd.get1(i))
