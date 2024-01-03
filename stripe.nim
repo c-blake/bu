@@ -61,7 +61,8 @@ proc bg(cmd: string; seqNo, i, tot: int): Pid =
   if bef.len + aft.len + irp.len > 1:   # Want t0 for wall if any fmt nontrivial
     rs[i].t0 = timeOfDay()
   if bef.len > 1:                       # `> 1` since \n is always appended.
-    ERR bef%["tm",$rs[i].t0, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo, "tot",$tot]
+    ERR bef % ["tm",$rs[i].t0, "i",$i, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo,
+               "tot",$tot]
   if aft.len+irp.len>1: rs[i].cmd = cmd # Maybe save for `wait`|interrupt report
   if putSN: putEnv "STRIPE_SEQ", $seqNo # Sequence number export was requested
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
@@ -95,9 +96,9 @@ proc wait(): int =
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
       ct.tv_sec = Time(tSched div 1_000_000); ct.tv_usec = tSched mod 1_000_000
-      pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1)
-      mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)
-    ERR aft % ["tm",$t1, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr, #%cpu,MiB RSS
+      pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1) #%cpu
+      mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)#MiB RSS
+    ERR aft % ["tm",$t1, "i",$i, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr,
                "u",$ru.ru_utime, "s",$ru.ru_stime, "ct",$ct, "cmd",rs[i].cmd]
   rs[i].cmd.setLen 0
   i
@@ -166,9 +167,9 @@ when isMainModule:
   proc ctrlC() {.noconv.} =
     if irp.len > 1:                     # interrupt reports requested
       let t1 = timeOfDay(); var w: Timeval
-      for r in rs:
-        if r.cmd.len>0:(w = nsToTimeVal(t1 - r.t0); ERR irp %
-                        ["tm",$t1, "nm",r.nm, "w",$w, "cmd",r.cmd, "sub",r.sub])
+      for i, r in rs:
+        if r.cmd.len>0: (w = nsToTimeVal(t1 - r.t0); ERR irp %
+          ["tm",$t1, "i",$i, "nm",r.nm, "w",$w, "cmd",r.cmd, "sub",r.sub])
     quit(min(127, sumSt))               # stdlib saturates at 127
   setControlCHook(ctrlC)
 
@@ -184,8 +185,8 @@ when isMainModule:
                  "secs"  : "sleep `SECS` before running each job",
                  "load"  : "0/1/2: 1/5/15-minute load average < `N`",
                  "before":"""\"D\": $tm \\e[1mslot: $nm $cmd\\e[m
-alsoAvail: \$seq \$tot""",
+also: slot \$i \$seq \$tot""",
                  "after" :"""\"D\": $tm \\e[7mslot: $nm usr: $u sys: $s\\e[m
-alsoAvail: wall \$w MiBRSS \$m \$ct \$pcpu \$cmd""",
+also: slot \$i wall \$w MiBRSS \$m \$ct \$pcpu \$cmd""",
                  "irupt" :"""\"D\": $tm interrupt $nm after $w: $cmd
-alsoAvail: substitution \$sub"""}
+also: slot \$i substitution \$sub"""}
