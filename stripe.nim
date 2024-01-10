@@ -61,8 +61,8 @@ proc bg(cmd: string; seqNo, i, tot: int): Pid =
   if bef.len + aft.len + irp.len > 1:   # Want t0 for wall if any fmt nontrivial
     rs[i].t0 = timeOfDay()
   if bef.len > 1:                       # `> 1` since \n is always appended.
-    ERR bef % ["tm",$rs[i].t0, "i",$i, "nm",rs[i].nm, "cmd",cmd, "seq",$seqNo,
-               "tot",$tot]
+    ERR bef%["tm",$rs[i].t0, "i",$i, "nm",rs[i].nm, "sub",rs[i].sub, "cmd",cmd,
+             "seq",$seqNo, "tot",$tot]
   if aft.len+irp.len>1: rs[i].cmd = cmd # Maybe save for `wait`|interrupt report
   if putSN: putEnv "STRIPE_SEQ", $seqNo # Sequence number export was requested
   putEnv("STRIPE_SLOT", $i)             # This & next both cycle over small sets
@@ -98,8 +98,8 @@ proc wait(): int =
       ct.tv_sec = Time(tSched div 1_000_000); ct.tv_usec = tSched mod 1_000_000
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1) #%cpu
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)#MiB RSS
-    ERR aft % ["tm",$t1, "i",$i, "nm",rs[i].nm, "w",$w, "pcpu",pc, "m",mr,
-               "u",$ru.ru_utime, "s",$ru.ru_stime, "ct",$ct, "cmd",rs[i].cmd]
+    ERR aft%["tm",$t1, "i",$i, "nm",rs[i].nm, "sub",rs[i].sub, "cmd",rs[i].cmd,
+      "w",$w, "pcpu",pc, "m",mr, "u",$ru.ru_utime, "s",$ru.ru_stime, "ct",$ct]
   rs[i].cmd.setLen 0
   i
 
@@ -149,11 +149,11 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
   fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
   numMo = posArgs.len == 1
   if numMo:                             # FIXED NUM JOBS MODE
-    var n: int
-    if parseInt(posArgs[0], n) == 0 or n <= 0:
+    var n: int; if parseInt(posArgs[0], n) == 0 or n <= 0:
       raise newException(ValueError, "Only one slot but not a positive int.")
     rs.setLen n                         #   impossible zero PIDs
     for i in 0 ..< n: rs[i].nm = $i     #   slot names == nums
+    if n == 1 and(let ss = getEnv("STRIPE_SUB", ""); ss.len > 0): rs[0].sub = ss
   else:                                 # STRIPE ID SUBST MODE
     rs.setLen posArgs.len               #   impossible zero PIDs
     for i, a in posArgs: rs[i].nm = a; rs[i].sub = a  # $STRIPE_SLOT,_SUB
