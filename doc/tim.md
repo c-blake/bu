@@ -54,13 +54,13 @@ among alternatives in benchmarking.  To get a minimum without error, one needs
 an **infinite** number of trials.  We instead want to economize on repetitions.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
-the mean,sdev for the **BEST SEVERAL TIMES OUT OF MANY RUNS** to approximate the
+the mean,sdev for the best several times out of many runs to approximate the
 error on the sample min.[^5] Other ideas (like differences between two smallest
 times or various statistical formulae) are surely possible.  One problem here
-is that you are guaranteed to be over even the sample-min itself.  One can be a
-bit more sophisticated and use the Fraga Alves-Neves estimator for the minimum
-and repeated sampling of that to estimate the standard error which is what the
-present version of `tim` does.
+is that you are guaranteed to exceed the sample-min itself.  One can be a bit
+more sophisticated and use the Fraga Alves-Neves estimator for the minimum
+(which is always below the sample min) and repeated sampling of that to estimate
+its standard error which is what the present version of `tim` does.
 
 Usage
 =====
