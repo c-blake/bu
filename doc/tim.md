@@ -150,8 +150,8 @@ sorting and adding some blanks:
 (8.434 +- 0.038)e-03    /bin/bash -lic exit 2>/n
 ```
 A statically linked Plan 9 rc shell, `/bin/rc -lic exit`, for example, has time
-measurement errors below 2 microseconds and deltas of 0.024 +- 0.019 = 1.26σ and
-0.116 +- 0.017 = 6.8σ.  In general, errors are around 1..40μs or 0.1%..0.5%.
+measurement errors below 2 microseconds and deltas of 2.4 +- 1.9μs = 1.26σ and
+11.6 +- 1.7μs = 6.8σ.  In general, errors are around 1..40μs or 0.1%..0.5%.
 
 The large sigma distances suggest the errors are a bit underestimated, but more
 careful study showed the situation is mostly very leptokurtotic.. (I saw some
