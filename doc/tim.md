@@ -116,10 +116,10 @@ $ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic
 ```
 
 The overhead time itself has (2.0398 +- 0.0091) - (1.9455 +- 0.0072) = 0.094 +-
-0.012[^6] or 94/12 =~ 7.8 sigma variation which is kind of big.[^7]  Actual
-timings of programs reproduce reliably with "similar" error scale from trial to
-trial.  This can be made easier to more or less just read-off reproduction by
-just sorting and adding some blanks:
+0.012[^6] or 94/12 =~ 7.8σ variation which is kind of big.[^7]  Actual timings
+of programs reproduce reliably with "similar" error scale from trial to trial.
+This can be made easier to more or less just read-off reproduction by just
+sorting and adding some blanks:
 ```
 (1.9455 +- 0.0072)e-04  (AlreadySubtracted)Overhead
 (2.0226 +- 0.0084)e-04  (AlreadySubtracted)Overhead
