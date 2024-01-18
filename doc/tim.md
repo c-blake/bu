@@ -5,15 +5,16 @@ One may want to time it to use as a benchmark.  While computers are conceptually
 deterministic, in practical settings on general purpose OSes[^1] asynchronously
 interacting with physical devices, all you can really measure is:
 
-(1) `observed_time = t0 + noise`
+(1) `observed_time = tDesired + tBackground(noise)`
 
 Even with no time-sharing, peripheral interactions[^2] degrade determinism
-motivating a random model for `noise`.  **`t0` is often what you want** because
-`noise` often does not reproduce to other minutes / days / environments &
-understanding begins with reproduction.[^3]
+motivating a random model for `tBackground` and the name "noise".  **`t0` is
+often what you want** because background activity simply does not reproduce to
+other minutes / days / environments & understanding begins with
+reproduction.[^3]
 
 This seems like a "statistics to the rescue" scenario, but caution is warranted.
-In most deployments, `noise` from Eq.1 is both time varying
+In most deployments, `tBackground` from Eq.1 is both time varying
 ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
 [heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
 **imperfect control over competing load**.  Both properties make both value &
@@ -28,7 +29,7 @@ sometimes the noise *is* the signal[^3]).
 Solutions
 =========
 A **0-tech** approach is to declare differences less than 2-10X "uninteresting".
-While not invalid, **practical difficulties** remain.  You cannot always control
+While not invalid, **practical difficulty** remains.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
 deltas can be composed of improvement with many smaller stages which then still
 need a solution.  Truly cold-cache times often have far bigger deltas than some
@@ -40,7 +41,7 @@ to suppress `noise`.  Sometimes people "scale up" naively[^4] to get hard to
 interpret &| misleading results.  Since it is also rarely clear how much scaling
 up is "enough" anyway or what the residual noise scale is, this can **compound**
 waiting time for results via several samples of longer benchmarks.  Maybe we can
-do better.
+do better!
 
 ---
 
@@ -55,19 +56,122 @@ an **infinite** number of trials.  We instead want to economize on repetitions.
 A low art way to estimate the error on the sample min `t0` estimate is to find
 the mean,sdev for the **BEST SEVERAL TIMES OUT OF MANY RUNS** to approximate the
 error on the sample min.[^5] Other ideas (like differences between two smallest
-times or various statistical formulae) are surely possible, but sdev(best) seems
-workable in practice.  [Empirical
-Evaluation](#empirical-evaluation-of-error-estimates) shows it works
-surprisingly well.  There is also a more statistically principled `eve` mode
-that [yields similar answers](#convergence--consistency).
+times or various statistical formulae) are surely possible.  One problem here
+is that you are guaranteed to be over even the sample-min itself.  One can be a
+bit more sophisticated and use the Fraga Alves-Neves estimator for the minimum
+and repeated sampling of that to estimate the standard error which is what the
+present version of `tim` does.
 
----
+Usage
+=====
+```
+  tim [optional-params] 'cmd1' 'cmd2' ..
 
+Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
+estimate.  doc/tim.md explains more.
+
+Options:
+  -w=, --warmup=  int     2  number of warm-up runs to discard
+  -k=, --k=       int     3  number of best tail times to average
+  -n=, --n=       int     8  number of inner trials; 1/m total
+  -m=, --m=       int     4  number of outer trials
+  -o=, --ohead=   int     8  number of "" overhead runs;  If > 0, value
+                             (measured same way) is taken from each time
+  -s=, --save=    string  "" also save TIMES<TAB>CMD<NL>s to this file
+  -r=, --read=    string  "" read output of save instead of running
+  -p=, --prepare= strings {} cmds to run before corresponding progs
+  -c=, --cleanup= strings {} cmds to run after corresponding progs
+```
+
+Example / Does It Work?
+=======================
+Let's see by running it 3 times and comparing results!  (Here lb=/usr/local/bin
+is an environment variable to avoid env -i PATH="$PATH", and `/n` is a symlink
+to "/dev/null"):
+```
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(2.0398 +- 0.0091)e-04  (AlreadySubtracted)Overhead
+(1.820 +- 0.017)e-04    /bin/dash -c exit
+(2.111 +- 0.015)e-04    /bin/rc -lic exit
+(7.045 +- 0.049)e-04    /bin/bash -c exit
+(1.2383 +- 0.0069)e-03  /bin/dash -lic exit
+(1.800 +- 0.016)e-03    /bin/ksh -lic exit
+(8.414 +- 0.023)e-03    /bin/bash -lic exit 2>/n
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(1.9455 +- 0.0072)e-04  (AlreadySubtracted)Overhead
+(2.007 +- 0.011)e-04    /bin/dash -c exit
+(2.251 +- 0.013)e-04    /bin/rc -lic exit
+(7.121 +- 0.030)e-04    /bin/bash -c exit
+(1.2239 +- 0.0059)e-03  /bin/dash -lic exit
+(1.849 +- 0.017)e-03    /bin/ksh -lic exit
+(8.386 +- 0.014)e-03    /bin/bash -lic exit 2>/n
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(2.0226 +- 0.0084)e-04  (AlreadySubtracted)Overhead
+(1.976 +- 0.012)e-04    /bin/dash -c exit
+(2.135 +- 0.011)e-04    /bin/rc -lic exit
+(7.133 +- 0.044)e-04    /bin/bash -c exit
+(1.2155 +- 0.0070)e-03  /bin/dash -lic exit
+(1.7999 +- 0.0085)e-03  /bin/ksh -lic exit
+(8.434 +- 0.038)e-03    /bin/bash -lic e
+```
+
+The overhead time itself has (2.0398 +- 0.0091) - (1.9455 +- 0.0072) = 0.094 +-
+0.012[^6] or 94/12 =~ 7.8 sigma variation which is kind of big.[^7]  Actual
+timings of programs reproduce reliably with "similar" error scale from trial to
+trial.  This can be made easier to more or less just read-off by just sorting
+and adding some blanks:
+```
+(1.9455 +- 0.0072)e-04  (AlreadySubtracted)Overhead
+(2.0226 +- 0.0084)e-04  (AlreadySubtracted)Overhead
+(2.0398 +- 0.0091)e-04  (AlreadySubtracted)Overhead
+
+(1.820 +- 0.017)e-04    /bin/dash -c exit
+(1.976 +- 0.012)e-04    /bin/dash -c exit
+(2.007 +- 0.011)e-04    /bin/dash -c exit
+
+(2.111 +- 0.015)e-04    /bin/rc -lic exit
+(2.135 +- 0.011)e-04    /bin/rc -lic exit
+(2.251 +- 0.013)e-04    /bin/rc -lic exit
+
+(7.045 +- 0.049)e-04    /bin/bash -c exit
+(7.121 +- 0.030)e-04    /bin/bash -c exit
+(7.133 +- 0.044)e-04    /bin/bash -c exit
+
+(1.2155 +- 0.0070)e-03  /bin/dash -lic exit
+(1.2239 +- 0.0059)e-03  /bin/dash -lic exit
+(1.2383 +- 0.0069)e-03  /bin/dash -lic exit
+
+(1.7999 +- 0.0085)e-03  /bin/ksh -lic exit
+(1.800 +- 0.016)e-03    /bin/ksh -lic exit
+(1.849 +- 0.017)e-03    /bin/ksh -lic exit
+
+(8.386 +- 0.014)e-03    /bin/bash -lic exit 2>/n
+(8.414 +- 0.023)e-03    /bin/bash -lic exit 2>/n
+(8.434 +- 0.038)e-03    /bin/bash -lic exit 2>/n
+```
+A statically linked Plan 9 rc shell, `/bin/rc -lic exit`, for example, has time
+measurement errors below 2 microseconds and deltas of 0.024 +- 0.019 = 1.26σ and
+0.116 +- 0.017 = 6.8σ.  In general, errors are around 1..40μs or 0.1%..0.5%.
+
+The large sigma distances suggest the errors are a bit underestimated, but more
+careful study showed the situation is mostly very leptokurtotic.. (I saw some
+excess kurtosis over 12) meaning wild tail events are much more common than
+expectations from light-tailed noise and one cannot use sigma alone for t-tests.
+This wild distribution itself is probably not reproducible over time or across
+test machines.
+
+So, we can answer the question "Does it work?" with "kinda, but take any A/B
+t-tests with a cube of salt".  Deviations beyond 10 sigma with no underlying
+difference are far too common, but errors are still small in absolute terms and
+so can still separate fairly subtle effects.
+
+Other issues
+============
 There is actually a natural pre-requisite to all of this which is to assess if
 **if your benchmark gives stable times in the min-tail in the first place**.
 One way to do this is checking min-tail quantile-means are consistent across
 back-to-back trials.  **If so**, then you have some reason to think you have a
-stable sampling process (at least near the min).[^6]  **If not**, you must
+stable sampling process (at least near the min).[^8]  **If not**, you must
 correct this before concluding much (even on an isolated test machine).
 
 There are many such actions..1) Shutting down browsers 2) Going single-user 3)
@@ -76,135 +180,6 @@ BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
 6) `isolcpus` to avoid timer interrupts entirely, 7) Cache Allocation Technology
 extensions to reserve L3, and on & on. (`tim` hopes that simpler ideas can
 prevent all that effort most of the time without corrupting benchmark design.)
-
-`tim` wraps these ideas up into a simple library & command-line wrapper.  You
-just pass some expression/command to be timed (probably not outputting anything
-to terminals).  It prints out an informative error when times are too unstable.
-
-Usage
-=====
-```
-  tim [optional-params] [cmds: string...]
-
-Run shell cmds (maybe w/escape|quoting) 2n times.  Finds mean,"err" of the
-best twice and, if stable at level dist, merge results for a final time & error
-estimate (-B>0 => EVT estimate).  doc/tim.md explains.
-
-  -n=, --n=       int    10   number of outer trials; 1/2 total
-  -b=, --best=    int    3    number of best times to average
-  -d=, --dist=    float  9.0  max distance to decide stable samples
-  -w=, --write=   string ""   also write times to this file
-  -r=, --read=    string ""   use output of write instead of running
-  -B=, --Boot=    int    0    bootstrap replications for final err estim
-                              <1 => simpler sample min estimate & error
-  -l=, --limit=   int    5    re-try limit to get finite tail replication
-  -a=, --aFinite= float  0.05 alpha/signif level to test tail finiteness
-  -s=, --shift=   float  4.0  shift by this many sigma (finite bias)
-  -k=, --k=       float  -0.5 2k=num of order statistics; <0 => = n^|k|
-  -K=, --KMax=    int    50   biggest k; FA,N2017 suggests ~50..100
-  -o=, --ohead=   int    0    number of "" overhead runs;  If > 0, value
-                              (measured same way) is offset from each item
-```
-
-Example: Measuring Dispatch Overhead
-====================================
-Internally, `tim` uses system(3) which passes each `cmd` as a string to a shell.
-POSIX shells have a built-in command `:` which only expands its arguments.  So,
-at least on Unix-like, one can do this:
-```sh
-$ tim : :          # OR, e.g., tim 'this way' 'that way'
-(3.53 +- 0.15)e-04      :   #NOTE: seconds - so 0.353 ms
-(3.70 +- 0.10)e-04      :
-```
-to time "null" commands twice.[^7]  In this case, we expect times in seconds to
-be "the same" and they are.[^8]
-
-Empirical Evaluation of "error" estimates
-=========================================
-The above example can be generalized to **measure** how coherent the estimate &
-errors are with your interpretations.  You can re-purpose `--dist` to get `tim`
-to emit a little report which includes distances.  That can just be extracted
-with simple text manipulation.  To get 1000 samples of the distribution of dist
-under noise variation, for example, you can just:
-```sh
-c=$(printf '%1000s\n' | sed 's/ /: /g')
-eval tim -d0 $c|grep apart|awk '{print $2}'|sort -g>/tmp/a
-# plot '/tmp/a' u 1:0 w step  # gnuplot datum idx vs. val
-```
-produces for me (normal = under `taskset 0xE chrt 99` on an otherwise "idle"
-i7-6700k CPU running Linux 6.1.1 with X11, a no-tabs browser, a few terminals,
-the network stack and so on running, but zero load)[^9]:
-![tim EDF plot](tim.png)
-For reference, abs(N(0,1)) and a rebooted BIOS-fixed frequency single-user also
-taskset/chrt'd plot are also included.  As a "unit", `dist` is close (in
-complementary probability) to Gaussian at <1.5, but the divergence gets bad past
-2 Gauss sigmas (with 2X or 3X errors depending on special boot mode or not).  By
-3 sigma rare events happen **over 50X** more often than Gaussian.[^10]  Even with
-best 3/10, **tails are very heavy**.  Even selecting `--dist` to decide
-"reproducible" can be.. challenging.  This **challenge spills over** into any
-better-worse comparisons since deltas big enough to be significant may need to
-be many "sigma" apart.[^11]
-
-A plot of your own test environments can perhaps show how bad this may be for
-you, but it is, again, non-stationary/competing work dependent.  Whatever level
-of stationarity occurs, shape & scale of the distribution likely also vary with
-time scale of the measured program.  So, trying to measure/memorize it is hard.
-**Playing with `--best` & `--run` to rein in the tail** at various scales seems
-more likely to be productive of better measurements.[^12]  `tim` does support
-`~/.config/tim` for setting defaults if you find some you like.
-
-In light of all this, this best n of m idea twice is only a "something is better
-than nothing" thing.
-
-Convergence / Consistency
-=========================
-The idea of `tim` is fundamentally a sort of "optimization of benchmarking".
-Specifically, we want to **repeat as few times as possible** while getting a
-vaguely credible measurement error estimate.  A natural next question is "How
-many iterations is 'enough'".  Answer to any "enough" question depends (at
-least!) upon what users want (eg. 10%, 0.1% error, etc.).
-
-However, to validate the methodology itself we can do something as simple as
-the overhead calibration measurement (as root):
-```sh
-for n in 10 30 100 300 1000; do env -i PATH=$PATH CLIGEN=/dev/null chrt 99 taskset 0x3 tim -n$n '' '' '' '' '' '' '' '' ''; done
-```
-Using this, we can examine two features - internal consistency with estimated
-errors at a given `n` and convergence as `n` increases.  (The empty string
-corresponds to `sh -c ''` which for me is a statically linked `/bin/dash -c
-''`.)  We can go a bit further by switching to `tim -B100` to use [Extreme Value
-Theory](https://en.wikipedia.org/wiki/Extreme_value_theory) (this is the
-max-operation version of the Central Limit Theorem for summations) as currently
-encoded in [eve](eve.md) (which uses a Fraga Alves method with more heuristic
-threshold selection).  What we get is summarized by: ![tim
-consistency-convergence plot](consisCvg.png)
-
-The plot artificially staggers the `n` ordinate on the x-axis to make error bars
-visible (in a points not overlaying sense, but data is at discrete, round `n`).
-
-What we ideally want is an estimator that converges to a distribution roughly
-symmetric and near Gaussian-around-its mode (which should match 60,000 =
-approximate infinite run limit).  Though `tim` seems far less off track than
-more common practices, it does not quite realize the dream (yet).
-
-First, the estimator seems to be converge (what stats folk call "consistent"),
-but from above  as `n` grows, not symmetrically.  I.e., the error on t0hat is
-"only '-' not '+/-'".  (This could partly be a very long-term warming-up effect
-of the sampling process, not entirely about the estimator, although experiments
-with `fitl/dists` suggest otherwise.)
-
-Second, the "error of the error" is large.  I.e., at both small & large `n`,
-estimated errors are easily 2-3X too small, *but also* sometimes too large by
-similar factors.  So, estimating errors here is a real challenge (as is, by
-extension, "iterating until an estimate reaches an accuracy target).  Pseudo
-T-tests also remain suspect out to very non-Gaussian distances.
-
-Third, though max likelihood estimator GPD fits might improve the EVT method,
-playing with kPow makes it unlikely to me that it will become much better than
-the very low art in finite samples which is a little disappointing.  Heuristic
-fudge factors on the sdev to try to center the estimate will converge (since
-sdev seems to), but may generalize poorly to other measurement time scales which
-are more costly to "cross-check" with 10s of thousands of runs.
 
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
@@ -244,31 +219,19 @@ hostile distribution.  This makes, e.g., median(min(nTimes)) the
 quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
 quite variable on most systems!
 
-[^6]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
-https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
-this more formally, but perhaps trimmed or strongly min-tail-weighted.
-
-[^7]: My /bin/sh -> dash, not bash.  Statically linked dash is 3..4X faster than
-bash for this.  Automatically measuring & subtracting shell overhead/optionally
-minimizing it with `bu/execstr.nim` are possible future work.
-
-[^8]: The values are (3.7 - 3.53)/(.15^2 + .1^2)^.5 = 0.94 "err"s apart by basic
-[error propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty)
-which uses "smallness" of errors and Taylor series.  The Nim package
+[^6]: Basic [error
+propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) uses
+"smallness" of errors and Taylor series.  The Nim package
 [Measuremancer](https://github.com/SciNim/Measuremancer) or the Python package
 [uncertainties](https://pypi.org/project/uncertainties/) can make such
 calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
-[^9]: |N(0,1)| came from just taking absolute values of 1000 unit normals.
+[^7]: Particle physics has "5 sigma" rules of thumb to declare new science in a
+similar vein.  5 seems too small for this hostile noise context.  10..15 is
+more about right, but leptokurtosis makes sigma alone an inadequate scale.
 
-[^10]: For that graph, at 4 the special mode is also 1.1% vs 2.4% for normal.
-So, special boots *can* help (by 2.2X even), but the tail remains quite heavy.
-The max distance is 8.0 for the special boot mode and 14.5 for the normal mode.
-
-[^11]: I use "sigma" here loosely as a general scale parameter, not the scale of
-a Gaussian/Normal distribution.  Particle physics has "5 sigma" rules of thumb
-to declare new science in a similar vein.  5 seems too small for this context.
-
-[^12]: Playing with `err = avg(abs(t - tMin))` definitions also seems a path to
-more reproducible error estimates.
+[^8]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
+https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
+this more formally, but perhaps trimmed or strongly min-tail-weighted.  Tests
+like these do 
