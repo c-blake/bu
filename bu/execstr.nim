@@ -1,5 +1,5 @@
 when not declared(stderr): import std/syncio
-import posix, parseutils, strformat, os; include cligen/unsafeAddr
+import posix, strformat, os; include cligen/unsafeAddr
 template er(s) =
   let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 
@@ -41,7 +41,8 @@ iterator tokens(cmd: string): Token =
           else:                             # First UnEsc '>'
             gT = true
             if t.ue.len > 0:                # Convert optional N
-              if parseInt(t.ue, t.param[0]) == t.ue.len:
+              if t.ue.len == 1 and t.ue[0] in {'0'..'9'}:
+                t.param[0] = ord(t.ue[0]) - ord('0')
                 t.kind = oDir;t.ue.setLen 0 # Purely integral; "N>"
               else:                         # Not purely integral; end last tok
                 t.param[0] = -1             #   Reject parse; "prior>"
@@ -102,7 +103,7 @@ proc execStr*(cmd: string): cint =
   if execvp(prog.cstring, argv) != 0: er &"exec: \"{prog}\": {e}"
   argv.deallocCStringArray # execvp fail; Dealloc argv BUT likely about to die
 
-when isMainModule:                      # This is for testing against syntax
+when isMainModule: #Eg: a=b=\$c x\=y=z cmd n m i=j\ k<in>O 2>E 3>>L<I2>O2 2>E2
   for token in tokens(paramStr(1)): echo token
 #[ Some correctness tests for to give this file compiled as a program:
  'a=b=c x\=y=z cmd n m i=j\ k<in>out 2>err 3>>log< in2 > out2 2> err2 3>> log2'
