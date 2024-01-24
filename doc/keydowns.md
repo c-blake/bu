@@ -12,12 +12,14 @@ error-prone.  So, a little program can help.
 
 Usage
 =====
+```
   keydowns [optional-params]
 
 Return min key downs needed to enter all lines on stdin, optimizing SHIFTs.
 
   -s=, --shift= string "~!@#$%^&*()_+|}{:\"?><" in addition to 'A'..'Z'
   -v, --v       bool   false                    err log counts & strings
+```
 
 Example
 =======
