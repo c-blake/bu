@@ -32,8 +32,8 @@ A **0-tech** approach is to declare differences less than 2-10X "uninteresting".
 While not invalid, **practical difficulty** remains.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
 deltas can be composed of improvement with many smaller stages which then still
-need a solution.  Truly cold-cache times often have far bigger deltas than some
-proposed range, leading to multiple runs to compare hot-cache results anyway.
+need a solution.  Truly cold-cache times often have far bigger deltas relative
+to hot than any proposed range.
 
 The scale of `noise` compared to `t0` can vary considerably.  A popular approach
 is to avoid sub-second times entirely, making benchmarks **many seconds long**
@@ -41,26 +41,28 @@ to suppress `noise`.  Sometimes people "scale up" naively[^4] to get hard to
 interpret &| misleading results.  Since it is also rarely clear how much scaling
 up is "enough" anyway or what the residual noise scale is, this can **compound**
 waiting time for results via several samples of longer benchmarks.  Maybe we can
-do better!
+do better than 0-tech!
 
 ---
 
 A low tech way to estimate reproducibly Eq.1's `t0`, in spite of hostile noise,
 is a simple sample minimum.  This **filters out all but noise(minimum)** -
-better behaved than average noise.[^5]
+far better behaved than average noise.[^5]
 
-However, this gives no estimate of estimator error to do principled comparisons
-among alternatives in benchmarking.  To get a minimum without error, one needs
-an **infinite** number of trials.  We instead want to economize on repetitions.
+However, this gives no uncertainty to the estimate for principled comparisons
+among alternatives.  To get a population minimum without error, one needs an
+**infinite** number of trials.  We instead want to economize on repetitions.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
 the mean,sdev for the best several times out of many runs to approximate the
-error on the sample min.[^5] Other ideas (like differences between two smallest
-times or various statistical formulae) are surely possible.  One problem here
-is that you are guaranteed to exceed the sample-min itself.  One can be a bit
-more sophisticated and use the Fraga Alves-Neves estimator for the minimum
-(which is always below the sample min) and repeated sampling of that to estimate
-its standard error which is what the present version of `tim` does.
+error on the sample min.[^5] Differences between two smallest times or various
+statistical formulae or nesting with sample stats on min(several) are surely
+possible, but these all share a problem: the sample-min itself is guaranteed to
+be exceeded.
+
+One can be a bit more sophisticated and use the Fraga Alves-Neves estimator[^6]
+for the true endpoint.  This is always below the sample min.  Repeated sampling
+of smaller windows to estimate its uncertainty is what `tim` does presently.
 
 Usage
 =====
@@ -116,7 +118,7 @@ $ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic
 ```
 
 The overhead time itself has (2.0398 +- 0.0091) - (1.9455 +- 0.0072) = 0.094 +-
-0.012[^6] or 94/12 =~ 7.8σ variation which is kind of big.[^7]  Actual timings
+0.012[^7] or 94/12 =~ 7.8σ variation which is kind of big.[^8]  Actual timings
 of programs reproduce reliably with "similar" error scale from trial to trial.
 This can be made easier to more or less just read-off reproduction by just
 sorting and adding some blanks:
@@ -170,7 +172,7 @@ There is actually a natural pre-requisite to all of this which is to assess if
 **if your benchmark gives stable times in the min-tail in the first place**.
 One way to do this is checking min-tail quantile-means are consistent across
 back-to-back trials.  **If so**, then you have some reason to think you have a
-stable sampling process (at least near the min).[^8]  **If not**, you must
+stable sampling process (at least near the min).[^9]  **If not**, you must
 correct this before concluding much (even on an isolated test machine).
 
 There are many such actions..1) Shutting down browsers 2) Going single-user 3)
@@ -215,10 +217,12 @@ comparisons is hard to say, but it's better to avoid it than guess at it.
 distribution of the sample minimum (noise) itself is the N-th power of the base
 hostile distribution.  This makes, e.g., median(min(nTimes)) the
 [0.5^n](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
-quantile of the times.  For n=20 this is ~1/million.  That sounds small, but is
-quite variable on most systems!
+quantile of the underlying times distribution.  For n=20 this is ~1/million.
+That sounds small, but is quite variable on most systems!
 
-[^6]: Basic [error
+[^6]: https://arxiv.org/abs/1412.3972
+
+[^7]: Basic [error
 propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) uses
 "smallness" of errors and Taylor series.  The Nim package
 [Measuremancer](https://github.com/SciNim/Measuremancer) or the Python package
@@ -226,11 +230,12 @@ propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) uses
 calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
-[^7]: Particle physics has "5 sigma" rules of thumb to declare new science in a
+[^8]: Particle physics has "5 sigma" rules of thumb to declare new science in a
 similar vein.  5 seems too small for this hostile noise context.  10..15 is
 more about right, but leptokurtosis makes sigma alone an inadequate scale.
 
-[^8]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
+[^9]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
 https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
 this more formally, but perhaps trimmed or strongly min-tail-weighted.  Tests
-like these do 
+like these do require independent samples which may also be tested, though the
+results of such tests are likely to be "Nope, not independent - by design".
