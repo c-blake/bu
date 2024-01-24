@@ -154,7 +154,7 @@ Miscellaneous/Islands Unto Themselves
 
 [stripe - Run jobs in parallel w/slot key vars/seqNos/shell elision](doc/stripe.md)
 
-[wsample - Weighted random sampler with fancy weighting](doc/wsample.md)
+[wgt - Weighted random sampler with fancy weighting](doc/wgt.md)
 
 [zipf - Random samples according to Zipf distribution](doc/zipf.md)
 
