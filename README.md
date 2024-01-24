@@ -70,6 +70,8 @@ Benchmarking Related Utilities (How Long)
 
 [eve - Extreme Value Estimator (e.g. *true* max|min of an infinite sample)](doc/eve.md)
 
+[keydowns - Assess string complexity in terms of a human cost](doc/keydowns.md)
+
 Row/Column/Text Table Things
 ----------------------------
 

@@ -112,7 +112,7 @@ var cpTab: Table[string, Regex]     # cached pattern: compiled expression
 proc cp*(pat: string): Regex =
   try: cpTab[pat] except: (let f = pat.re; cpTab[pat] = f; f)
 ```
-you can then just say with 54 keydowns (including "rp ")[^3]:
+you can then just say with 54 [keydowns](keydowns.md) (including "rp ")[^3]:
 ```sh
 printf "%s\n" "brown bread mat hair 42" \
               "blue cake mug shirt -7"  \
