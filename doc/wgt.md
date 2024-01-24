@@ -16,25 +16,29 @@ NeededIO   25     IO
 ```
 So, the idea is we want to "skew" sampling toward (or away from) items/tokens of
 costs that vary.  (There can even be uses besides "cost" such as desirability.)
-What `wsample` does is calculate the total weight over all scores and then use
-this to create a sampling of tokens weighted however.
+What `wgt` does is calculate the total weight over all scores and then use this
+to create a sampling of tokens weighted however.  `wgt make` additionally allows
+an updating state machine to effect a self-avoiding random-walk style sampler
+with a colorful sample-to-sample weight delta report.
 
 Usage
 -----
 ```
-  wsample [NEED,optional-params]
+⁞ wgt [-d|--dir=(".")] {SUBCMD} [sub-command options & parameters]
 
-Print n-sample of tokens {nl-delim file tokens} weighted by path weights which
-has fmt: SRC W LABEL\n where each SRC file is a set of nl-delimited tokens.
-BASE in weights = tokens (gets no label).
+SUBCMDs:
 
-  -w=, --weights= string NEED  path to weight meta file
-  -t=, --tokens=  string NEED  path to tokens file
-  -n=, --n=       int    4000  sample size
-  -m=, --m=       int    3     max duplicates for any given token
-  -d=, --dir=     string "."   path to directory to run in
-  -e, --explain   bool   false print WEIGHT TOKEN SOURCE(s) & exit
-  -s, --stdize    bool   false divide explain weight by mean weight
+  help    print comprehensive or per-cmd help
+  make    Write keyOff,Len,Wgt,Why dictionary implied by source & keys
+  print   Emit WEIGHT TOKEN SOURCE(s) for all/some keys to stdout
+  assay   Emit aggregate stats assay for given .NC3CS6C files
+  sample  Emit n-sample of keys {nl-delim file} weighted by table weights
+  diff    Emit color-highlighted diff of old & new weights for keys
+
+wgt {-h|--help} or with no args at all prints this message.
+wgt --help-syntax gives general cligen syntax help.
+Run "wgt {help SUBCMD|SUBCMD --help}" to see help for just SUBCMD.
+Run "wgt help" to get *comprehensive* help
 ```
 
 A few more "whys"
@@ -46,11 +50,7 @@ You may also want to limit/cap the total number of samples any given token can
 realize, a kind of back stop against over-skewed scores.
 
 This all rather complex to drive.  So, you also may want to report & explain
-total weights on a per token basis.  That is what the --explain flag tells
-`wsample` to do, and `--stdize` reports in terms of overall mean weight.
-
-(There may well be other interesting refinements - such as standardizing by
-median not mean weight, etc., etc.  As with everything, this is but a start.)
+total weights on a per token basis (`print`). 
 
 Related Work
 ------------
