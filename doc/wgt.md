@@ -4,7 +4,7 @@ Sometimes you want to simulate workloads from logs/records or other bases of
 synthesis.  There may be many ways to "score" items in terms of desired sampling
 frequency.  Here each kind of score is a "source" of weight (e.g. requires a DB
 query or required device IO or whatever).  These are listed in a weight meta
-file specified by `-w`.  E.g.:
+file specified by `wgt make -w`.  E.g.:
 ```
 # SOURCE  WEIGHT  LABEL
 # Some base weight for all known tokens
