@@ -27,6 +27,7 @@ Example
 $ keydowns -v
 awk -F, 'BEGIN{a=1;b=2;c=3}{print $a,$b+$c}'
 rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'
+^D
 51 awk -F, 'BEGIN{a=1;b=2;c=3}{print $a,$b+$c}'
 41 rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'1234
 92
