@@ -33,7 +33,7 @@ when defined(Windows):
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
-  "keydowns"    # Assess string complexity in terms of a human cost
+  "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
@@ -107,7 +107,7 @@ else:
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "tim",        # Sanity checking benchmark timer using only basic statistics
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
-  "keydowns"    # Assess string complexity in terms of a human cost
+  "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
   "tails",      # Generalizes head & tail into one with all-but compliments
