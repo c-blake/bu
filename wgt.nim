@@ -59,9 +59,10 @@ proc parseSource*(weights=""): (seq[MSlice], seq[uint16], seq[MSlice]) =
       result[2].add cols[2]
       if result[0].len == 49: raise newException(IOError, "too many sources")
 
-proc globalStats*(wt: WTab): MovingStat[float, uint16] =
-  result.init 0.5, 65535.5, 1024, {OrderStats}
-  for ww in wt.values: result.push ww.w.float
+proc globalStats*(wt: WTab): (MovingStat[float, uint16], Hash) =## stats&why.sig
+  result[0].init 0.5, 65535.5, 1024, {OrderStats}
+  for ww in wt.values: result[0].push ww.w.float; result[1]=result[1] !& ww.why.int
+  result[1] = !$result[1]
 
 proc fmt[F: SomeFloat, C: SomeInteger](s: MovingStat[F,C]): seq[string] =
   result.add &"W: {s.sum.int} "
@@ -86,8 +87,8 @@ proc wdiff(labs: seq[MSlice]; key: MSlice; ol,nw: Ww; kMx,cMx: var int): HQR =
   cMx = max(cMx, result.chg.printedLen)
 
 proc cmp(sOld, sNew: WTab; labs: seq[MSlice], only="") =
-  let stO = sOld.globalStats; let stN = sNew.globalStats
-  if stO.mean == stN.mean: return
+  let (stO, sigO) = sOld.globalStats; let (stN, sigN) = sNew.globalStats
+  if sigO == sigN: return
   func spc(n: int): string = repeat(" ", n)
   var kMx, cMx: int
   var hq = HeapQueue[HQR]()
@@ -163,7 +164,7 @@ proc assay*(tables: seq[string]) =
   for table in tables:
     let wt = wopen table
     if wt.wgts.mem.isNil: continue
-    let st = wt.globalStats
+    let (st, _) = wt.globalStats
     let sf = st.fmt; let nTot = st.n.float; let wTot = st.sum
     outu &"SCORE:\n"; for e in sf: outu "  ", e, "\n"
     var wd = collect(for ww in wt.values: ww.w.int); wd.sort; wd.cumsum
