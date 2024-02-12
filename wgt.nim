@@ -145,19 +145,44 @@ proc diff*(oldNew: seq[string], keys="keys", weights="weights", only="") =
   ## Emit color-highlighted diff of old & new weights for keys
   cmp wopen(oldNew[0],keys),wopen(oldNew[1],keys), parseSource(weights)[2],only
 
-proc print*(table="wt.NC3CS6C", keys="keys", weights="weights", ks:seq[string])=
-  ## Emit WEIGHT TOKEN SOURCE(s) for all/some keys to stdout
+proc rend(wt: WTab, fmt: string, cs: seq[MacroCall], labs: seq[MSlice],
+          labTab: Table[string, (int, string, string)], k: Key|string, ww: Ww) =
+  for (id, arg, call) in cs:
+    if id.idIsLiteral: outu fmt[arg]
+    else:
+      let id = fmt[id].toString # type MaCallX=(MacroCall,string) &tmplParsedX?
+      case id
+      of "w"  : outu ww.w
+      of "k"  : (when k is Key: outu wt.keyQ(k) else: outu k)
+      of "why": (var wr=false; for i in ww.why.onBits:
+                                 (if wr: outu " " else: wr=true); outu labs[i])
+      else:
+        try:
+          let (bit, y, n) = labTab[id]
+          outu if ((1'u shl bit) and ww.why) != 0: y else: n
+        except KeyError: outu fmt[call]
+  outu '\n'
+
+proc toTab(fmt: string, cs: seq[MacroCall], labs: seq[MSlice]):
+    Table[string, (int, string, string)] =
+  for (id, arg, call) in cs:
+    if not id.idIsLiteral and (let id = fmt[id].toString; ',' in id):
+      let cols = id.split(',')
+      if cols.len!=3: raise newException(IOError, "bad syntax: \"" & id & "\"")
+      let bit = labs.find(cols[0].toMSlice)
+      if bit<0: raise newException(IOError, "unknown label \"" & cols[0] & "\"")
+      result[id] = (bit, cols[1], cols[2])
+
+proc print*(table="wt.NC3CS6C", keys="keys", weights="weights",fmt="$w $k $why",
+            ks: seq[string]) =
+  ## Print weights for all/some keys based on `fmt`
   if dir != ".": setCurrentDir dir
-  let wt = wopen(table, keys)
-  let (_, _, labs) = parseSource(weights)
-  var s: string
-  template body =
-    s.setLen 0; s.addInt ww.w                   # List total weight, maybe key
-    if ks.len != 1: s.add " "; (when k is Key: s.add wt.keyQ(k) else: s.add k)
-    for i in ww.why.onBits: s.add " "; s.add labs[i]  # Then weight explanation
-    outu s, '\n'
-  if ks.len==0: (for k, ww in wt: body)         # All in hash-order | requested
-  else: (for k in ks: (let ww = wt.getOrDefault(k.toMSlice); body))
+  let wt = wopen(table, keys); let (_, _, labs) = parseSource(weights)
+  let cs = fmt.tmplParsed; let labTab = fmt.toTab(cs, labs)
+  if ks.len == 0: (for k, ww in wt: wt.rend(fmt,cs, labs,labTab, k,ww))
+  else:                 #   No `ks` => all in hash-order else ..
+    for k in ks:        #.. `ks` => requested order w/lookups.
+      let ww = wt.getOrDefault(k.toMSlice); wt.rend(fmt,cs, labs,labTab, k,ww)
 
 proc assay*(tables: seq[string]) =
   ## Emit aggregate stats assay for given .NC3CS6C files
@@ -218,7 +243,8 @@ Run "$command help" to get *comprehensive* help"""],
                 [make  , help={"table":hT, "keys":hK, "weights":hW, "only":hO,
                   "refTab": "if given `table`->that, then cmp", "refKey":
                   "if given, keys for refTab for cmp"}, short={"refKey":'R'}],
-                [print , help={"table":hT, "keys":hK, "weights":hW}],
+                [print , help={"table":hT, "keys":hK, "weights":hW, "fmt":
+                               "w:weight k:key why:labels; label,Y,N"}],
                 [assay , help={"tables": hT & "s" }],
             [wgt.sample, help={"table":hT, "keys":hK, "n":"sample size",
                   "m": "max dups for any given key"}],
