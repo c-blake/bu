@@ -58,12 +58,13 @@ A low art way to estimate the error on the sample min `t0` estimate is to find
 the mean,sdev for the best several times out of many runs to approximate the
 error on the sample min.[^5] Differences between two smallest times or various
 statistical formulae or nesting with sample stats on min(several) are surely
-possible, but these all share a problem: the sample-min itself is guaranteed to
-be exceeded.
+possible, but these all share a problem: the population-min is guaranteed to be
+less than any sample min.
 
 One can be a bit more sophisticated and use the Fraga Alves-Neves estimator[^6]
-for the true endpoint.  This is always below the sample min.  Repeated sampling
-of smaller windows to estimate its uncertainty is what `tim` does presently.
+for the true endpoint to try to extrapolate.  This is always < sample min.
+Repeated sampling of smaller windows to estimate its uncertainty is what `tim`
+does presently.
 
 Usage
 =====
