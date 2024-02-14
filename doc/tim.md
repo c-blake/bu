@@ -9,8 +9,9 @@ interacting with physical devices, all you can really measure is:
 
 Even with no time-sharing, peripheral interactions[^2] degrade determinism
 motivating a random model for `tBackground` and the name "noise".  **`t0` is
-often what you want** because background activity simply does not reproduce to
-other minutes / days / environments & understanding begins with
+often what you want** because background activity and precise synchronization of
+load-based CPU dynamic frequency scale-up simply does not reproduce to other
+milliseconds / minutes / days / environments.  Understanding begins with
 reproduction.[^3]
 
 This seems like a "statistics to the rescue" scenario, but caution is warranted.
@@ -193,18 +194,19 @@ machines/networks/etc.  Basically, there is not really such a thing as an "truly
 idle" general purpose system..merely "approximately idle".
 
 [^3]: Of course, understanding does not ***end*** with reproduction.  Sometimes
-the whole distribution is of interest, not the "luckiest".  Sometimes cold-cache
-(for some value of "cold" and "cache" are more interesting).  `tim` does let you
-write all the times to a file.  Most debate over such things (eg. hbench vs.
-lmbench) is really about how to compress many numbers into one for purposes of
-comparison.  Not compressing at all (or even nixing time series structure) is
-the more informative comparison.  Since humans are bad at reading such reports,
-views on the debate mostly come down to priors on misinterpretation probability
-(usually with strong subjective experience components).  In any event, if one
-*does* care about the whole distribution, not merely `t0`, to be scientific one
-should check that ***the whole distro reproduces*** via a K-S test or similar
+the whole distribution is of interest, not the best or "luckiest".  Cold-cache
+(for some values of "cold" & "cache") can be more interesting.  `tim` can write
+all times to a file, including "warm-ups".  Most debate over such things (eg.
+hbench vs.  lmbench) is more about how to compress many numbers into one for
+purposes of comparison.  Not compressing at all (or even flattening time series
+structure) is the more informative comparison.  Since humans are bad at reading
+such reports, views on the debate mostly come down to disagreeing estimates of
+P(misinterpretation|strong subjective experience components).  In any event, if
+one *does* care about the whole distribution, not merely `t0`, to be scientific
+one should check that ***the whole distro reproduces*** via K-S tests or similar
 (unlikely but not impossible for most noise of my personal experience).  This
-may be Future Work for `tim`.
+may be Future Work for `tim` and inherently requires a *lot* of data/samples as
+well as environmental controls.
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
 times***](https://benhoyt.com/writings/count-words/) means that branch
