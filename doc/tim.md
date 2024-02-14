@@ -23,8 +23,8 @@ error estimates of **flat averages including ALL OF `noise` mislead**.  Central
 measures like the mean (& median) are likely dragged way up.  Errors in the
 means just explode.  Neither converge as you might think from [Limit
 Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Non-stationary,
-non-independent noise violates base assumptions of most applied statistics.
-Even trimmed / outlier removed averages risk confusing signal & noise (though
+**non-independent** noise violates base assumptions of most applied statistics.
+Even trimmed / outlier-removed averages risk confusing signal & noise (though
 sometimes the noise *is* the signal[^3]).
 
 Solutions
@@ -197,8 +197,8 @@ idle" general purpose system..merely "approximately idle".
 the whole distribution is of interest, not the best or "luckiest".  Cold-cache
 (for some values of "cold" & "cache") can be more interesting.  `tim` can write
 all times to a file, including "warm-ups".  Most debate over such things (eg.
-hbench vs.  lmbench) is more about how to compress many numbers into one for
-purposes of comparison.  Not compressing at all (or even flattening time series
+hbench vs. lmbench) is more about how to compress many numbers into one for
+purposes of comparison.  Not compressing at all (& not flattening time series
 structure) is the more informative comparison.  Since humans are bad at reading
 such reports, views on the debate mostly come down to disagreeing estimates of
 P(misinterpretation|strong subjective experience components).  In any event, if
