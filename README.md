@@ -152,7 +152,7 @@ Miscellaneous/Islands Unto Themselves
 
 [dirq - Kind of its own system-building atom thing](doc/dirq.md)
 
-[funnel - A reliable, record boundary respecting "FIFO funnel](doc/funnel.md)
+[funnel - A reliable, record boundary respecting "FIFO funnel"](doc/funnel.md)
 
 [stripe - Run jobs in parallel w/slot key vars/seqNos/shell elision](doc/stripe.md)
 
