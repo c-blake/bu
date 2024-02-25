@@ -73,7 +73,7 @@ echo>"$XA/.fin"                 # Tell funnel writers are dead
 wait                            # Wait for funnel to finish
 ```
 Yes, yes.  It could probably be even more careful & general or, with more
-assumptions (e.g. temp space, bash, EPOCHREALTIME) it could also be much
+assumptions (e.g. temp space, bash, EPOCHREALTIME), it could also be much
 simpler, not even requiring `funnel`.  I tried to strike a balance.
 
 The e.g. in the doc blurb of `xa` above can be used, e.g., to compare perf of
