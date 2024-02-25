@@ -157,9 +157,9 @@ slower than serial grep.
 would agree `t0` is more interesting than noise dependent upon everything going
 on concurrently in a system - which seems a bizarrely popular thing to assess.
 mean(best3/10) is only one easy upper bound for the true t0.  `eve` also in this
-package is an attempt at a better t0 estimator, but can be glitchy.  Even the
-best 3/10 method is polluted by whatever noise makes it into the best 30%. "The
-perfect" here is a bit elusive, but "not awful" is not so hard to get.
+package is an attempt at a better t0 estimator.  Even the best 3/10 method is
+polluted by whatever noise makes it into the best 30%. "The perfect" here is a
+bit elusive, but "not awful" is not so hard to get.
 
 [^2]: Whatever you use - same environment reproducibility requires *some* way to
 compare runs/assess said reproduction.  For errors small enough that [classic
