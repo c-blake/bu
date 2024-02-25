@@ -31,7 +31,7 @@ when defined(Windows):
   "fread",      # Like `cat` but just read data (no writes)
 # "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
-  "tim",        # Sanity checking benchmark timer using only basic statistics
+  "tim",        # Uncertain time comparison via repeated sampling
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
   "keydowns",   # Assess string complexity in terms of a human cost
 
@@ -105,7 +105,7 @@ else:
   "fread",      # Like `cat` but just read data (no writes)
   "ru",         # Resource Usage measurement { high-res/nicer time(1) }
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
-  "tim",        # Sanity checking benchmark timer using only basic statistics
+  "tim",        # Uncertain time comparison via repeated sampling
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
   "keydowns",   # Assess string complexity in terms of a human cost
 

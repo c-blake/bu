@@ -66,7 +66,7 @@ Benchmarking Related Utilities (How Long)
 
 [etr - e)stimate t)ime r)emaining using subcommands for %done](doc/etr.md)
 
-[tim - Sanity checking benchmark timer using only basic statistics](doc/tim.md)
+[tim - Uncertain time comparison via repeated sampling](doc/tim.md)
 
 [eve - Extreme Value Estimator (e.g. *true* max|min of an infinite sample)](doc/eve.md)
 
