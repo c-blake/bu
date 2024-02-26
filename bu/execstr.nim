@@ -104,7 +104,9 @@ proc execStr*(cmd: string): cint =
   argv.deallocCStringArray # execvp fail; Dealloc argv BUT likely about to die
 
 when isMainModule: #Eg: a=b=\$c x\=y=z cmd n m i=j\ k<in>O 2>E 3>>L<I2>O2 2>E2
-  for token in tokens(paramStr(1)): echo token
+  for i, str in commandLineParams():
+    if i != 0: echo ""
+    for token in tokens(str): echo token
 #[ Some correctness tests for to give this file compiled as a program:
  'a=b=c x\=y=z cmd n m i=j\ k<in>out 2>err 3>>log< in2 > out2 2> err2 3>> log2'
 Overhead benchmarking is easy (replace 0->1, true->false for prog fail path):
