@@ -6,6 +6,7 @@ license     = "MIT/ISC"
 
 when defined(Windows):
  bin         = @[
+# "catz",       # Generalize `zcat` to many encodings, not merely `gzip`
 # "ft",         # file typer {i-node type, not file(1)/libmagic(3) type}
 # "only",       # file(1)/libmagic tool to emit files whose types match
 # "fkindc",     # file(1)/libmagic tool to histogram file types
@@ -80,6 +81,7 @@ when defined(Windows):
  ]
 else:
  bin         = @[
+  "catz",       # Generalize `zcat` to many encodings, not merely `gzip`
   "ft",         # file typer {i-node type, not file(1)/libmagic(3) type}
   "only",       # file(1)/libmagic tool to emit files whose types match
   "fkindc",     # file(1)/libmagic tool to histogram file types

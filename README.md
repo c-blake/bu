@@ -21,6 +21,8 @@ File Typology (What/Whether)
 
 [notIn - Helper to manage semi-mirrored file trees](doc/notIn.md)
 
+[catz - Generalize `zcat` to many encodings, not merely `gzip`](doc/catz.md)
+
 Space Management (How Much)
 ---------------------------
 
