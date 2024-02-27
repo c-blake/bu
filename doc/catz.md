@@ -37,6 +37,7 @@ A Few Examples
 catz a.gz b.bz2 c.xz d.zs > /dev/null
 catz < foo.tar.anyz | tar xpf -
 export LESSOPEN="|-catz %s"
+rg -l --pre=catz pattern /usr/share/man/man?
 etc., etc.
 ```
 
