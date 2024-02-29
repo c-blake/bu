@@ -85,6 +85,6 @@ document that and the listing format itself could serve.
 [^3]: That can be minimized by static linking of catz, decoders, or both.  A way
 to specify `.so:open/decode/close` transformers could make for 1-exec not 2. The
 ideal 0-exec would need an in-end-requesting-process `zopen` meta-library (but
-that entails either dynamic linking & `LD_PRELOAD` tricks or integration work).
+that entails either dynamic linking & `LD_PRELOAD` tricks or a PL-specific API).
 
 [^4]:  Happy to put in citations if you tell me.
