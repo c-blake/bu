@@ -1,5 +1,5 @@
 import std/[os, posix, strformat]       # Nim program to measure Resource Usage
-when not declared(stderr): import std/[syncio, formatfloat]
+when not declared(stderr): import std/syncio
 
 import std/[macros, strutils]           # Some formats want no leading spaces
 macro strp(sVars: varargs[untyped]): untyped =
