@@ -31,8 +31,19 @@ Options:
   -n=, --n=     int    0            scale for '%' amounts
 ```
 
-Example
--------
+Very Simple Example
+-------------------
+```sh
+$ paste <(seq 1 100) <(seq 1 10 1000) | topn 5
+96      951
+97      961
+98      971
+99      981
+100     991
+```
+
+Fancier Example
+---------------
 This will recurse in `.` emitting c-time, m-time, and path names to a pipeline.
 `topn` then collects the top-3 of the first column (0-origin column 0) and the
 top-4 of the 2nd column (0-origin column 1) in bounded-size heaps (for the
@@ -40,8 +51,8 @@ curious) and emits the pathnames (0-origin column 2) of each to stdout.
 ```sh
 find . -printf '%Cs %Ts %P\n' | topn  3,0,2  4,1,2
 ```
-(Yes, this *exact* example is handled by [`newest`](newest.md), but there in 2
-passes over the file tree).
+(Yes, this *exact* example is handled by [`newest`](newest.md); It's just an
+example).
 
 If you want output to separate files (or FIFOs), you can just add `",top3c"` and
 `",top4m"` to the ends of the two parameters, for example.
