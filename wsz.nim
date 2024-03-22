@@ -5,4 +5,5 @@ proc terminalSize(): IOctl_WinSize =
 let t = terminalSize()
 echo "cells: "    , t.ws_col   , " x ", t.ws_row   ,
      " pixels: "  , t.ws_xpixel, " x ", t.ws_ypixel,
-     " charCell: ", t.ws_xpixel div t.ws_col, " x ", t.ws_ypixel div t.ws_row
+     " charCell: ", t.ws_xpixel div max(1.cushort, t.ws_col),
+     " x "        , t.ws_ypixel div max(1.cushort, t.ws_row)
