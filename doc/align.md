@@ -18,15 +18,15 @@ Usage
 stdInOut filter to align an ASCII table & optionally emit colNo header row.
 Zero or more alignSpecs control output alignment:
 
-  -[(emptyCode|aByte|classCode)][<R(1)>] Left Align (default) R columns
-  0[(emptyCode|aByte|classCode)][<R(1)>] Center R columns
-  +[(emptyCode|aByte|classCode)][<R(1)>] Right Align  R columns
+  -[(emptyCode|aByte|setCode)][<R(1)>] Left Align R columns (default)
+  0[(emptyCode|aByte|setCode)][<R(1)>] Center R columns
+  +[(emptyCode|aByte|setCode)][<R(1)>] Right Align R columns
 
 where
 
   emptyCode Names the empty string for a column; absent => 'e'
   aByte     Specifies '.'|','-like alignment byte; cannot be 'e'
-  classCode Names digit-like set w/an implied trailing align byte (only
+  setCode   Names digit-like set w/an implied trailing align byte (only
               if byte missing).  Cannot collide with char code emptyCode.
 
 The final alignSpec is used for any higher, unspecified columns.  E.g.:
@@ -40,12 +40,13 @@ w/"N/A" empties & implicit '.' (all others have a default "" empty).
   -d=, --delim=   string  ","   inp delim chars; Any repeats => foldable
   -m=, --maxCol=  int     0     max columns to form for aligning;0=unlimited
   -p, --prLen     bool    false force adjust for ANSI SGR escape sequences
-  -a=, --aclass=  strings d0-9  byteCharacterClass bindings; "-" => a range
+  -a=, --aSet=    strings d0-9  byteCharacterSet bindings; "-" => a range
   -s=, --sepOut=  string  " "   output separator (beyond just space padding)
   -0, --origin0   bool    false print a header of 0-origin column labels
   -1, --origin1   bool    false print a header of 1-origin column labels
   -n=, --null=    string  ""    output string for cell introduced as padding
   -e=, --empties= strings e     byteString binds for missing internal cells
+  -g, --debug     bool    false emit indented alignment metadata to stderr
 ```
 
 More Involved Example
