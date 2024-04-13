@@ -51,7 +51,7 @@ proc tim(warmup=2, k=3, n=8, m=4, ohead=8, save="", read="", cmds: seq[string],
 when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "cmds"   : "'cmd1' 'cmd2' ..",
   "warmup" : "number of warm-up runs to discard",
-  "k"      : "number of best tail times to average",
+  "k"      : "number of best tail times to use/2",
   "n"      : "number of inner trials; 1/m total",
   "m"      : "number of outer trials",
   "ohead": """number of \"\" overhead runs;  If > 0, value
