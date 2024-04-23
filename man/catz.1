@@ -1,0 +1,89 @@
+.\" -*- nroff -*-
+.TH CATZ 1 "July 2002" "CB Utils"
+
+.SH NAME
+
+catz \- ``cat'' for compressed files
+
+.SH SYNOPSIS
+
+.nf
+.B catz \fI[ -d ] [ -v STDIN_NAME_VAR ] [ FILES [ "-" ] [ < FILE ] ]\fR
+.fi
+
+.SH DESCRIPTION
+
+.B catz
+is a replacement for \fBcat\fR(1), but \fIcatz\fR decodes encoded files,
+avoiding temporary storage like \fBzcat\fR(1) but for many possible formats.
+
+.SH USAGE
+
+This program is careful to go by magic numbers in headers of compressed or
+otherwise encoded files when no pathname extension matches.  NOTE: in a shell
+context, it is easy to say "\fIcatz\fR < input.xz" to force ignoring extensions.
+
+The flag "-v" indicates \fISTDIN_NAME_VAR \fR, an environment variable that
+the invoker sets to the pathname for stdin.  Other pathnames are available
+from the \fBcatz\fR argument list.  Pathnames are only really needed if magic
+number recognition would fail or if selected decoder programs need a pathname.
+
+Just as with \fBcat\fR(1), a lone minus sign ("-") filename indicates
+how the standard input stream should be ordered within the catenation.
+
+Currently, \fBcatz\fR has decoders for
+\fBzip\fR,
+\fBgzip\fR,
+\fBcompress\fR,
+\fBbzip\fR,
+\fBbzip2\fR,
+\fBlzop\fR,
+\fBlzma\fR (lzma-utils version),
+\fBxz\fR or \fBpixz\fR,
+\fBplzip\fR,
+\fBlz4\fR, and
+\fBzstd\fR and the document formats
+\fB.pdf\fR,
+\fB.ps*\fR, and
+\fB.htm*\fR
+
+NOTE: Due to limitations in utilities for the format, zip files given as
+paths will have \fBall\fR members catenated, while only the \fBfirst\fR
+member is extracted from unseekable zip inputs.
+
+A leading "-d" option is ignored for compatibility with GNU tar -I.
+
+.SH IMPL NOTES
+
+The one-file, seekable-input case allows simple replacement of the
+\fBcatz\fR process with a decoder process.  The \fBexec\fR(2) inherits
+the needed file descriptors.  This avoids any unnecessary context
+switching or copying.
+
+The N-file, named-argument case requires a two-process at a time system
+in order to generate an ordered, integrated output stream.  \fBcatz\fR
+uses a forked version of itself to read output from the read side of a
+pipe, copying it to the original stdout.  All decoder programs send
+their output to the write-side.
+
+If no path name is available (e.g., stdin) or if the pathname does not
+have a standard filename extension for compressed files, then a magic
+number \fImust\fR be read to identify the decoder to be used.  A decoder
+itself will (typically) \fIalso\fR insist on this magic number being
+present.  For seekable input streams, \fBlseek\fR(2) can restore the
+file pointer and the decoder process will be happy.  For unseekable
+input streams, we must fork and exec a new process to put the header
+back into place for a translator.  In short, \fBcat foo|catz\fR should
+work fine.  This is unlikely true of any/many other auto-decoder.
+
+.SH AUTHOR
+
+C.Blake <charlechaud@gmail.com> conceived & wrote \fBcatz\fR.
+
+.SH BUGS
+
+Please report them!
+
+.SH SEE ALSO
+
+.BR cat (1) ", zcat" (1) ", bzip" (1) ", bzip2" (1) ", zip" (1) ", compress" (1) ", grep"(1)
