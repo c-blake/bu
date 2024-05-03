@@ -68,9 +68,9 @@ Benchmarking Related Utilities (How Long)
 
 [etr - e)stimate t)ime r)emaining using subcommands for %done](doc/etr.md)
 
-[tim - Uncertain time comparison via repeated sampling](doc/tim.md)
-
 [eve - Extreme Value Estimator (e.g. *true* max|min of an infinite sample)](doc/eve.md)
+
+[tim - Uncertain time comparison via repeated sampling & `eve`](doc/tim.md)
 
 [keydowns - Assess string complexity in terms of a human cost](doc/keydowns.md)
 
