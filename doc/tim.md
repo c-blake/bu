@@ -185,8 +185,8 @@ There are many such actions..1) Shutting down browsers 2) Going single-user 3)
 `taskset`/`chrt`, 4) fixing CPU frequency dynamically in-OS 5) Rebooting into a
 BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
 6) `isolcpus` to avoid timer interrupts entirely, 7) Cache Allocation Technology
-extensions to reserve L3, and on & on. (`tim` hopes that simpler ideas can
-prevent all that effort most of the time without corrupting benchmark design.)
+extensions to reserve L3, and on & on. (`tim` hopes simpler ideas can prevent
+much of that effort most of the time without corrupting benchmark design.)
 
 [^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
 how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
