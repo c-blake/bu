@@ -163,11 +163,14 @@ study showed the situation is mostly very leptokurtotic.. (I saw excess kurtosis
 over 12) meaning wild tail events are much more common than expectations from
 light-tailed noise.  So, one cannot use sigma alone for t-tests.  This wild
 distribution itself is likely irreproducible over time or across test machines.
+Running that set of tests with fixed CPU frequency and very minimal background
+activity would very likely make these distributions less hostile.
 
-So, we can answer the question "Does it work?" with "kinda, but take any A/B
-t-tests with a cube of salt".  Deviations beyond 10 sigma with no underlying
-difference are far too common, but errors are still small in absolute terms and
-so can still separate fairly subtle effects.
+So, we can answer the question "Does it work?" with "kinda!".  10σ devs with no
+underlying difference are far too common, yet errors are still small in absolute
+terms letting you separate fairly subtle effects.  So, it seems useful as long
+as you take any A/B pseudo-t-tests with a "cube of salt" a bit bigger than the
+one common in particle physics.[^8]
 
 Other issues
 ============
