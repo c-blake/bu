@@ -58,5 +58,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
 (measured same way) is taken from each time""",
   "save"   : "also save TIMES<TAB>CMD<NL>s to this file",
   "read"   : "read output of `save` instead of running",
-  "prepare": "cmds to run before corresponding progs",
-  "cleanup": "cmds to run after corresponding progs"}
+  "prepare": "cmds to run before *corresponding* cmd<i>s",
+  "cleanup": "cmds to run after *corresponding* cmd<i>s"}

@@ -83,8 +83,8 @@ Options:
                              (measured same way) is taken from each time
   -s=, --save=    string  "" also save TIMES<TAB>CMD<NL>s to this file
   -r=, --read=    string  "" read output of save instead of running
-  -p=, --prepare= strings {} cmds to run before corresponding progs
-  -c=, --cleanup= strings {} cmds to run after corresponding progs
+  -p=, --prepare= strings {} cmds to run before corresponding cmd<i>s
+  -c=, --cleanup= strings {} cmds to run after corresponding cmd<i>s
 ```
 
 Example / Does It Work?
