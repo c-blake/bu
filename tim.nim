@@ -20,8 +20,8 @@ proc padWithLast(xs: seq[string], n: int): seq[string] =
   result = xs; if xs.len == 0: result.add ""
   for i in xs.len ..< n: result.add result[^1]
 
-proc tim(warmup=2, k=3, n=8, m=4, ohead=8, save="", read="", cmds: seq[string],
-         prepare: seq[string]= @[], cleanup: seq[string] = @[]) =
+proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
+         prepare: seq[string]= @[], cleanup: seq[string] = @[], verbose=false) =
   ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
   ## time & error estimate.  `doc/tim.md` explains more.
   if n < k:
@@ -30,6 +30,11 @@ proc tim(warmup=2, k=3, n=8, m=4, ohead=8, save="", read="", cmds: seq[string],
     raise newException(HelpError, "Need cmds; Full ${HELP}")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
+  if verbose: stderr.write(&"tim: warmup  {warmup}\ntim: k       {k}\n",
+                           &"tim: n       {n}\ntim: m       {m}\n",
+                           &"tim: ohead   {ohead}\ntim: save    {save}\n",
+                           &"tim: read    {read}\ntim: cmds    {cmds}\n",
+                           &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n")
   let f = if save.len > 0: open(save, fmAppend) else: nil
   var r = read.maybeRead
   proc get1(cmd: string, i = -1): float =             # Either use read times..
@@ -59,4 +64,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "save"   : "also save TIMES<TAB>CMD<NL>s to this file",
   "read"   : "read output of `save` instead of running",
   "prepare": "cmds to run before *corresponding* cmd<i>s",
-  "cleanup": "cmds to run after *corresponding* cmd<i>s"}
+  "cleanup": "cmds to run after *corresponding* cmd<i>s",
+  "verbose": "log parameters & some activity to stderr"}
