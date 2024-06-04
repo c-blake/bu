@@ -3,14 +3,14 @@ Motivation
 [`tim`](tim.md) gives an example way to collect durations and uses
 [`eve`](eve.md) to estimate the minimum values, but, as mentioned in the [tim
 doc](tim.md), one is sometimes interested in the whole distribution, perhaps
-summarized more graphically than analytically { say via
+summarized more graphically than analytic-numerically { say via
 [approximate](https://c-blake.github.io/adix/adix/mvstat.html) or [exact
 interpolated quantiles](https://github.com/c-blake/fitl/blob/main/fitl/qtl.nim)
-used either directly or [via
-sampling](https://github.com/c-blake/fitl/blob/main/fitl/cds.nim) }.  This is
-especially common in the context of comparing two or more data samples, often
-but not exclusively of run-times, for similarities, differences, and features.
-This is what `edplot` is for (short for "Empirical Distribution Plot").
+used either directly or [by
+re-sampling](https://github.com/c-blake/fitl/blob/main/fitl/cds.nim) }.  This is
+a common way of comparing two or more data samples, often but by no means
+exclusively of run-times, for similarities, differences, and features.  This is
+what `edplot` is for (short for "Empirical Distribution Plot").
 
 Background (A)
 ==============
@@ -27,22 +27,23 @@ the true population distribution with multiple well known error bands.
 I also prefer density / derivative / PDF Speak, ***BUT*** the disagreement on
 bandwidth selection techniques is staggering.  There are (easily!) ten thousand
 papers in academic statistics on bandwidth selection since the late, great
-Emmanuel Parzen got people interested in KDEs in 1962 (or maybe Rosenblatt in
+Emanuel Parzen got people interested in KDEs in 1962 (or maybe Rosenblatt in
 1956).  I even have my own ideas along those lines, but even so, without broad
-acceptance, one is stuck debating methods not analyzing data.  So, as a
-practical social matter, ***IF*** you ***can*** answer & inspire your questions
-with EDFs, you probably should.  The most common reasons people do not is not
-spending time to learn to read/use them; They are popular in social sciences.
+acceptance, one gets stuck debating methods not analyzing data.  So, as a
+practical/social matter, ***IF*** you ***can*** answer & inspire your questions
+with EDFs, you probably should.  The most common reason people do not is not
+having spent time to learn to read/use them; They're popular in social sciences.
 
 Key EDF Properties (B)
 ======================
-Order statistics (the sorted data) form a complete, sufficient statistic.  The
-theory of such statistics implies that the EDF is both ***unbiased*** and
-***minimum variance***.  This is another reason why using EDFs removes doubt -
-there is no real competitor.  Re-sampling from EDFs is also the basis of methods
-going by the popular name
+Order statistics (the sorted data) form a [complete, sufficient
+statistic](https://en.wikipedia.org/wiki/Sufficient_statistic).  The theory of
+such statistics implies that the EDF is both an ***UNBIASED*** and ***MINIMUM
+VARIANCE*** estimator of the true distribution function F(x).  This is another
+reason why using EDFs removes doubt - there is no real competitor.  Re-sampling
+from EDFs is also the basis of various methods going by the popular name
 [bootstrap](https://en.wikipedia.org/wiki/Bootstrapping_(statistics) which is
-often another way to get more weakly assuming results.
+often another way to get results with weaker assumptions (what you want!).
 
 Confidence Bands (C)
 ====================
@@ -65,13 +66,13 @@ population.
 
 Boundaries (D)
 ==============
-One thing ordinarily just "clipped for convenience" in a classical EDF estimate
-is any chance of something below the sample min.  For true distributions which
-are discrete, it may be literally impossible to see such values.  However, for
-true distributions of a continuous random variable no finite sample can ever see
-a true population minimum.  Estimating such is the project of [`eve`](eve.md),
-and we simply use those estimates here.[^4]  They are used to decide how "wide"
-lines along P=0 & P=1 are.
+One thing ordinarily just "clipped conveniently" in a classical EDF estimate is
+chances of being below the sample min or above the sample max.  For true
+distributions which are discrete, it may be literally impossible to see such
+values.  However, for true distributions of a *continuous* random variable, no
+finite sample can *ever* see a true population minimum.  Estimating such is the
+project of [`eve`](eve.md), and we simply use those estimates here.[^4]  They
+are used to decide how "wide" lines along P=0 & P=1 are.
 
 Usage
 =====
