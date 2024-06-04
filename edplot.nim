@@ -44,7 +44,7 @@ proc blur*(k=pw, ci=0.1; tp,gplot,xlabel:string; wvls,vals,alphas:Fs; ps:Strs) =
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
 # set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
-set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
+set key center left noautotitle # EDFs go bot left->up right;Dot keys crowd plot
 set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
 plot """
   for i, p in ps:
@@ -60,7 +60,7 @@ plot """
   g.write "\n"; g.close
 
 proc tube*(k=pw, ci=0.95;tp,gplot,xlabel:string; wvls,vals,alphas:Fs; ps:Strs) =
-  if ci < 0.3: stderr.write &"cdplot warning: ci = {ci:.4f}\n"
+  if ci < 0.3: stderr.write &"edplot warning: ci = {ci:.4f}\n"
   for p in ps:
     var xs: seq[float]
     for f in lines(if p.len>0: p.open else: stdin): xs.add f.strip.parseFloat
@@ -77,8 +77,9 @@ proc tube*(k=pw, ci=0.95;tp,gplot,xlabel:string; wvls,vals,alphas:Fs; ps:Strs) =
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
 # set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
-set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
+set key center left noautotitle # EDFs go bot left->up right;Dot keys crowd plot
 set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
+set yrange [-0.05:1.05]
 plot """
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
@@ -87,16 +88,22 @@ plot """
     let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
     let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
     if k == both: # Gnuplot has filledcurves & fillsteps, BUT no filledsteps;PR?
-      g.write s, &"'{tp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
-      g.write &",\\\n     '{tp}/{p}E' u 1:4:6 w filledc lc rgb '#{alph}{cCB}'"
-      g.write &",\\\n     '{tp}/{p}E' u 1:5:3 w filledc lc rgb '#{alph}{cCB}'"
+#     g.write s, &"'{tp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
+#     g.write &",\\\n     '{tp}/{p}E' u 1:4:6 w filledc lc rgb '#{alph}{cCB}'"
+#     g.write &",\\\n     '{tp}/{p}E' u 1:5:3 w filledc lc rgb '#{alph}{cCB}'"
+      let cM = rgb(wvls[i], sat=0.75, val=vals[i]).hex
+      g.write s, &"'{tp}/{p}E' u 1:2 w steps lw 2 lc rgb '#{alph}{cIn}' t '{lab}'"
+      g.write &",\\\n     '{tp}/{p}E' u 1:3 w steps lw 3 lc rgb '#{alph}{cM}'"
+      g.write &",\\\n     '{tp}/{p}E' u 1:4 w steps lw 3 lc rgb '#{alph}{cM}'"
+      g.write &",\\\n     '{tp}/{p}E' u 1:5 w steps lw 4 lc rgb '#{alph}{cCB}'"
+      g.write &",\\\n     '{tp}/{p}E' u 1:6 w steps lw 4 lc rgb '#{alph}{cCB}'"
     else: # Idea of ^^ is 3 shaded regions: the 2 band boundaries & pastel inner
       g.write s, &"'{tp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
       g.write &",\\\n     '{tp}/{p}E' u 1:3 lc rgb '#{alph}{cCB}'"
       g.write &",\\\n     '{tp}/{p}E' u 1:4 lc rgb '#{alph}{cCB}'"
   g.write "\n"; g.close
 
-proc cdplot*(band=pointWise,ci=0.02, tp="/tmp/ed/",gplot="",xlabel="Sample Val",
+proc edplot*(band=pointWise,ci=0.02, tp="/tmp/ed/",gplot="",xlabel="Sample Val",
   wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[], opt=both, inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
@@ -113,7 +120,7 @@ proc cdplot*(band=pointWise,ci=0.02, tp="/tmp/ed/",gplot="",xlabel="Sample Val",
   of tube        : tube opt, ci, tp, gplot, xlabel, wvls, vals, alphas, inputs
 
 when isMainModule:
-  import cligen; include cligen/mergeCfgEnv; dispatch cdplot, help={
+  import cligen; include cligen/mergeCfgEnv; dispatch edplot, help={
     "inputs": "input paths or \"\" for stdin",
     "band"  : "bands: pointWise simultaneous tube",
     "ci"    : "CI level | dP spacing for conf.bands",
