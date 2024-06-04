@@ -73,7 +73,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
     let rTo = try: relTo.strip.parseFloat except Ce: (try:
                 relTo.execProcess.strip.parseFloat except Ce:
                   stderr.write relTo, " output did not parse as a float\n"; 1.0)
-    echo r, " ", r.expSize(osz, if rTo > 0.0: rTo else: tot)
+    echo r," ",r.expSize(osz, if rTo > 0.0: rTo else: tot)," "
     result = (r.done >= estMin and
               osz > RatMin*r.done*(if rTo>0.0: rTo else: tot)).int
     if result != 0: discard posix.kill(pid.Pid, sigNo)
