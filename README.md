@@ -72,6 +72,8 @@ Benchmarking Related Utilities (How Long)
 
 [tim - Uncertain time comparison via repeated sampling & `eve`](doc/tim.md)
 
+[edplot - Generate EDF & its confidence bands files & plot scripts](doc/edplot.md)
+
 [keydowns - Assess string complexity in terms of a human cost](doc/keydowns.md)
 
 Row/Column/Text Table Things

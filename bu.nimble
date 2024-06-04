@@ -34,6 +34,7 @@ when defined(Windows):
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
   "tim",        # Uncertain time comparison via repeated sampling & `eve`
+  "edplot",     # Generate EDF & its confidence bands files & plot scripts
   "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
@@ -109,6 +110,7 @@ else:
   "etr",        # e)stimate t)ime r)emaining using subcommands for %done
   "bu/eve",     # Extreme Value Estimator (*true* max|min of infinite sample)
   "tim",        # Uncertain time comparison via repeated sampling & `eve`
+  "edplot",     # Generate EDF & its confidence bands files & plot scripts
   "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
