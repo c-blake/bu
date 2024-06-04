@@ -2,7 +2,7 @@ when not declared(stdin): import std/[syncio, formatfloat]
 import std/[strutils, strformat, algorithm]
 from spfun/binom import initBinomP, est
 from bu/eve      import a_ik, gNk0, gNk0Thresh, eLE, eRE
-from math        import ln, copySign
+from math        import ln, sqrt, copySign
 from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
 from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simultaneous, tube
@@ -48,7 +48,7 @@ iterator edf*[T](ts: seq[T], k=0, aFinite=0.05): (T, int) =
     yield (ts.eRE(a, k, gNk0Thresh), c)
 
 proc massartBand(c, n: int; ci=0.95): (float, float) =
-  let eps = 2.0/(1.0 - ci)/(2.0*n.float)
+  let eps = sqrt(2.0/ln(1.0 - ci)/(2.0*n.float))
   (max(0.0, c.float/n.float - eps), min(1.0, c.float/n.float + eps))
 
 proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
