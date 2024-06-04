@@ -30,20 +30,20 @@ papers in academic statistics on bandwidth selection since the late, great
 Emanuel Parzen got people interested in KDEs in 1962 (or maybe Rosenblatt in
 1956).  I even have my own ideas along those lines, but even so, without broad
 acceptance, one gets stuck debating methods not analyzing data.  So, as a
-practical/social matter, ***IF*** you ***can*** answer & inspire your questions
-with EDFs, you probably should.  The most common reason people do not is not
-having spent time to learn to read/use them; They're popular in social sciences.
+practical/social matter, ***IF you can*** answer & inspire your questions with
+EDFs, you probably should.  The most common reason people do not is not having
+spent time to learn to read/use them; They're popular in social sciences.
 
 Key EDF Properties (B)
 ======================
-Order statistics (the sorted data) form a [complete, sufficient
-statistic](https://en.wikipedia.org/wiki/Sufficient_statistic).  The theory of
+Order statistics (the sorted data) form a set of [complete, sufficient
+statistics](https://en.wikipedia.org/wiki/Sufficient_statistic).  The theory of
 such statistics implies that the EDF is both an ***UNBIASED*** and ***MINIMUM
 VARIANCE*** estimator of the true distribution function F(x).  This is another
 reason why using EDFs removes doubt - there is no real competitor.  Re-sampling
-from EDFs is also the basis of various methods going by the popular name
-[bootstrap](https://en.wikipedia.org/wiki/Bootstrapping_(statistics) which is
-often another way to get results with weaker assumptions (what you want!).
+from EDFs is also the basis of various methods going by the informal name of
+["The bootstrap"](https://en.wikipedia.org/wiki/Bootstrapping_(statistics))
+which is another way to get results with weaker assumptions (what you want!).
 
 Confidence Bands (C)
 ====================
