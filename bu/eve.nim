@@ -32,7 +32,8 @@ proc gNk(xF: float, k: int, x: seq[float], lower=false): float =
 proc gNk0*(xF: float, k: int, x: seq[float], lower=false): float =
   ## Is short-tailed test passes if gNk0 < -ln(-ln(-pFinite/2)) else long-tail.
   ln2*gNk(xF, k, x, lower) - (ln(k.float) + 0.5*ln2)
-
+  #^^ FragaAlves2017eq17; Theorem6 proof disambiguates (ln 2)*arg from ln(2*arg)
+                                                     
 proc gNk0Thresh*(aFinite: float): float = -ln(-ln(1.0 - aFinite))
 
 # Fraga Alves & Neves give a formula for an approx. "- not +-" conf.interval,
