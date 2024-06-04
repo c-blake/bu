@@ -25,12 +25,15 @@ proc ele*(x, a_ik: seq[float]): float =
   result = x[0]# echo "result: ", result # 0-origin index => -1
   for i in 1..<k: result -= a_ik[i]*(x[k+i-1] - x[k-1]) #echo "a_ik: ",a_ik[i]," dx: ",(x[k+i-1] - x[k-1])," H: ",x[k+i-1]," L: ",x[k-1]
 
-proc gNk(xF: float, k: int, x: seq[float]): float =
-  (xF - x[^k])/(x[^k] - x[^(2*k)])
+proc gNk(xF: float, k: int, x: seq[float], lower=false): float =
+  if lower: (x[k-1] - xF)/(x[2*k-1] - x[k-1])
+  else    : (xF - x[^k])/(x[^k] - x[^(2*k)])
 
-proc gNk0*(xF: float, k: int, x: seq[float]): float =
+proc gNk0*(xF: float, k: int, x: seq[float], lower=false): float =
   ## Is short-tailed test passes if gNk0 < -ln(-ln(-pFinite/2)) else long-tail.
-  ln2*gNk(xF, k, x) - (ln(k.float) + 0.5*ln2)
+  ln2*gNk(xF, k, x, lower) - (ln(k.float) + 0.5*ln2)
+
+proc gNk0Thresh*(aFinite: float): float = -ln(-ln(1.0 - aFinite))
 
 # Fraga Alves & Neves give a formula for an approx. "- not +-" conf.interval,
 #   proc h(g: float): float = (1.0/g)*(1.0 + (pow(2.0, -g) - 1)/(g*ln2))
