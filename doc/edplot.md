@@ -47,8 +47,8 @@ which is another way to get results with weaker assumptions (what you want!).
 
 Confidence Bands (C)
 ====================
-The next background point is that an EDF is based upon just one sample of what
-is usually viewed in statistics as a potentially unbounded sampling process
+The next background point is that an EDF is based upon *just one sample* of what
+is usually viewed in statistics as a potentially *unbounded sampling process*
 whose traits we seek to understand.  As such, it is not usually the end of the
 story.  There is uncertainty about what it implies about the population
 distribution.  There are various ways to analyze and exhibit such uncertainty.
@@ -69,10 +69,12 @@ Boundaries (D)
 One thing ordinarily just "clipped conveniently" in a classical EDF estimate is
 chances of being below the sample min or above the sample max.  For true
 distributions which are discrete, it may be literally impossible to see such
-values.  However, for true distributions of a *continuous* random variable, no
-finite sample can *ever* see a true population minimum.  Estimating such is the
-project of [`eve`](eve.md), and we simply use those estimates here.[^4]  They
-are used to decide how "wide" lines along P=0 & P=1 are.
+values.  So, pinning to the sample min/max or even a plot of "impulses" is best.
+However, for true distributions of a *continuous* random variable, no finite
+sample can *ever* see a true population minimum.  Estimating such is the project
+of [`eve`](eve.md), and we simply use those estimates here.[^4]  They are used
+to decide how "wide" lines along P=0 & P=1 are.  Many distributions like time
+durations are continuous to good approximations.
 
 Usage
 =====
