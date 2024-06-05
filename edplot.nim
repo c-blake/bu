@@ -89,7 +89,7 @@ plot """
 
 proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
-  if ci < 0.3: stderr.write &"edplot warning: ci = {ci:.4f}\n"
+  let ci = if ci == 0.02: 0.95 else: ci
   for p in ps:
     var xs: seq[float]
     for f in lines(if p.len>0: p.open else: stdin): xs.add f.strip.parseFloat
@@ -113,7 +113,7 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
 # set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
 set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
 set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
-set yrange [-0.03:1.03]
+set yrange [-0.03:1.03]; set ytics 0.1; set grid
 plot """
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
@@ -152,7 +152,7 @@ when isMainModule:
   import cligen; include cligen/mergeCfgEnv; dispatch edplot, help={
     "inputs": "input paths or \"\" for stdin",
     "band"  : "bands: pointWise simultaneous tube",
-    "ci"    : "CI level | dP spacing for conf.bands",
+    "ci"    : "band CI level(0.95)|dP spacing(0.02)",
     "k"     : "amount of tails to use for EVE; 0 => no data range estimation",
     "tailA" : "tail finiteness alpha (smaller: less prone to decided +-inf)",
     "fp"    : "tmp File Path prefix for emitted data",
