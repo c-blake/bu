@@ -93,21 +93,26 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
   for p in ps:
     var xs: seq[float]
     for f in lines(if p.len>0: p.open else: stdin): xs.add f.strip.parseFloat
-    xs.sort; let n = xs.len             # Make, then emit EDF, C.Band files
+    xs.sort; let n = xs.len             # Make, then emit EDF, Conf.Band files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
-    for (f, c) in edf(xs, k, tailA):
-      e.write f," ",c.float/n.float
-      if b in {pw ,both}:
-        let (lo, hi) = initBinomP(c, n).est(ci); e.write " ",lo," ",hi
+    var (p, pPL, pPH, pSL, pSH) = (0.0, 0.0, 0.0, 0.0, 0.0)
+    for (f, c) in edf(xs, k, tailA):    # Draw 2 lines:
+      e.write f," ",p                   #   1) Last P-level to new x
+      if b in {pw, both}: e.write &" {pPL} {pPH}"
+      if b in {sim,both}: e.write &" {pSL} {pSH}"
+      e.write "\n"; p = c.float/n.float #   2) Then new x, new P-level
+      e.write f," ",p
+      if b in {pw, both}:
+        let (l,h) = initBinomP(c, n).est(ci); e.write &" {l} {h}"; pPL=l; pPH=h
       if b in {sim,both}:
-        let (lo, hi) = massartBand(c, n, ci)   ; e.write " ",lo," ",hi
+        let (l,h) = massartBand(c, n, ci)   ; e.write &" {l} {h}"; pSL=l; pSH=h
       e.write "\n"
     e.close
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
 # set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
 set key center left noautotitle # EDFs go bot left->up right;Dot keys crowd plot
-set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
+set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]
 plot """
   for i, p in ps:
@@ -116,16 +121,10 @@ plot """
     let cCB = rgb(wvls[i], sat=1.0, val=vals[i]).hex
     let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
     let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
-    if b == both: # Gnuplot has filledcurves & fillsteps, BUT no filledsteps;PR?
-#     g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
-#     g.write &",\\\n     '{fp}/{p}E' u 1:4:6 w filledc lc rgb '#{alph}{cCB}'"
-#     g.write &",\\\n     '{fp}/{p}E' u 1:5:3 w filledc lc rgb '#{alph}{cCB}'"
-      let cM = rgb(wvls[i], sat=0.75, val=vals[i]).hex
-      g.write s,&"'{fp}/{p}E' u 1:2 lw 2 lc rgb '#{alph}{cIn}' t '{lab}'"
-      g.write &",\\\n     '{fp}/{p}E' u 1:3 lw 3 lc rgb '#{alph}{cM}'"
-      g.write &",\\\n     '{fp}/{p}E' u 1:4 lw 3 lc rgb '#{alph}{cM}'"
-      g.write &",\\\n     '{fp}/{p}E' u 1:5 lw 4 lc rgb '#{alph}{cCB}'"
-      g.write &",\\\n     '{fp}/{p}E' u 1:6 lw 4 lc rgb '#{alph}{cCB}'"
+    if b == both:
+      g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
+      g.write &",\\\n     '{fp}/{p}E' u 1:4:6 w filledc lc rgb '#{alph}{cCB}'"
+      g.write &",\\\n     '{fp}/{p}E' u 1:5:3 w filledc lc rgb '#{alph}{cCB}'"
     else: # Idea of ^^ is 3 shaded regions: the 2 band boundaries & pastel inner
       g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:3 lc rgb '#{alph}{cCB}'"
