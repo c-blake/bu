@@ -132,7 +132,7 @@ plot """
   g.write "\n"; g.close
 
 proc edplot*(band=pointWise, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed/", gplot="",
-             xlabel="Sample Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
+             xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
              opt=both, inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
