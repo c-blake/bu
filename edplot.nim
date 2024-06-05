@@ -72,8 +72,9 @@ proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
 # set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
-set key center left noautotitle # EDFs go bot left->up right;Dot keys crowd plot
+set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
 set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
+set yrange [-0.03:1.03]; set ytics 0.1; set grid
 plot """
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
