@@ -102,14 +102,49 @@ subsequent inputs, otherwise they match pair-wise.
 
 Examples
 ========
+To be easy to reproduce & also ease visually plot debugs, a running example here
+will be two 20 point data sets: `triang` - a distribution with a roughly
+triangular PDF from: `(seq 1 10;seq 3 7;seq 4 6;seq 5 5;seq 5 5)>triang` and
+`perturb` - an invented perturbation from `triang` that can be made from
+`(seq 4 9;seq 5 9;seq 6 8;seq 7 8;seq 7 8;seq 7 7;seq 7 7)>perturb`.[^5]
+The difference is ***just*** big enough to fail a [2-sample KS
+test](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#Two-sample_Kolmogorov%E2%80%93Smirnov_test)
+for same parent population at the 5% level.[^6]  The perturbation is just a bit
+narrower and a bit up-shifted.  These data are just to have concrete things to
+plot, not a full course on interpreting distributions and their differences as
+that seems out of scope.
+
+So, here are 4 basic examples.  Something to keep in mind as you read the plots
+is "which one best communicates 'only marginally different' to me?".
+
+First, a "smear" plot where many CIs are drawn at fixed steps apart (2% here)
+from the `--ci` option from `edplot -w.87 -w.13 -bp triang perturb`[^7]:
+![blur1](blur1.png).  (Simultaneous bands in such a plot are all "spaced the
+same" vertically and so are less visually engaging.)
+
+Next, `edplot -w.87 -w.13 -bt -ob triang perturb` renders only partly solid
+shaded regions of the pointwise bands from Wilson scores: ![pwise](pwise.png).
+
+Third, `edplot -w.87 -w.13 -bt -os triang perturb` shows a similar visualization
+with the wider Massart inequality simultaneous bands: ![simul](simul.png).
+
+Finally, `edplot -w.87 -w.13 -bt -op triang perturb`: ![tubes](tubes.png) shows
+the lower & upper bounds of each bands as a darker, more solid region with the
+"definitely at least this uncertain at this CI" bands in the middle.
+
+Personally, I find the 2nd or 3rd variants the easiest to read, but I do like
+how the final variant most boldly emphasizes what one most surely knows about
+the true distribution functions, and I also have some affection for the first
+as a more classic shade most darkly closest to the center of an estimate.  Hence
+all remain represented with different CL options.
 
 Conclusion
 ==========
-`edplot` emits files to plot to try to support principled reasoning about data
-sets based on EDFs and related uncertainties in distribution not density space.
-Its defaults are set up for a prior of a continuous true distribution.  Once you
-learn to read them, the plots it can makes are very "full information"
-containing ways to answer many questions about data sets.
+`edplot` emits files to plot to try to support principled visual reasoning about
+data sets based on EDFs and related uncertainties in distribution not density
+space.  Its defaults are set up for a prior assumption of a continuous true
+distribution.  Once you learn to read them, the plots it can makes are very
+"full information" containing ways to answer many questions about data sets.
 
 [^1]: Technically, the `k` used to assess the data range, is a non-probability
 free parameter, but A) this is also needed (though admittedly usually neglected)
@@ -130,3 +165,17 @@ module.
 [^4]: We do so with no visual indication of *their* uncertainty at the moment.
 One idea is "(..." on the 0-axis and "......)" on the 1-axis or perhaps an even
 fainter line extending beyond the data range.
+
+[^5]: If it's easier to copy-paste number lists than run `seq` these expand to
+1 2 3 3 4 4 4 5 5 5 5 5 6 6 6 7 7 8 9 10 and
+4 5 5 6 6 6 7 7 7 7 7 7 7 8 8 8 8 8 9 9.
+
+[^6]: `max |F_a(x)-F_b(x)|` is @5,6,7=9/20=0.45; Wiki table gives `1.358 *
+sqrt(40/400)` which is 0.43.
+
+[^7]: Personally, I usually just run `edplot ...|gnuplot` which dumps sixels to
+my `st` terminal via a `$GNUTERM` setting, but these plots were instead made by
+`edplot ...>foo.gpi`, hand editing the `.gpi` file to uncomment `# set terminal
+png` & change the output filename.  Another tweak (&| wrapper script) might be
+`(echo set term x11; edplot ...; echo pause -1)|gnuplot` for an interactive X
+window.
