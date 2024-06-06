@@ -7,9 +7,9 @@ proc esQuoParse*(q: string): EsQuo =
   ## Parse a quoting mode string into its enum or raise `ValueError`.
   if q.len > 0:
     case q[0].toLowerAscii
-    of 'n': eqNeed
-    of 'q': eqAlways
-    of 'e': eqEscape
+    of 'n': result = eqNeed
+    of 'q': result = eqAlways
+    of 'e': result = eqEscape
     else: raise newException(ValueError, "Unknown quote mode: \"" & q & "\".")
 
 const needQuo* = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
