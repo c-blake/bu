@@ -98,6 +98,8 @@ subsequent inputs, otherwise they match pair-wise.
   -v=, --vals=   floats   {}         values (V) of HSV fame; 0.8
   -a=, --alphas= floats   {}         alpha channel transparencies; 0.5
   -o=, --opt=    TubeOpt  both       tube opts: pointWise simultaneous both
+  -e=, --early=  string   ""         early text for gen script;Eg 'set term'
+  -l=, --late=   string   ""         late text for script;Eg 'pause -1'
 ```
 
 Examples
@@ -181,7 +183,6 @@ sqrt(40/400)` which is 0.43.
 
 [^7]: Personally, I usually just run `edplot ...|gnuplot` which dumps sixels to
 my `st` terminal via a `$GNUTERM` setting, but these plots were instead made by
-`edplot ...>foo.gpi`, hand editing the `.gpi` file to uncomment `# set terminal
-png` & change the output filename.  Another tweak (&| wrapper script) might be
-`(echo set term x11; edplot ...; echo pause -1)|gnuplot` for an interactive X
-window.
+`edplot ...>foo.gpi`, hand editing the `.gpi` file to add `set term png` & `set
+output` & running `gnuplot foo.gpi`.  Another tweak might be `-e 'set term x11'
+-l 'pause -1'` for an interactive X Window.

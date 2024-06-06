@@ -8,6 +8,7 @@ from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simultaneous, tube
 type TubeOpt* = enum pw="pointWise", sim="simultaneous", both
 type Fs = seq[float]; type Strs = seq[string]; let dbg = true   #XXX temporary
+var gEarly*, gLate*: string
 
 proc eLE[T](ts: seq[T], a_ik: seq[float], k: int, gNk0Thresh: float): float =
   result = ts.eLE(a_ik)
@@ -71,7 +72,7 @@ proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
     e.close
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
-# set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
+{gEarly}
 set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
 set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]; set ytics 0.1; set grid
@@ -86,7 +87,7 @@ plot """
       g.write &",\\\n     '{fp}/{p}E' u 1:{2*j+2} lw 2 lc rgb '#{alph}{cCI}'"
     let cEDF = rgb(wvls[i], sat=1.0, val=vals[i]).hex
     g.write &",\\\n     '{fp}/{p}E' u 1:2 lw 3 lc rgb '#{cEDF}' t '{lab}'"
-  g.write "\n"; g.close
+  g.write &"\n{glate}\n"; g.close
 
 proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
@@ -111,7 +112,7 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
     e.close
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
   g.write &"""#!/usr/bin/gnuplot
-# set terminal png size 1920,1080 font "Helvetica,10"; set output "cbands.png"
+{gEarly}
 set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
 set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]; set ytics 0.1; set grid
@@ -130,15 +131,16 @@ plot """
       g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:3 lc rgb '#{alph}{cCB}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:4 lc rgb '#{alph}{cCB}'"
-  g.write "\n"; g.close
+  g.write &"\n{gLate}\n"; g.close
 
 proc edplot*(band=pointWise, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed/", gplot="",
              xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
-             opt=both, inputs: Strs) =
+             opt=both, early="", late="", inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
   ## re-used for subsequent inputs, otherwise they match pair-wise.
   let inputs = if inputs.len > 0: inputs else: @[""]
+  gEarly = early; gLate = late
   template setup(id, arg, default) =    # Ensure ok (wvls|vals|alphas)[i] ..
     var id = arg                        #.. for each inputs[i].
     if id.len == 0: id.add default
@@ -162,4 +164,6 @@ when isMainModule:
     "wvls"  : "cligen/colorScl HSV-based wvlens; 0.6",
     "vals"  : "values (V) of HSV fame; 0.8",
     "alphas": "alpha channel transparencies; 0.5",
-    "opt"   : "tube opts: pointWise simultaneous both"}
+    "opt"   : "tube opts: pointWise simultaneous both",
+    "early" : "early text for gen script;Eg 'set term'",
+    "late"  : "late text for script;Eg 'pause -1'"}
