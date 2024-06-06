@@ -1,6 +1,6 @@
 when not declared(stdin): import std/[syncio, formatfloat]
 import std/[strutils, strformat, algorithm]
-from spfun/binom import initBinomP, est
+from spfun/binom import initBinomP, est, BinomPAlgo
 from bu/eve      import a_ik, gNk0, gNk0Thresh, eLE, eRE
 from math        import ln, sqrt, copySign
 from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
@@ -8,7 +8,7 @@ from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simultaneous, tube
 type TubeOpt* = enum pw="pointWise", sim="simultaneous", both
 type Fs = seq[float]; type Strs = seq[string]; let dbg = true   #XXX temporary
-var gEarly*, gLate*: string
+var gEarly*, gLate*: string; var gPropAl* = Wilson
 
 proc eLE[T](ts: seq[T], a_ik: seq[float], k: int, gNk0Thresh: float): float =
   result = ts.eLE(a_ik)
@@ -64,7 +64,7 @@ proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
       e.write f," ",c.float/n.float
       for j in 1..nCI:
         let ci = j.float/float(nCI + 1)
-        let (lo, hi) = if   b == pw : initBinomP(c, n).est(ci)
+        let (lo, hi) = if   b == pw : initBinomP(c, n).est(ci, gPropAl)
                        elif b == sim: massartBand(c, n, ci)
                        else: (c.float/n.float, c.float/n.float) # no range
         e.write " ",lo," ",hi
@@ -105,9 +105,9 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
       e.write "\n"; p = c.float/n.float #   2) Then new x, new P-level
       e.write f," ",p
       if b in {pw, both}:
-        let (l,h) = initBinomP(c, n).est(ci); e.write &" {l} {h}"; pPL=l; pPH=h
+        let(l,h)=initBinomP(c,n).est(ci,gPropAl);e.write &" {l} {h}";pPL=l;pPH=h
       if b in {sim,both}:
-        let (l,h) = massartBand(c, n, ci)   ; e.write &" {l} {h}"; pSL=l; pSH=h
+        let(l,h)=massartBand(c, n, ci)          ;e.write &" {l} {h}";pSL=l;pSH=h
       e.write "\n"
     e.close
   let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
@@ -135,12 +135,12 @@ plot """
 
 proc edplot*(band=pointWise, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed/", gplot="",
              xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
-             opt=both, early="", late="", inputs: Strs) =
+             opt=both, propAl=Wilson, early="", late="", inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
   ## re-used for subsequent inputs, otherwise they match pair-wise.
   let inputs = if inputs.len > 0: inputs else: @[""]
-  gEarly = early; gLate = late
+  gEarly = early; gLate = late; gPropAl = propAl
   template setup(id, arg, default) =    # Ensure ok (wvls|vals|alphas)[i] ..
     var id = arg                        #.. for each inputs[i].
     if id.len == 0: id.add default
@@ -165,5 +165,6 @@ when isMainModule:
     "vals"  : "values (V) of HSV fame; 0.8",
     "alphas": "alpha channel transparencies; 0.5",
     "opt"   : "tube opts: pointWise simultaneous both",
+    "propAl": "binomial p CI estimate: Wilson, etc.",
     "early" : "early text for gen script;Eg 'set term'",
     "late"  : "late text for script;Eg 'pause -1'"}

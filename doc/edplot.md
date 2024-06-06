@@ -85,21 +85,22 @@ Generate files & gnuplot script to render CDF as confidence band blur|tube.
 If .len < inputs.len the final value of wvls, vals, or alphas is re-used for
 subsequent inputs, otherwise they match pair-wise.
 
-  -b=, --band=   ConfBand pointWise  bands: pointWise simultaneous tube
-  -c=, --ci=     float    0.02       band CI level(0.95)|dP spacing(0.02)
-  -k=, --k=      int      4          amount of tails to use for EVE; 0 => no
-                                     data range estimation
-  -t=, --tailA=  float    0.05       tail finiteness alpha (smaller: less prone
-                                     to decided +-inf)
-  -f=, --fp=     string   "/tmp/ed/" tmp File Path prefix for emitted data
-  -g=, --gplot=  string   ""         gnuplot script or "" for stdout
-  -x=, --xlabel= string   "Samp Val" x-axis label; y is always probability
-  -w=, --wvls=   floats   {}         cligen/colorScl HSV-based wvlens; 0.6
-  -v=, --vals=   floats   {}         values (V) of HSV fame; 0.8
-  -a=, --alphas= floats   {}         alpha channel transparencies; 0.5
-  -o=, --opt=    TubeOpt  both       tube opts: pointWise simultaneous both
-  -e=, --early=  string   ""         early text for gen script;Eg 'set term'
-  -l=, --late=   string   ""         late text for script;Eg 'pause -1'
+  -b=, --band=   ConfBand   pointWise  bands: pointWise simultaneous tube
+  -c=, --ci=     float      0.02       band CI level(0.95)|dP spacing(0.02)
+  -k=, --k=      int        4          amount of tails to use for EVE; 0 => no
+                                       data range estimation
+  -t=, --tailA=  float      0.05       tail finiteness alpha (smaller: less
+                                       prone to decided +-inf)
+  -f=, --fp=     string     "/tmp/ed/" tmp File Path prefix for emitted data
+  -g=, --gplot=  string     ""         gnuplot script or "" for stdout
+  -x=, --xlabel= string     "Samp Val" x-axis label; y is always probability
+  -w=, --wvls=   floats     {}         cligen/colorScl HSV-based wvlens; 0.6
+  -v=, --vals=   floats     {}         values (V) of HSV fame; 0.8
+  -a=, --alphas= floats     {}         alpha channel transparencies; 0.5
+  -o=, --opt=    TubeOpt    both       tube opts: pointWise simultaneous both
+  -p=, --propAl= BinomPAlgo Wilson     binomial p CI estimate: Wilson, etc.
+  -e=, --early=  string     ""         early text for gen script;Eg 'set term'
+  -l=, --late=   string     ""         late text for script;Eg 'pause -1'
 ```
 
 Examples
