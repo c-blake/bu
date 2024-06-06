@@ -124,13 +124,13 @@ from the `--ci` option from `edplot -w.87 -w.13 -bp triang perturb`[^7]:
 ![blur1](blur1.png).  (Simultaneous bands in such a plot are all "spaced the
 same" vertically and so are less visually engaging.)
 
-Next, `edplot -w.87 -w.13 -bt -ob triang perturb` renders only partly solid
+Next, `edplot -w.87 -w.13 -bt -op triang perturb` renders only partly solid
 shaded regions of the pointwise bands from Wilson scores: ![pwise](pwise.png).
 
 Third, `edplot -w.87 -w.13 -bt -os triang perturb` shows a similar visualization
 with the wider Massart inequality simultaneous bands: ![simul](simul.png).
 
-Finally, `edplot -w.87 -w.13 -bt -op triang perturb`: ![tubes](tubes.png) shows
+Finally, `edplot -w.87 -w.13 -bt -ob triang perturb`: ![tubes](tubes.png) shows
 the lower & upper bounds of each bands as a darker, more solid region with the
 "definitely at least this uncertain at this CI" bands in the middle.
 
