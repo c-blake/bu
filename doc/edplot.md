@@ -140,9 +140,9 @@ the true distribution functions, and I also have some affection for the first
 as a more classic shade most darkly closest to the center of an estimate.  Hence
 all remain represented with different CL options.
 
-If you have a series of colors you like, just put `wvls=0.87`, `wvls=0.13`, etc.
-in your `~/.config/edplot` config file, and similarly for other CLI options to
-reduce your keystrokes to just `edplot a b|gnuplot`.
+If you have a series of colors you like, just put `wvls=0.87`, `wvls=0.13`,
+`band=tube`, etc. in your `~/.config/edplot` config file, and similarly for
+other CLI options to reduce your keystrokes to just `edplot a b|gnuplot`.
 
 Conclusion
 ==========
