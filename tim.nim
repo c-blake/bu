@@ -1,6 +1,8 @@
 when not declared(addfloat): import std/[syncio, formatfloat]
 import std/[os, times, strformat, math, tables, strutils, deques],
        cligen, cligen/strUt, bu/emin
+let timeScales = {"ns":1e9, "us":1e6, "ms":1e3, "s":1.0, "min":1.0/60.0}.toTable
+var dtScale = 1.0
 
 proc sample1(f: File; cmd, prepare, cleanup: string): float =
   template runOrQuit(c, x) = (if execShellCmd(c)!=0: quit "\""&c&"\" failed", x)
@@ -8,7 +10,7 @@ proc sample1(f: File; cmd, prepare, cleanup: string): float =
   let t0 = epochTime(); cmd.runOrQuit 3; let dt = epochTime() - t0 # Time
   if cleanup.len > 0: cleanup.runOrQuit 4                          # Maybe Clean
   if not f.isNil: f.write $dt,'\t',cmd,'\n'                        # Maybe log
-  dt
+  dt*dtScale
 
 proc maybeRead(path: string): Table[string, Deque[float]] = # Parse saved data
   if path.len > 0:                      # Use Deque[] since temporal correlation
@@ -21,13 +23,16 @@ proc padWithLast(xs: seq[string], n: int): seq[string] =
   for i in xs.len ..< n: result.add result[^1]
 
 proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
-         prepare: seq[string]= @[], cleanup: seq[string] = @[], verbose=false) =
+         prepare: seq[string]= @[], cleanup: seq[string] = @[], timeunit="ms",
+         verbose=false) =
   ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
   ## time & error estimate.  `doc/tim.md` explains more.
   if n < k:
     raise newException(HelpError, "Need n >= k; Full ${HELP}")
   if cmds.len == 0:
     raise newException(HelpError, "Need cmds; Full ${HELP}")
+  try: dtScale = timeScales[timeunit]
+  except KeyError: raise newException(HelpError, "Bad time unit; Full ${HELP}")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
   if verbose: stderr.write(&"tim: warmup  {warmup}\ntim: k       {k}\n",
@@ -46,12 +51,12 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   if ohead > 0:                                       # Measure overhead
     for t in 1..warmup: discard "".get1
     o = eMin(k, ohead, m, get1="".get1)               # Measure&Report overhead
-    echo fmtUncertain(o.est, o.err),"\t(AlreadySubtracted)Overhead"
+    echo fmtUncertain(o.est, o.err)," ",timeunit,"\t(AlreadySubtracted)Overhead"
   for i, cmd in cmds:                                 # Measure each cmd
     for t in 1..warmup: discard cmd.get1(i)
     var e = eMin(k, n, m, get1=cmd.get1(i))
-    if ohead > 0: e.est -= o.est; e.err = sqrt(e.err^2 + o.err^2)   # -= ohead
-    echo fmtUncertain(e.est, e.err),"\t",cmd          # Report time maybe- ohead
+    if ohead > 0: e.est -= o.est; e.err = sqrt(e.err^2 + o.err^2) # Maybe -= ohd
+    echo fmtUncertain(e.est, e.err)," ",timeunit,"\t",cmd         # Report time
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "cmds"   : "'cmd1' 'cmd2' ..",
@@ -65,4 +70,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "read"   : "read output of `save` instead of running",
   "prepare": "cmds to run before *corresponding* cmd<i>s",
   "cleanup": "cmds to run after *corresponding* cmd<i>s",
-  "verbose": "log parameters & some activity to stderr"}
+  "time-unit": "Can be: ns us ms s min",
+  "verbose": "log parameters & some activity to stderr"}, short={"timeunit":'u'}

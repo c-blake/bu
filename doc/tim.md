@@ -75,17 +75,18 @@ Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
 estimate.  doc/tim.md explains more.
 
 Options:
-  -w=, --warmup=  int     1     number of warm-up runs to discard
-  -k=, --k=       int     2     number of best tail times to use/2
-  -n=, --n=       int     7     number of inner trials; 1/m total
-  -m=, --m=       int     3     number of outer trials
-  -o=, --ohead=   int     7     number of "" overhead runs;  If > 0, value
-                                (measured same way) is taken from each time
-  -s=, --save=    string  ""    also save TIMES<TAB>CMD<NL>s to this file
-  -r=, --read=    string  ""    read output of save instead of running
-  -p=, --prepare= strings {}    cmds to run before corresponding cmd<i>s
-  -c=, --cleanup= strings {}    cmds to run after corresponding cmd<i>s
-  -v, --verbose   bool    false log parameters & some activity to stderr
+  -w=, --warmup=    int     1     number of warm-up runs to discard
+  -k=, --k=         int     2     number of best tail times to use/2
+  -n=, --n=         int     7     number of inner trials; 1/m total
+  -m=, --m=         int     3     number of outer trials
+  -o=, --ohead=     int     7     number of "" overhead runs;  If > 0, value
+                                  (measured same way) is taken from each time
+  -s=, --save=      string  ""    also save TIMES<TAB>CMD<NL>s to this file
+  -r=, --read=      string  ""    read output of save instead of running
+  -p=, --prepare=   strings {}    cmds to run before corresponding cmd<i>s
+  -c=, --cleanup=   strings {}    cmds to run after corresponding cmd<i>s
+  -u=, --time-unit= string  "ms"  Can be: ns us ms s min
+  -v, --verbose     bool    false log parameters & some activity to stderr
 ```
 
 Example / Does It Work?
@@ -94,30 +95,30 @@ Let's see by running it 3 times and comparing results!  (Here lb=/usr/local/bin
 is an environment variable to avoid env -i PATH="$PATH", and `/n` is a symlink
 to "/dev/null"):
 ```
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(2.0398 +- 0.0091)e-04  (AlreadySubtracted)Overhead
-(1.820 +- 0.017)e-04    /bin/dash -c exit
-(2.111 +- 0.015)e-04    /bin/rc -lic exit
-(7.045 +- 0.049)e-04    /bin/bash -c exit
-(1.2383 +- 0.0069)e-03  /bin/dash -lic exit
-(1.800 +- 0.016)e-03    /bin/ksh -lic exit
-(8.414 +- 0.023)e-03    /bin/bash -lic exit 2>/n
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(1.9455 +- 0.0072)e-04  (AlreadySubtracted)Overhead
-(2.007 +- 0.011)e-04    /bin/dash -c exit
-(2.251 +- 0.013)e-04    /bin/rc -lic exit
-(7.121 +- 0.030)e-04    /bin/bash -c exit
-(1.2239 +- 0.0059)e-03  /bin/dash -lic exit
-(1.849 +- 0.017)e-03    /bin/ksh -lic exit
-(8.386 +- 0.014)e-03    /bin/bash -lic exit 2>/n
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(2.0226 +- 0.0084)e-04  (AlreadySubtracted)Overhead
-(1.976 +- 0.012)e-04    /bin/dash -c exit
-(2.135 +- 0.011)e-04    /bin/rc -lic exit
-(7.133 +- 0.044)e-04    /bin/bash -c exit
-(1.2155 +- 0.0070)e-03  /bin/dash -lic exit
-(1.7999 +- 0.0085)e-03  /bin/ksh -lic exit
-(8.434 +- 0.038)e-03    /bin/bash -lic e
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(2.0398 +- 0.0091)e-04 s  (AlreadySubtracted)Overhead
+(1.820 +- 0.017)e-04 s    /bin/dash -c exit
+(2.111 +- 0.015)e-04 s    /bin/rc -lic exit
+(7.045 +- 0.049)e-04 s    /bin/bash -c exit
+(1.2383 +- 0.0069)e-03 s  /bin/dash -lic exit
+(1.800 +- 0.016)e-03 s    /bin/ksh -lic exit
+(8.414 +- 0.023)e-03 s    /bin/bash -lic exit 2>/n
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(1.9455 +- 0.0072)e-04 s  (AlreadySubtracted)Overhead
+(2.007 +- 0.011)e-04 s    /bin/dash -c exit
+(2.251 +- 0.013)e-04 s    /bin/rc -lic exit
+(7.121 +- 0.030)e-04 s    /bin/bash -c exit
+(1.2239 +- 0.0059)e-03 s  /bin/dash -lic exit
+(1.849 +- 0.017)e-03 s    /bin/ksh -lic exit
+(8.386 +- 0.014)e-03 s    /bin/bash -lic exit 2>/n
+$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
+(2.0226 +- 0.0084)e-04 s  (AlreadySubtracted)Overhead
+(1.976 +- 0.012)e-04 s    /bin/dash -c exit
+(2.135 +- 0.011)e-04 s    /bin/rc -lic exit
+(7.133 +- 0.044)e-04 s    /bin/bash -c exit
+(1.2155 +- 0.0070)e-03 s  /bin/dash -lic exit
+(1.7999 +- 0.0085)e-03 s  /bin/ksh -lic exit
+(8.434 +- 0.038)e-03 s    /bin/bash -lic e
 ```
 
 The overhead time itself has (2.0398 +- 0.0091) - (1.9455 +- 0.0072) = 0.094 +-
@@ -126,33 +127,33 @@ of programs reproduce reliably with "similar" error scale from trial to trial.
 This can be made easier to more or less just read-off reproduction by just
 sorting and adding some blanks:
 ```
-(1.9455 +- 0.0072)e-04  (AlreadySubtracted)Overhead
-(2.0226 +- 0.0084)e-04  (AlreadySubtracted)Overhead
-(2.0398 +- 0.0091)e-04  (AlreadySubtracted)Overhead
+(1.9455 +- 0.0072)e-04 s  (AlreadySubtracted)Overhead
+(2.0226 +- 0.0084)e-04 s  (AlreadySubtracted)Overhead
+(2.0398 +- 0.0091)e-04 s  (AlreadySubtracted)Overhead
 
-(1.820 +- 0.017)e-04    /bin/dash -c exit
-(1.976 +- 0.012)e-04    /bin/dash -c exit
-(2.007 +- 0.011)e-04    /bin/dash -c exit
+(1.820 +- 0.017)e-04 s    /bin/dash -c exit
+(1.976 +- 0.012)e-04 s    /bin/dash -c exit
+(2.007 +- 0.011)e-04 s    /bin/dash -c exit
 
-(2.111 +- 0.015)e-04    /bin/rc -lic exit
-(2.135 +- 0.011)e-04    /bin/rc -lic exit
-(2.251 +- 0.013)e-04    /bin/rc -lic exit
+(2.111 +- 0.015)e-04 s    /bin/rc -lic exit
+(2.135 +- 0.011)e-04 s    /bin/rc -lic exit
+(2.251 +- 0.013)e-04 s    /bin/rc -lic exit
 
-(7.045 +- 0.049)e-04    /bin/bash -c exit
-(7.121 +- 0.030)e-04    /bin/bash -c exit
-(7.133 +- 0.044)e-04    /bin/bash -c exit
+(7.045 +- 0.049)e-04 s    /bin/bash -c exit
+(7.121 +- 0.030)e-04 s    /bin/bash -c exit
+(7.133 +- 0.044)e-04 s    /bin/bash -c exit
 
-(1.2155 +- 0.0070)e-03  /bin/dash -lic exit
-(1.2239 +- 0.0059)e-03  /bin/dash -lic exit
-(1.2383 +- 0.0069)e-03  /bin/dash -lic exit
+(1.2155 +- 0.0070)e-03 s  /bin/dash -lic exit
+(1.2239 +- 0.0059)e-03 s  /bin/dash -lic exit
+(1.2383 +- 0.0069)e-03 s  /bin/dash -lic exit
 
-(1.7999 +- 0.0085)e-03  /bin/ksh -lic exit
-(1.800 +- 0.016)e-03    /bin/ksh -lic exit
-(1.849 +- 0.017)e-03    /bin/ksh -lic exit
+(1.7999 +- 0.0085)e-03 s  /bin/ksh -lic exit
+(1.800 +- 0.016)e-03 s    /bin/ksh -lic exit
+(1.849 +- 0.017)e-03 s    /bin/ksh -lic exit
 
-(8.386 +- 0.014)e-03    /bin/bash -lic exit 2>/n
-(8.414 +- 0.023)e-03    /bin/bash -lic exit 2>/n
-(8.434 +- 0.038)e-03    /bin/bash -lic exit 2>/n
+(8.386 +- 0.014)e-03 s    /bin/bash -lic exit 2>/n
+(8.414 +- 0.023)e-03 s    /bin/bash -lic exit 2>/n
+(8.434 +- 0.038)e-03 s    /bin/bash -lic exit 2>/n
 ```
 A statically linked Plan 9 rc shell, `/bin/rc -lic exit`, for example, has time
 measurement errors below 2 microseconds and deltas of 2.4±1.9μs = 1.26σ and
