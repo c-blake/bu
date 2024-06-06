@@ -115,7 +115,9 @@ plot, not a full course on interpreting distributions and their differences as
 that seems out of scope.
 
 So, here are 4 basic examples.  Something to keep in mind as you read the plots
-is "which one best communicates 'only marginally different' to me?".
+is "which one best communicates 'only marginally different' to me?".  "Inspiring
+next questions" in §A above relates to "Do I *need* a precise statistical test
+(e.g. KS-2-sample) to decide a question OR does a picture make it self-evident?"
 
 First, a "smear" plot where many CIs are drawn at fixed steps apart (2% here)
 from the `--ci` option from `edplot -w.87 -w.13 -bp triang perturb`[^7]:
