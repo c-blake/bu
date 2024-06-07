@@ -163,7 +163,7 @@ measurement errors below 2 microseconds and deltas of 2.4±1.9μs = 1.26σ and
 The large sigma distances suggest errors are a bit underestimated.  More careful
 study showed the situation is mostly very leptokurtotic.. (I saw excess kurtosis
 over 12) meaning wild tail events are much more common than expectations from
-light-tailed noise.  So, one cannot use sigma alone for t-tests.  This wild
+light-tailed noise.  So, one *cannot use sigma alone* for comparison.  This wild
 distribution itself is likely irreproducible over time or across test machines.
 Running that set of tests with fixed CPU frequency and very minimal background
 activity would very likely make these distributions less hostile.
@@ -240,9 +240,9 @@ propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) uses
 calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
-[^8]: Particle physics has "5 sigma" rules of thumb to declare new science in a
-similar vein.  5 seems too small for this hostile noise context.  10..15 is
-more about right, but leptokurtosis makes sigma alone an inadequate scale.
+[^8]: Particle physics has "5 sigma" rules of thumb to declare results.  5 seems
+too small for this hostile noise context.  10..15 is more about right, but again
+leptokurtosis makes sigma alone inadequate.
 
 [^9]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
 https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
