@@ -49,11 +49,10 @@ do better than 0-tech!
 
 A low tech way to estimate reproducibly Eq.1's `t0`, in spite of hostile noise,
 is a simple sample minimum.  This **filters out all but noise(minimum)** - far
-better behaved than average noise.[^5]
-
-However, this gives no uncertainty to its estimate for principled comparisons
-among alternatives.  To get a population minimum without error, one needs an
-**infinite** number of trials.  We instead want to economize on repetitions.
+better behaved than average noise.[^5]  However, this gives no uncertainty to
+its estimate for principled comparisons among alternatives.  To get a population
+minimum without error, one needs an **infinite** number of trials.  We instead
+want to economize on repetitions.
 
 A low art way to estimate the error on the sample min `t0` estimate is to find
 the mean,sdev for the best several times out of many runs to approximate the
@@ -62,10 +61,10 @@ statistical formulae or nesting with sample stats on min(several) are surely
 possible, but these all share a problem: the population-min is guaranteed to be
 less than any sample min.
 
-`tim` used to do the low art way but now is a bit more sophisticated using the
-Fraga Alves-Neves estimator[^6] for the true endpoint to try to extrapolate
-beyond the sample min.  Repeated sampling of smaller windows to estimate its
-uncertainty is what `tim` does presently (to side-step tail index estimation).
+`tim` used to do an Einmahl moments estimator or an sdev(low quantiles) way but
+now is more sophisticated & reliable using the Fraga Alves-Neves estimator[^6]
+for the true endpoint to extrapolate beyond a sample min and samples of smaller
+windows to estimate its uncertainty (to side-step tail index estimation).
 
 Usage
 =====
@@ -230,7 +229,8 @@ hostile distribution.  This makes, e.g., median(min(nTimes)) the
 quantile of the underlying times distribution.  For n=20 this is ~1/million.
 That sounds small, but is quite variable on most systems!
 
-[^6]: https://arxiv.org/abs/1412.3972
+[^6]: An Einmahl reference is DOI 10.1111/j.1467-9574.2010.00470.x, old methods
+in version control here, & FA-N estimator is in https://arxiv.org/abs/1412.3972
 
 [^7]: Basic [error
 propagation](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) uses
