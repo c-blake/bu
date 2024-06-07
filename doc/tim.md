@@ -195,9 +195,9 @@ BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
 extensions to reserve L3, and on & on. (`tim` hopes simpler ideas can prevent
 much of that effort most of the time without corrupting benchmark design.)
 
-[^1]: Find a link to circa 2019 blog about writing own "Measurement OS" to study
-how [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))-
-like security vulnerabilities play out.
+[^1]: There are, of course, Linux kernel `isolcpus` boot parameters-like modes
+and specialized OS kernels for measurement like this interesting one with a lot
+of diagrams: https://gamozolabs.github.io/metrology/2019/08/19/sushi_roll.html
 
 [^2]: Spinning platter disks & handling even ambient broadcast network packets
 or other competing action can evict your cache entries on unrelated work.  This
