@@ -162,16 +162,22 @@ measurement errors below 2 microseconds and deltas of 2.4±1.9μs = 1.26σ and
 The large sigma distances suggest errors are a bit underestimated.  More careful
 study showed the situation is mostly very leptokurtotic.. (I saw excess kurtosis
 over 12) meaning wild tail events are much more common than expectations from
-light-tailed noise.  So, one *cannot use sigma alone* for comparison.  This wild
-distribution itself is likely irreproducible over time or across test machines.
-Running that set of tests with fixed CPU frequency and very minimal background
-activity would very likely make these distributions less hostile.
+light-tailed noise.  You can run experiments on your own Unix computers with a
+simple pipeline like this Zsh: `repeat 1000 tim "" | grep -v Overhead | sed -e
+'s/.*(//g' -e 's/).*$//g' -e 's/ ms//' | awk '{print $1/$3}'`.  "Well behaved"
+results would be N(0,1) or "unit normal", but you are unlikely to see that.
+
+Leptokurtosis itself means one *cannot use sigmas alone* for comparison.  This
+wild distribution itself is also likely irreproducible over time, across test
+machines, OS settings, etc.  Running a set of tests with fixed CPU frequency and
+minimal background activity would likely make noise distributions less hostile,
+but also be more "preparatory work" whenever you want to benchmark something.
 
 So, we can answer the question "Does it work?" with "kinda!".  10σ devs with no
 underlying difference are far too common, yet errors are still small in absolute
-terms letting you separate fairly subtle effects.  So, it seems useful as long
-as you take any A/B pseudo-t-tests with a "cube of salt" a bit bigger than the
-one common in particle physics.[^8]
+terms letting you separate fairly subtle effects with only a few dozen runs. So,
+it seems useful if take reported uncertainties with a "cube of salt" a bit
+bigger than the one common in particle physics.[^8]
 
 Other issues
 ============
