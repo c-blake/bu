@@ -5,12 +5,11 @@ type EsQuo* = enum eqNeed, eqAlways, eqEscape ## Quoting mode enum
 
 proc esQuoParse*(q: string): EsQuo =
   ## Parse a quoting mode string into its enum or raise `ValueError`.
-  if q.len > 0:
-    case q[0].toLowerAscii
-    of 'n': result = eqNeed
-    of 'q': result = eqAlways
-    of 'e': result = eqEscape
-    else: raise newException(ValueError, "Unknown quote mode: \"" & q & "\".")
+  case (if q.len > 0: q[0].toLowerAscii else: 'X')
+  of 'n': result = eqNeed
+  of 'q': result = eqAlways
+  of 'e': result = eqEscape
+  else: raise newException(ValueError, "Unknown quote mode: \"" & q & "\".")
 
 const needQuo* = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
                   '*', ';', '<', '=', '>', '?', '?', '[', '`' , '{', '|', '~'}
