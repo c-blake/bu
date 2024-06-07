@@ -217,9 +217,9 @@ but usually means *big* samples (slow) as well as environmental control (hard to
 make portable across deployments).
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
-times***](https://benhoyt.com/writings/count-words/) means that branch
-prediction and so possibly memory prefetching begins to work perfectly after
-just 10% of his benchmark.  Beyond this, hash table sizes become non-reflective
+times***](https://benhoyt.com/writings/count-words/) means branch predictors and
+likely memory prefetching begins to work perfectly after ~10% of his benchmark.
+Beyond this, hash tables fit better in L1/L2 CPU caches & become non-reflective
 of natural language vocabulary scaling.  How much this degrades his prog.lang
 comparisons is hard to say, but it's better to avoid it than guess at it.
 
