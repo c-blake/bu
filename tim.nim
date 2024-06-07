@@ -1,7 +1,12 @@
 when not declared(addfloat): import std/[syncio, formatfloat]
 import std/[os, times, strformat, math, tables, strutils, deques],
        cligen, cligen/strUt, bu/emin
-let timeScales = {"ns":1e9, "us":1e6, "ms":1e3, "s":1.0, "min":1.0/60.0}.toTable
+proc timePrefix(s: string): string =   # A very "big tent" setup supporting..
+  if   s.endsWith("seconds"): s[0..^8] #..short&long, singular&plural, sec, s.
+  elif s.endsWith("secs"): s[0..^5]
+  elif s.endsWith("sec"): s[0..^4] elif s.endsWith("s"): s[0..^2] else: s
+let timeScales={"n":1e9, "nano":1e9, "micro":1e6, "u":1e6, "μ":1e6, "m":1e3,
+                "milli":1e3, "":1.0, "min":1.0/60.0, "minute":1.0/60.0}.toTable
 var dtScale = 1.0
 
 proc sample1(f: File; cmd, prepare, cleanup: string): float =
@@ -31,7 +36,7 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
     raise newException(HelpError, "Need n >= k; Full ${HELP}")
   if cmds.len == 0:
     raise newException(HelpError, "Need cmds; Full ${HELP}")
-  try: dtScale = timeScales[timeunit]
+  try: dtScale = timeScales[timeunit.timePrefix]
   except KeyError: raise newException(HelpError, "Bad time unit; Full ${HELP}")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
@@ -70,5 +75,6 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "read"   : "read output of `save` instead of running",
   "prepare": "cmds to run before *corresponding* cmd<i>s",
   "cleanup": "cmds to run after *corresponding* cmd<i>s",
-  "time-unit": "Can be: ns us ms s min",
+  "time-unit": """(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
+OR min[s] minute[s] { [s]=an optional 's' }""",
   "verbose": "log parameters & some activity to stderr"}, short={"timeunit":'u'}
