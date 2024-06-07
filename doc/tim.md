@@ -14,27 +14,28 @@ load-based CPU dynamic frequency scale-up simply does not reproduce to other
 milliseconds / minutes / days / environments.  Understanding begins with
 reproduction.[^3]
 
-This seems like a "statistics to the rescue" scenario, but caution is warranted.
-In most deployments, `tBackground` from Eq.1 is both time varying
+This seems like a "statistics to the rescue" scenario, but caution is warranted
+since `noise` violates base assumptions of most applied statistics.  In most
+deployments, `tBackground` from Eq.1 is time-varying
 ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
 [heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
-**imperfect control over competing load**.  Both properties make both value &
-error estimates of **flat averages including ALL OF `noise` mislead**.  Central
-measures like the mean (& median) are likely dragged way up.  Errors in the
-means just explode.  Neither converge as you might think from [Limit
-Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Non-stationary,
-**non-independent** noise violates base assumptions of most applied statistics.
-Even trimmed / outlier-removed averages risk confusing signal & noise (though
-sometimes the noise *is* the signal[^3]).
+**imperfect control over competing load** and **non-independent** due to caches.
+These traits make both value & error estimates of **flat averages that include
+ALL OF `noise` mislead**.  Central measures like the mean (& median) are likely
+dragged way up.  Errors in the means just explode.  Neither converge as you may
+think from [Limit
+Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Even trimmed /
+outlier-removed averages risk confusing signal & noise (though sometimes the
+noise *is* the signal[^3]).
 
 Solutions
 =========
 A **0-tech** approach is to declare differences less than 2-10X "uninteresting".
 While not invalid, **practical difficulty** remains.  You cannot always control
 what other people find "interesting".  It's also not rare that "interesting"
-deltas can be composed of improvement with many smaller stages which then still
-need a solution.  Truly cold-cache times often have far bigger deltas relative
-to hot than any proposed range.
+deltas can be composed of improvement with many incremental small improvements
+which then still need a solution.  Truly cold-cache times often have far bigger
+deltas relative to hot than any proposed range.
 
 The scale of `noise` compared to `t0` can vary considerably.  A popular approach
 is to avoid sub-second times entirely, making benchmarks **many seconds long**
@@ -47,10 +48,10 @@ do better than 0-tech!
 ---
 
 A low tech way to estimate reproducibly Eq.1's `t0`, in spite of hostile noise,
-is a simple sample minimum.  This **filters out all but noise(minimum)** -
-far better behaved than average noise.[^5]
+is a simple sample minimum.  This **filters out all but noise(minimum)** - far
+better behaved than average noise.[^5]
 
-However, this gives no uncertainty to the estimate for principled comparisons
+However, this gives no uncertainty to its estimate for principled comparisons
 among alternatives.  To get a population minimum without error, one needs an
 **infinite** number of trials.  We instead want to economize on repetitions.
 
@@ -61,10 +62,10 @@ statistical formulae or nesting with sample stats on min(several) are surely
 possible, but these all share a problem: the population-min is guaranteed to be
 less than any sample min.
 
-One can be a bit more sophisticated and use the Fraga Alves-Neves estimator[^6]
-for the true endpoint to try to extrapolate.  This is always < sample min.
-Repeated sampling of smaller windows to estimate its uncertainty is what `tim`
-does presently.
+`tim` used to do the low art way but now is a bit more sophisticated using the
+Fraga Alves-Neves estimator[^6] for the true endpoint to try to extrapolate
+beyond the sample min.  Repeated sampling of smaller windows to estimate its
+uncertainty is what `tim` does presently (to side-step tail index estimation).
 
 Usage
 =====
@@ -89,11 +90,11 @@ Options:
   -v, --verbose     bool    false log parameters & some activity to stderr
 ```
 
-Example / Does It Work?
-=======================
-Let's see by running it 3 times and comparing results!  (Here lb=/usr/local/bin
-is an environment variable to avoid env -i PATH="$PATH", and `/n` is a symlink
-to "/dev/null"):
+Example / Evaluation
+====================
+Let's see by running it 3 times & comparing results!  (Here `lb=/usr/local/bin`
+is an environment variable to avoid `env -i PATH="$PATH"` & `/n` is a symlink
+to "/dev/null" for brevity):
 ```
 $ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
 (2.0398 +- 0.0091)e-04 s  (AlreadySubtracted)Overhead
@@ -202,17 +203,18 @@ idle" general purpose system..merely "approximately idle".
 [^3]: Of course, understanding does not ***end*** with reproduction.  Sometimes
 the whole distribution is of interest, not the best or "luckiest".  Cold-cache
 (for some values of "cold" & "cache") can be more interesting.  `tim` can write
-all times to a file, including "warm-ups".  Most debate over such things (eg.
-hbench vs. lmbench) is more about how to compress many numbers into one for
-purposes of comparison.  Not compressing at all (& not flattening time series
-structure) is the more informative comparison.  Since humans are bad at reading
-such reports, views on the debate mostly come down to disagreeing estimates of
-P(misinterpretation|strong subjective experience components).  In any event, if
-one *does* care about the whole distribution, not merely `t0`, to be scientific
-one should check that ***the whole distro reproduces*** via K-S tests or similar
-(unlikely but not impossible for most noise of my personal experience).  This
-may be Future Work for `tim` and inherently requires a *lot* of data/samples as
-well as environmental controls.
+all times to a file, including warm-ups which [`edplot`](edplot.md) can render.
+Most debate over such things (eg. hbench vs. lmbench) is more about how to
+compress many numbers into one for purposes of comparison.  Not compressing at
+all (& not flattening time series structure!) is a more informative comparison.
+Since humans are bad at reading such reports, views on the debate mostly come
+down to disagreeing estimates of P(misinterpretation | strong subjective
+experience components).  In any event, if one *does* care about whole distros,
+not merely `t0`, science mandates checking ***whole distros reproduce*** by K-S
+tests etc. (unlikely but not impossible for most noise in my experience) and has
+order-independence (via permutation tests).  This may be Future Work for `tim`,
+but usually means *big* samples (slow) as well as environmental control (hard to
+make portable across deployments).
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
 times***](https://benhoyt.com/writings/count-words/) means that branch
