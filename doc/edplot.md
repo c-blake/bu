@@ -20,19 +20,22 @@ https://en.wikipedia.org/wiki/Empirical_distribution_function) instead of a
 estimate](https://en.wikipedia.org/wiki/Density_estimation).  The answer is
 simple: no free parameters (beyond "confidence interval size"-like ones).[^1]
 Free parameters slow science (construed most broadly), inviting methodological
-debate.  KDEs improve on histograms by averaging over bin alignment[^2].  EDFs
-nix both alignment *and* bandwidth / bin width and are a solid best estimate of
-the true population distribution with multiple well known error bands.
+debate.  KDEs improve on histograms by averaging over bin alignment[^2], but
+data can be many-scale (need variable bin width/bandwidth) leading to the number
+of parameters also needing estimation.  EDFs sidestep all such concerns & are a
+good estimate of true population distributions with multiple known error bands
+for finite-samples that are distribution free & non-parametric.
 
-I also prefer density / derivative / PDF Speak, ***BUT*** the disagreement on
+I also prefer density / derivative / PDF "Speak", ***BUT*** the disagreement on
 bandwidth selection techniques is staggering.  There are (easily!) ten thousand
-papers in academic statistics on bandwidth selection since the late, great
-Emanuel Parzen got people interested in KDEs in 1962 (or maybe Rosenblatt in
-1956).  I even have my own ideas along those lines, but even so, without broad
-acceptance, one gets stuck debating methods not analyzing data.  So, as a
-practical/social matter, ***IF you can*** answer & inspire your questions with
-EDFs, you probably should.  The most common reason people do not is not having
-spent time to learn to read/use them; They're popular in social sciences.
+papers on many dozens to hundreds of proposals in academic statistics on
+bandwidth selection since the late, great Emanuel Parzen got people interested
+in KDEs in 1962 (or maybe Rosenblatt in 1956).  I even have my own ideas along
+these lines, but even so, without broad acceptance for multiple-decades, one
+gets stuck debating methods not analyzing data.  So, as a practical/social
+matter, ***IF you can*** answer & inspire your questions with EDFs, you probably
+should.  The most common reason people do not is not having spent time to learn
+to read/use them; They're popular in social sciences.
 
 Key EDF Properties (B)
 ======================
