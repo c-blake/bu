@@ -19,11 +19,11 @@ since `noise` violates base assumptions of most applied statistics.  In most
 deployments, `tBackground` from Eq.1 is time-varying
 ([non-stationary](https://en.wikipedia.org/wiki/Stationary_process)) and
 [heavy-tailed](https://en.wikipedia.org/wiki/Heavy-tailed_distribution) due to
-**imperfect control over competing load** and **non-independent** due to caches.
-These traits make both value & error estimates of **flat averages that include
-ALL OF `noise` mislead**.  Central measures like the mean (& median) are likely
-dragged way up.  Errors in the means just explode.  Neither converge as you may
-think from [Limit
+**imperfect control over competing load** and **non-independent** due to many
+caches & queues.  These traits make both value & error estimates of **flat
+averages that include ALL OF `noise` mislead**.  Central measures like the mean
+(& median) are likely dragged way up.  Errors in the means just explode.
+Neither converge as you may think from [Limit
 Theorems](https://en.wikipedia.org/wiki/Central_limit_theorem).  Even trimmed /
 outlier-removed averages risk confusing signal & noise (though sometimes the
 noise *is* the signal[^3]).
