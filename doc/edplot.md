@@ -150,6 +150,19 @@ If you have a series of colors you like, just put `wvls=0.87`, `wvls=0.13`,
 `band=tube`, etc. in your `~/.config/edplot` config file, and similarly for
 other CLI options to reduce your keystrokes to just `edplot a b|gnuplot`.
 
+Once you have things set up, you can plot distributions from various sources.
+For example, an AB-comparison of interpreter startup times using [tim](tim.md)
+might be interesting:
+```
+tim -k4 -n20 -m20 -sj "bash<$n" "awk ''<$n"
+236 +- 20 μs    (AlreadySubtracted)Overhead
+833 +- 28 μs    bash</n
+720 +- 25 μs    awk ''</n
+edplot <(awk '/h/{print $1*1e6-236}'<j) <(awk '/k/{print $1*1e6-236}'<j)|gnuplot
+```
+In my attempt, I got widely separated bulk bodies but some overlap in the upper
+tails, but these kinds of things are often hard to reproduce.
+
 Conclusion
 ==========
 `edplot` emits files to plot to try to support principled visual reasoning about
