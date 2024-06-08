@@ -40,11 +40,11 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   except KeyError: raise newException(HelpError, "Bad time unit; Full ${HELP}")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
-  if verbose: stderr.write(&"tim: warmup  {warmup}\ntim: k       {k}\n",
-                           &"tim: n       {n}\ntim: m       {m}\n",
-                           &"tim: ohead   {ohead}\ntim: save    {save}\n",
-                           &"tim: read    {read}\ntim: cmds    {cmds}\n",
-                           &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n")
+  if verbose:stderr.write &"tim: warmup  {warmup}\ntim: k       {k}\n",
+                          &"tim: n       {n}\ntim: m       {m}\n",
+                          &"tim: ohead   {max(n,ohead)}\ntim: save    {save}\n",
+                          &"tim: read    {read}\ntim: cmds    {cmds}\n",
+                          &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n"
   let f = if save.len > 0: open(save, fmAppend) else: nil
   var r = read.maybeRead
   proc get1(cmd: string, i = -1): float =             # Either use read times..
@@ -55,7 +55,7 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   var o: MinEst                                       # Auto-Init to 0.0 +- 0.0
   if ohead > 0:                                       # Measure overhead
     for t in 1..warmup: discard "".get1
-    o = eMin(k, ohead, m, get1="".get1)               # Measure&Report overhead
+    o = eMin(k, max(n,ohead), m, get1="".get1)        # Measure&Report overhead
     echo fmtUncertain(o.est, o.err)," ",timeunit,"\t(AlreadySubtracted)Overhead"
   for i, cmd in cmds:                                 # Measure each cmd
     for t in 1..warmup: discard cmd.get1(i)
