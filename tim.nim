@@ -32,10 +32,8 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
          verbose=false) =
   ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
   ## time & error estimate.  `doc/tim.md` explains more.
-  if n < k:
-    raise newException(HelpError, "Need n >= k; Full ${HELP}")
-  if cmds.len == 0:
-    raise newException(HelpError, "Need cmds; Full ${HELP}")
+  let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
+  if cmds.len == 0: raise newException(HelpError, "Need cmds; Full ${HELP}")
   try: dtScale = timeScales[timeunit.timePrefix]
   except KeyError: raise newException(HelpError, "Bad time unit; Full ${HELP}")
   let prepare = prepare.padWithLast(cmds.len)
