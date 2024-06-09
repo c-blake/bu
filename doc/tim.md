@@ -1,6 +1,6 @@
 Background
 ==========
-Often one has some program/operation of interest that takes 1..500 milliseconds.
+Often one has some program/operation of interest that takes 50μs .. 500 ms.
 One may want to time it to use as a benchmark.  While computers are conceptually
 deterministic, in practical settings on general purpose OSes[^1] asynchronously
 interacting with physical devices, all you can really measure is:
