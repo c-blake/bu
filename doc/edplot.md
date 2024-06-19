@@ -177,9 +177,9 @@ visualization is that the fat band guides the eye to not over-conclude.  If you
 think [Occam](https://en.wikipedia.org/wiki/William_of_Ockham) is in the
 driver's seat then you can imagine the smoothest curve through the shape.  If
 you think [Ed Murphy](https://en.wikipedia.org/wiki/Murphy's_law) holds the
-reigns then you can go by "only the larger scale shape" and imagine a swarm of
-all possible monotonic curves through the patch.  (Of course, you can always
-widen | narrow targeted CIs from 95%, too.)[^9]
+reigns then you can go by "only the larger scale shape" and imagine a swarm[^9]
+of all possible monotonic curves through the patch.  (Of course, you can always
+widen | narrow targeted CIs from 95%, too.)[^10]
 
 Conclusion
 ==========
@@ -224,7 +224,10 @@ output` & running `gnuplot foo.gpi`.  Another tweak might be `-e 'set term x11'
 
 [^8]: There are others with even finer structure like "the comb" and so on.
 
-[^9]: One can, of course, also put error estimates on top of density estimates,
+[^9]: In fact, https://github.com/c-blake/fitl/blob/main/fitl/cds.nim is one
+such way to generate such a swarm via interpolated re-sampling.
+
+[^10]: One can, of course, also put error estimates on top of density estimates,
 but this is about as rare as error estimates on distributions and comes with
 what bandwidth (and what kernel) hazards instead of having strong distribution
 free theory to support it.
