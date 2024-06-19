@@ -172,15 +172,34 @@ modes at -1, 0.5, 0, 0.5, +1.  Here is what a sample of size 256 { from simply
 [`dists`](https://github.com/c-blake/fitl/blob/main/fitl/dists.nim) `-n256 -dClaw`
 } looks like with the final tube with borders visualization: ![claw](claw.png)
 
-A real interpretability hazard in all work like this is "over-concluding from
-just one sample" (and often a small one at that).  What I like about this
-visualization is that the fat band guides the eye to not over-conclude.  If you
-think [Occam](https://en.wikipedia.org/wiki/William_of_Ockham) is in the
-driver's seat then you can imagine the smoothest curve through the shape.  If
-you think [Ed Murphy](https://en.wikipedia.org/wiki/Murphy's_law) holds the
-reigns then you can go by "only the larger scale shape" and imagine a swarm[^9]
-of all possible monotonic curves through the patch.  (Of course, you can always
-widen | narrow targeted CIs from 95%, too.)[^10]
+The interpretability hazard in all work like this is "over-concluding from just
+one sample" (and often a small one at that).  What I like about this
+visualization is that the ***fat band guides the eye to not over-conclude***
+while still leaving breadcrumbs of emerging evidence.  For example, for the data
+above, if one tests for "Gaussian or not" via several [standard statistical
+tests](https://github.com/c-blake/fitl/blob/main/fitl/gof.nim), the answer is
+roughly, "only borderline inconsistent with Gaussian" (for, as usual, inspecific
+departures):
+```
+gof -g,=,k,c,a -a,=,e,f -e,=,s,p -- the data
+mD: 13.68
+P(mD>val|Gauss): 0.08660
+mW^2: 0.1514
+P(mW^2>val|Gauss): 0.02160
+mA^2: 1.064
+P(mA^2>val|Gauss): 0.009200
+```
+The first K-S test (related to the outer fat band) alone doesn't even exclude
+consistency from Gaussian sampling, though the other 2 slightly more powerful
+tests suggest it is getting unlikely at 2.1% and 0.92% alpha levels.  Knowing
+the answer, it is naturally easy to fool oneself in thinking any visualization
+says more than it really does.  The challenge is: How to present the evidence
+without suggesting over-conclusions?
+
+The bottom line is that if this data sample is supposed to say something about
+other samples from the same process, you should really only look at "large scale
+shape" and imagine a swarm[^9] of all possible monotonic curves through such.
+(You can also widen | narrow targeted CIs from 95%, of course.[^10])
 
 Conclusion
 ==========
