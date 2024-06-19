@@ -169,8 +169,8 @@ In the density estimation literature, a distribution often used as a test case
 is fancifully called "The Claw".[^8]  This is a mixture distribution of 50% a
 standard unit normal N(0,1) with 50% one of 5 narrower (0.1 standard deviation)
 modes at -1, 0.5, 0, 0.5, +1.  Here is what a sample of size 256 { from simply
-[dists](https://github.com/c-blake/fitl/blob/main/fitl/dists.nim) -n256 -dClaw }
-looks like with the final tube with borders visualization: ![claw](claw.png)
+[`dists`](https://github.com/c-blake/fitl/blob/main/fitl/dists.nim) `-n256 -dClaw`
+} looks like with the final tube with borders visualization: ![claw](claw.png)
 
 A real interpretability hazard in all work like this is "over-concluding from
 just one sample" (and often a small one at that).  What I like about this
