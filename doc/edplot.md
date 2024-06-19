@@ -163,6 +163,24 @@ edplot <(awk '/h/{print $1*1e6-236}'<j) <(awk '/k/{print $1*1e6-236}'<j)|gnuplot
 In my attempt, I got widely separated bulk bodies but some overlap in the upper
 tails, but these kinds of things are often hard to reproduce.
 
+A Sample From The "Famous" Claw
+===============================
+In the density estimation literature, a distribution often used as a test case
+is fancifully called "The Claw".[^8]  This is a mixture distribution of 50% a
+standard unit normal N(0,1) with 50% one of 5 narrower (0.1 standard deviation)
+modes at -1, 0.5, 0, 0.5, +1.  Here is what a sample of size 256 looks like
+with the final tube with borders visualization: ![claw](claw.png)
+
+A real interpretability hazard in all work like this is "over-concluding from
+just one sample" (and often a small one at that).  What I like about this
+visualization is that the fat band guides the eye to not over-conclude.  If you
+think [Occam](https://en.wikipedia.org/wiki/William_of_Ockham) is in the
+driver's seat then you can imagine the smoothest curve through the shape.  If
+you think [Ed Murphy](https://en.wikipedia.org/wiki/Murphy's_law) holds the
+reigns then you can go by "only the larger scale shape" and imagine a swarm of
+all possible monotonic curves through the patch.  (Of course, you can always
+widen | narrow targeted CIs from 95%, too.)[^9]
+
 Conclusion
 ==========
 `edplot` emits files to plot to try to support principled visual reasoning about
@@ -203,3 +221,10 @@ my `st` terminal via a `$GNUTERM` setting, but these plots were instead made by
 `edplot ...>foo.gpi`, hand editing the `.gpi` file to add `set term png` & `set
 output` & running `gnuplot foo.gpi`.  Another tweak might be `-e 'set term x11'
 -l 'pause -1'` for an interactive X Window.
+
+[^8]: There are others with even finer structure like "the comb" and so on.
+
+[^9]: One can, of course, also put error estimates on top of density estimates,
+but this is about as rare as error estimates on distributions and comes with
+what bandwidth (and what kernel) hazards instead of having strong distribution
+free theory to support it.
