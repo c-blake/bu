@@ -229,5 +229,4 @@ such way to generate such a swarm via interpolated re-sampling.
 
 [^10]: One can, of course, also put error estimates on top of density estimates,
 but this is about as rare as error estimates on distributions and comes with
-what bandwidth (and what kernel) hazards instead of having strong distribution
-free theory to support it.
+what bandwidth(s) & what kernel(s) questions as mentioned.
