@@ -243,7 +243,7 @@ For an interactive X Window, `-e 'set term x11' -l 'pause -1'` or the similar
 long-option version in `~/.config/edplot` also works.
 
 [^8]: There are others with even finer structure like "the comb" and so on.  The
-claw is so named because its *density* looks a bit like 5-fingered animals paws.
+claw is so named because its *density* looks like a 5-fingered animal paw.
 
 [^9]: In fact, https://github.com/c-blake/fitl/blob/main/fitl/cds.nim is one
 such way to generate such a swarm via interpolated re-sampling.
