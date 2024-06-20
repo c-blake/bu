@@ -206,8 +206,8 @@ Conclusion
 `edplot` emits files to plot to try to support principled visual reasoning about
 data sets based on EDFs and related uncertainties in distribution not density
 space.  Its defaults are set up for a prior assumption of a continuous true
-distribution.  Once you learn to read them, the plots it can makes are very
-"full information" containing ways to answer many questions about data sets.
+distribution.  Once you learn to read them, these plots are very "full
+information" containing ways to answer many questions about data sets.
 
 [^1]: Technically, the `k` used to assess the data range, is a non-probability
 free parameter, but A) this is also needed (though admittedly usually neglected)
