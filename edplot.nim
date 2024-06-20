@@ -10,6 +10,11 @@ type TubeOpt* = enum pw="pointWise", sim="simultaneous", both
 type Fs = seq[float]; type Strs = seq[string]; let dbg = true   #XXX temporary
 var gEarly*, gLate*: string; var gPropAl* = Wilson
 
+proc ingest(p: string): seq[float] =
+  for f in lines(if p.len>0: p.open else: stdin): result.add f.strip.parseFloat
+#XXX Test serial indep by spfun/studentT.ccPv,identical by fitl/gof k-sample A-D
+  result.sort
+
 proc eLE[T](ts: seq[T], a_ik: seq[float], k: int, gNk0Thresh: float): float =
   result = ts.eLE(a_ik)
   if (let s = result.gNk0(k, ts, lower=true); s < gNk0Thresh.abs) and dbg:
@@ -56,9 +61,7 @@ proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let nCI = int(0.5/ci - 0.5)   # + 1 gets added in divisor
   for p in ps:
-    var xs: seq[float]
-    for f in lines(if p.len>0: p.open else: stdin): xs.add f.strip.parseFloat
-    xs.sort; let n = xs.len             # Make, then emit EDF, C.Band files
+    let xs = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
     for (f, c) in edf(xs, k, tailA):
       e.write f," ",c.float/n.float
@@ -93,17 +96,15 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let ci = if ci == 0.02: 0.95 else: ci
   for p in ps:
-    var xs: seq[float]
-    for f in lines(if p.len>0: p.open else: stdin): xs.add f.strip.parseFloat
-    xs.sort; let n = xs.len             # Make, then emit EDF, Conf.Band files
+    let xs = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
-    var (p, pPL, pPH, pSL, pSH) = (0.0, 0.0, 0.0, 0.0, 0.0)
+    var (P, pPL, pPH, pSL, pSH) = (0.0, 0.0, 0.0, 0.0, 0.0)
     for (f, c) in edf(xs, k, tailA):    # Draw 2 lines:
-      e.write f," ",p                   #   1) Last P-level to new x
+      e.write f," ",P                   #   1) Last P-level to new x
       if b in {pw, both}: e.write &" {pPL} {pPH}"
       if b in {sim,both}: e.write &" {pSL} {pSH}"
-      e.write "\n"; p = c.float/n.float #   2) Then new x, new P-level
-      e.write f," ",p
+      e.write "\n"; P = c.float/n.float #   2) Then new x, new P-level
+      e.write f," ",P
       if b in {pw, both}:
         let(l,h)=initBinomP(c,n).est(ci,gPropAl);e.write &" {l} {h}";pPL=l;pPH=h
       if b in {sim,both}:
