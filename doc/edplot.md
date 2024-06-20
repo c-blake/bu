@@ -236,11 +236,11 @@ fainter line extending beyond the data range.
 [^6]: `max |F_a(x)-F_b(x)|` is @5,6,7=9/20=0.45; Wiki table gives `1.358 *
 sqrt(40/400)` which is 0.43.
 
-[^7]: Personally, I usually just run `edplot ...|gnuplot` which dumps sixels to
-my `st` terminal via a `$GNUTERM` setting, but these plots were instead made by
-`edplot ...>foo.gpi`, hand editing the `.gpi` file to add `set term png` & `set
-output` & running `gnuplot foo.gpi`.  Another tweak might be `-e 'set term x11'
--l 'pause -1'` for an interactive X Window.
+[^7]: Day-to-day, I just run `edplot ...|gnuplot` which dumps sixels to my
+patched `st` terminal via a `$GNUTERM` setting.  These plots were instead made
+by un-commenting `early = "set term png...; set out"` in my `~/.config/edplot`.
+For an interactive X Window, `-e 'set term x11' -l 'pause -1'` or the similar
+long-option version in `~/.config/edplot` also works.
 
 [^8]: There are others with even finer structure like "the comb" and so on.  The
 claw is so named because its *density* looks a bit like 5-fingered animals paws.
