@@ -190,16 +190,16 @@ mA^2: 1.064
 P(mA^2>val|Gauss): 0.009200
 ```
 The first K-S test (related to the outer fat band) alone doesn't even exclude
-consistency from Gaussian sampling, though the other 2 slightly more powerful
-tests suggest it is getting unlikely at 2.1% and 0.92% alpha levels.  Knowing
-the answer, it is naturally easy to fool oneself in thinking any visualization
-says more than it really does.  The challenge is: How to present the evidence
-without suggesting over-conclusions?
+consistency from Gaussian sampling at 8%, though the other 2 slightly more
+powerful tests suggest it is getting unlikely at 2% and 1% alpha levels.
+Knowing the answer, it is easy to fool oneself in thinking any visualization
+says more than it really does.  The challenge is: How to present evidence that
+suggests conclusions of just the right strength to those with minimal training?
 
 The bottom line is that if this data sample is supposed to say something about
-other samples from the same process, you should really only look at "large scale
-shape" and imagine a swarm[^9] of all possible monotonic curves through such.
-(You can also widen | narrow targeted CIs from 95%, of course.[^10])
+other samples from The Same[^9] process, you should really only look at "large
+scale shape" and imagine a swarm[^10] of all possible monotonic curves through
+such.  (You can also widen | narrow targeted CIs from 95%, of course.[^11])
 
 Conclusion
 ==========
@@ -245,9 +245,17 @@ long-option version in `~/.config/edplot` also works.
 [^8]: There are others with even finer structure like "the comb" and so on.  The
 claw is so named because its *density* looks like a 5-fingered animal paw.
 
-[^9]: In fact, https://github.com/c-blake/fitl/blob/main/fitl/cds.nim is one
+[^9]: This means both old & forecast numbers are [independent & identically
+distributed](https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables)
+is an essential pre-condition for pooling numbers in the first place.  These
+assumptions ideally should be verified, e.g. distributional similarity across
+time for identicality & serial autocorrelation of various lags for independence
+via permutation testing.  Ensuring future samples are from the same process is
+also hard, of course.
+
+[^10]: In fact, https://github.com/c-blake/fitl/blob/main/fitl/cds.nim is one
 such way to generate such a swarm via interpolated re-sampling.
 
-[^10]: One can, of course, also put error estimates on top of density estimates,
+[^11]: One can, of course, also put error estimates on top of density estimates,
 but this is about as rare as error estimates on distributions and comes with
 what bandwidth(s) & what kernel(s) questions as mentioned.
