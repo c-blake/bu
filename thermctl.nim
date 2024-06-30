@@ -69,8 +69,7 @@ proc thermctl*(qry="auto", ival=1.0, match=".", excl = @["thermctl"], log="",
         cooling = true
 
 when isMainModule:
-  import cligen
-  dispatch thermctl, help={
+  import cligen; include cligen/mergeCfgEnv; dispatch thermctl, help={
     "qry"  : "auto:Intel?turbostat -sCPU,CoreTmp:cpuTemp",
     "ival" : "$1 param to `qry` (likely a delay)",
     "match": "pattern selecting cpuTemp line",
