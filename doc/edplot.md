@@ -20,11 +20,12 @@ https://en.wikipedia.org/wiki/Empirical_distribution_function) instead of a
 estimate](https://en.wikipedia.org/wiki/Density_estimation).  The answer is
 simple: no free parameters (beyond "confidence interval size"-like ones).[^1]
 Free parameters slow science (construed most broadly), inviting methodological
-debate.  KDEs improve on histograms by averaging over bin alignment[^2], but
-data can be many-scale (need variable bin width/bandwidth) leading to the number
-of parameters also needing estimation.  EDFs sidestep all such concerns & are a
-good estimate of true population distributions with multiple known error bands
-for finite-samples that are distribution free & non-parametric.
+debate.  [KDEs](https://en.wikipedia.org/wiki/Kernel_density_estimation) improve
+on histograms by averaging over bin alignment[^2], but data can be many-scale
+(need variable bin width/bandwidth) leading to the number of parameters also
+needing estimation.  EDFs sidestep all such concerns & are a good estimate of
+true population distributions with multiple known error bands for finite-samples
+that are distribution free & non-parametric.
 
 I also prefer density / derivative / PDF "Speak", ***BUT*** the disagreement on
 bandwidth selection techniques is staggering.  There are (easily!) ten thousand
