@@ -191,7 +191,7 @@ mA^2: 1.064
 P(mA^2>val|Gauss): 0.009200
 ```
 The first K-S test (related to the outer fat band) alone doesn't even exclude
-consistency from Gaussian sampling at 8%, though the other 2 slightly more
+consistency with Gaussian sampling at 8%, though the other 2 slightly more
 powerful tests suggest it is getting unlikely at 2% and 1% alpha levels.
 Knowing the answer, it is easy to fool oneself in thinking any visualization
 says more than it really does.  The challenge is: How to present evidence that
@@ -259,5 +259,5 @@ also hard, of course.
 such way to generate such a swarm via interpolated re-sampling.
 
 [^11]: One can, of course, also put error estimates on top of density estimates,
-but this is about as rare as error estimates on distributions and comes with
-what bandwidth(s) & what kernel(s) questions as mentioned.
+but this is about as rare as error estimates on distributions and comes with the
+same bandwidth(s) & kernel(s) question previously mentioned.
