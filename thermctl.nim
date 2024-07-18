@@ -12,20 +12,20 @@ proc log(o: File, t0: var DateTime, msg: string) =
  except Ce: discard
 
 proc pidStCmd(pid: string): (Pid, char, string) =
-  let ps = readFile("/proc/" & pid & "/stat") # Parse PID (CMD) STATE...
-  let eoPid = ps.find(" (")      # Bracket CMD. Works even if CMD has
-  let eoCmd = ps.rfind(") ")     #..parens or whitespace chars in it.
-  if eoPid != -1 and eoCmd != -1 and pid == ps[0 ..< eoPid]:
-    result[0] = parseInt(ps[0 ..< eoPid]).Pid
-    if (let eoSt = ps.find(' ', start=eoCmd + 2); eoSt != -1):
-      result[1] = ps[eoCmd + 2 ..< eoSt][0]
-    result[2] = ps[eoPid + 2 ..< eoCmd]
+  try:      # Process list is dynamic => time-of-walk/time-of-parse|act errors
+    let ps = readFile("/proc/" & pid & "/stat") # Parse PID (CMD) STATE...
+    let eoPid = ps.find(" (")           # Bracket CMD. Works even if CMD has..
+    let eoCmd = ps.rfind(") ")          #..parens or whitespace chars in it.
+    if eoPid != -1 and eoCmd != -1 and pid == ps[0 ..< eoPid]:
+      result[0] = parseInt(ps[0 ..< eoPid]).Pid
+      if (let eoSt = ps.find(' ', start=eoCmd + 2); eoSt != -1):
+        result[1] = ps[eoCmd + 2 ..< eoSt][0]
+      result[2] = ps[eoPid + 2 ..< eoCmd]
+  except Ce: discard
 
 iterator pidStates(): (Pid, char, string) = # yield (pid, st, cmd)
-  try:      # Process list is dynamic => time-of-walk/time-of-parse|act errors
     for pcKind, pid in walkDir("/proc", relative=true):
       if pcKind == pcDir and pid.len>0 and pid[0] in Digits: yield pidStCmd(pid)
-  except Ce: discard
 
 var pids: HashSet[Pid]
 
