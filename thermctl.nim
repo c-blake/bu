@@ -7,7 +7,7 @@ proc `$`(x: HashSet[Pid]): string =
 proc log(o: File, t0: var DateTime, msg: string) =
  try:
   let t1 = now(); let diff = t1 - t0; t0 = t1
-  o.write t1.format("yyyy/MM/dd-HH:mm:ss,ffffff")#'.' notin times.FormatLiterals
+  o.write t1.format("yyyy/MM/dd-HH:mm:ss'.'ffffff")
   o.write ": ", msg, " after ", diff.inMilliseconds, " ms\n"; o.flushFile
  except Ce: discard
 
