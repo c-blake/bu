@@ -23,8 +23,8 @@ File Typology (What/Whether)
 
 [catz - Generalize `zcat` to many encodings, not merely `gzip`](doc/catz.md)
 
-Space Management (How Much)
----------------------------
+Space Management (How Much/Where)
+---------------------------------
 
 [dfr - d)isk fr)ee; `df` with color coding & modern units](doc/dfr.md)
 
