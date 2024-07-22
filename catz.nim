@@ -27,7 +27,7 @@ const decs: seq[Decoder] = @[
   (".txz"    , "ý7zX"    , 0, @["pixz", "-d"]),
   (".Lz"     , "LZIP"       , 0, @["plzip", "-d"]),
   (".tLz"    , "LZIP"       , 0, @["plzip", "-d"]),
-  (".lz4"    , "\x04\"M\x18", 0, @["lz4", "-cd"]),
+  (".lz4"    , "\x04\"M\x18", 0, @["lz4c", "-cdT0"]),
   (".zst"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
   ( ".zs"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
   (".tzs"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
