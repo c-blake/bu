@@ -159,4 +159,4 @@ else:
 
 # Dependencies
 requires "nim >= 1.6.0", "cligen >= 1.7.2",
-         "adix >= 0.5.18", "nio >= 0.7.0", "fitl >= 0.5.7", "spfun >= 0.7.0"
+         "adix >= 0.6.0", "nio >= 0.7.0", "fitl >= 0.5.7", "spfun >= 0.7.0"

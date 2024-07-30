@@ -1,6 +1,6 @@
 when not declared(stderr): import std/syncio
 include cligen/unsafeAddr
-import std/[heapqueue, posix], cligen, cligen/[osUt, posixUt, dents, statx]
+import std/posix, cligen, cligen/[osUt, posixUt, dents, statx], adix/topk
 
 type TimePath = tuple[tm: int64, path: string]
 
@@ -16,7 +16,7 @@ proc newest*(n=1, time="m", recurse=1, chase=false, Deref=false, kinds={fkFile},
   let err = if quiet: nil else: stderr
   let tO = fileTimeParse(time)                  #- or CAPITAL=oldest
   let it = both(paths, fileStrings(file, delim))
-  var q  = initHeapQueue[TimePath]()            # min-heap with q[0]=min
+  var t  = initTopK[TimePath](n)                # topk accumulator
   for root in it():
     if root.len == 0: continue                  # skip any improper inputs
     forPath(root, recurse, false, chase, xdev, eof0, err,
@@ -25,14 +25,11 @@ proc newest*(n=1, time="m", recurse=1, chase=false, Deref=false, kinds={fkFile},
         if (dt==DT_LNK and Deref and doStat(dfd,path,nmAt,lst,Deref,quiet)) or
            lst.stx_nlink != 0 or doStat(dfd,path,nmAt,lst,Deref,quiet):
           if lst.stx_mode.match(kinds):
-            let tp = (fileTime(lst, tO.tim, tO.dir), path)
-            if q.len < n  : q.push(tp)
-            elif tp > q[0]: discard q.replace(tp)
+            t.push (fileTime(lst, tO.tim, tO.dir), path)
     do: discard
     do: discard
     do: recFailDefault("newest", path)
-  while q.len > 0:                              # q now has top n times; Print
-    stdout.write q.pop().path, outEnd           #..in the specified-time order.
+  for tp in t.ascending: stdout.write tp.path, outEnd # Emit in given tmOrd
 
 when isMainModule:  # Exercise this with an actually useful CLI wrapper.
   dispatch newest, help = {
