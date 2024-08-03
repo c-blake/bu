@@ -117,7 +117,7 @@ Freeform Text Things
 Pipeline Calculation Tools
 --------------------------
 
-[topn - heap-based fast 1-pass top-N over m columns](doc/topn.md)
+[topn - Fast streaming 1-pass top-N over M columns](doc/topn.md)
 
 [oft - Approximately most often items via a low-memory algorithm](doc/oft.md)
 

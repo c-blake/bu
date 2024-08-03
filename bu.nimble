@@ -55,7 +55,7 @@ when defined(Windows):
   "ndelta",     # Numerical difference between two reports utility
   "tmpls",      # A fast string template interpolater
 
-  "topn",       # heap-based fast 1-pass top-N over m columns
+  "topn",       # Fast streaming 1-pass top-N over M columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
@@ -131,7 +131,7 @@ else:
   "ndelta",     # Numerical difference between two reports utility
   "tmpls",      # A fast string template interpolater
 
-  "topn",       # heap-based fast 1-pass top-N over m columns
+  "topn",       # Fast streaming 1-pass top-N over M columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
