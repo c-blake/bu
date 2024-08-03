@@ -88,7 +88,7 @@ proc fdCopy(src, dst: cint) =           # File descriptor copy loop
     proc copy_file_range(fdI: cint, offI: ptr int64, fdO: cint, offO: ptr int64,
       len: csize_t, flags: cuint): int64 {.importc, header: "unistd.h".}
     proc sendfile(fdO: cint, fdI: cint, offI: ptr int64, len: csize_t):
-      int64 {.importc: "sendfile", header: "unistd.h".}
+      int64 {.importc: "sendfile", header: "sys/sendfile.h".}
     proc splice(fdI: cint, offI: ptr int64, fdO: cint, offO: ptr int64,
       len: csize_t, flags: cuint): int64 {.importc, header: "unistd.h".}
     template tryLoopRet(call) =
