@@ -4,6 +4,12 @@ FreeBSD kqueue are possible, likely with translation of abstractions."""
 else:
  import posix/inotify, std/posix, cligen, cligen/[sysUt, posixUt]
  when not declared(stderr): import std/syncio
+ {.passC: "-Wno-error=incompatible-pointer-types".} #[ inotify.InotifyEvent.name
+ is decl'd as `char` @end-of-object.  Should instead be `array[1, char]` to make
+ callers use `[0].addr` which is more explicit about the storage layout & no
+ longer has Nim codegen produce C-side incompatible pointer types (gcc-14). That
+ is a backward incompatible change at the Nim-level and I am unsure how to even
+ deprecate the old way in favor of this new way. ]#
 
  type Event* = enum
   inAccess    ="access"   , inAttrib ="attrib"    , inModify    ="modify"      ,
