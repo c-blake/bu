@@ -4,12 +4,6 @@ FreeBSD kqueue are possible, likely with translation of abstractions."""
 else:
  import posix/inotify, std/posix, cligen, cligen/[sysUt, posixUt]
  when not declared(stderr): import std/syncio
- {.passC: "-Wno-error=incompatible-pointer-types".} #[ inotify.InotifyEvent.name
- is decl'd as `char` @end-of-object.  Should instead be `array[1, char]` to make
- callers use `[0].addr` which is more explicit about the storage layout & no
- longer has Nim codegen produce C-side incompatible pointer types (gcc-14). That
- is a backward incompatible change at the Nim-level and I am unsure how to even
- deprecate the old way in favor of this new way. ]#
 
  type Event* = enum
   inAccess    ="access"   , inAttrib ="attrib"    , inModify    ="modify"      ,
@@ -34,23 +28,8 @@ else:
     of inDelete    : result |= IN_DELETE
     of inDeleteSelf: result |= IN_DELETE_SELF
 
- iterator dqueue*(dir: string; events={inMovedTo, inCloseWr}):
-    tuple[name: ptr char; len: int] {.deprecated: "use `dqueues`".} =
-  ## Set up event watches on dir & forever yield NUL-terminated (ptr char,len).
-  if chdir(dir) == -1:
-    raise newException(OSError, "chdir(\"" & dir & "\")")
-  let fd = cint(inotify_init())
-  if fd == -1:
-    raise newException(OSError, "inotify_init")
-  if inotify_add_watch(fd, dir.cstring, events.mask or IN_ONLYDIR) == -1:
-    raise newException(OSError, "inotify_add_watch")
-  var evs = newSeq[byte](8192)
-  while (let n = read(fd, evs[0].addr, 8192); n) > 0:
-    for ev in inotify_events(evs[0].addr, n):
-      yield (ev[].name.addr, int(ev[].len))
-
  iterator dqueues*(events: set[Event]; dirs: seq[string]):
-    tuple[i, len: int; name: ptr char] =
+    tuple[i, len: int; name: cstring] =
   ## Set up event watches on dirs & forever yield NUL-term (i, len, ptr char).
   var rd0: TFdSet; var fdMax = 0.cint
   FD_ZERO rd0
@@ -70,7 +49,7 @@ else:
       if FD_ISSET(fd, rd) != 0:
         while (let n = read(fd, evs[0].addr, 8192); n) > 0 or errno == EINTR:
           for ev in inotify_events(evs[0].addr, n):
-            yield (i, int(ev[].len), ev[].name.addr)
+            yield (i, int(ev[].len), cast[cstring](ev[].name.addr))
         if errno notin [EAGAIN, EWOULDBLOCK]:
           stderr.write "dirq errno: ",errno,"\n"
     rd = rd0
@@ -125,5 +104,5 @@ cmdPfx for A --dir=B cmdPfx for A* patterns; *events* & *wait* are global."""
     if nmLen > 0 or name != nil:
       if chdir(dirs[i].cstring) == -1:
         raise newException(OSError, "chdir \"" & dirs[i] & "\"")
-      cmds[i][ns[i]] = cast[cstring](name)      # Poke ptr char into slot and..
+      cmds[i][ns[i]] = name                     # Poke ptr char into slot and..
       discard cmds[i].system(wait)              #..run command, maybe in bkgd
