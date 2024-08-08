@@ -2,7 +2,7 @@ Motivation
 ----------
 The Nim package manager nimble identifies versions by the most recent git tag.
 This must match in the .nimble file and the git repository.  It is pretty easy
-to forget changing it one or the other when making new releases.
+to forget changing it one place or the other when making new releases.
 
 Usage
 -----
