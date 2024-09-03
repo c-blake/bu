@@ -40,7 +40,7 @@ proc parseArg(arg1: string) =
   fSwSh  = 's' in arg1
   fComm  = 'c' in arg1
   fPlain = 'p' in arg1 or existsEnv("NO_COLOR")
-  fUnwrp = 'u' in arg1
+  fUnWrp = 'u' in arg1
   if 'a' in arg1: fTm = true; fIO = true; fSwSh = true; fComm = true
   elif not fTm and not fIO and not fSwSh and not fComm:
     fH = true; fIO = true; fTm = true

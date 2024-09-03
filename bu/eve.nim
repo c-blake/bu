@@ -9,7 +9,7 @@ proc a_ik*(a: var seq[float], k: int) =
 
 proc a_ik*(k: int): seq[float] = result.a_ik k
 
-proc ere*(x, a_ik: seq[float]): float = #, o=0.0
+proc eRE*(x, a_ik: seq[float]): float = #, o=0.0
   ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
   ## This needs `x` to be ascending & `x.len >= 2*k`.
   let k = a_ik.len
@@ -17,7 +17,7 @@ proc ere*(x, a_ik: seq[float]): float = #, o=0.0
   result = x[^1]# echo "result: ", result
   for i in 1..<k: result += a_ik[i]*(x[^k] - x[^(k+i)]) #echo "a_ik: ",a_ik[i],"dx: ",(x[^k] - x[^(k+i)])," H: ",o-x[^k]," L: ",o-x[^(k+i)]
 
-proc ele*(x, a_ik: seq[float]): float =
+proc eLE*(x, a_ik: seq[float]): float =
   ## The general Fraga Alves & Neves2017 Estimator for Extreme *Left* Endpoint.
   ## This needs `x` to be ascending & `x.len >= 2*k`.
   let k = a_ik.len
@@ -43,7 +43,7 @@ proc gNk0Thresh*(aFinite: float): float = -ln(-ln(1.0 - aFinite))
 # but that must estimate g=gamma & a0.  This code does sample extreme-retaining
 # bootstrapped variance instead.  Such retention helps near-estimate clustering.
 # Samples can fail finite tail tests. Such are dropped (cf importance sampling).
-proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
+proc eSE*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
   var wnd = false
   let boo = min(boot, int(pow(2.0, float(2*k - 1))))
   if boo < boot: erru "eve: warning: tiny 2k-1=",2*k-1," saturates B=",boot,"\n"
@@ -56,7 +56,7 @@ proc ese*(x: seq[float]; k, boot, BLimit: int; aFinite: float): float =
     for subTry in 1..BLimit:            # Nim rand(m) is 0..m inclusive of m.
       for i in 0 ..< 2*k-1: b[o+i] = x[o + rand(2*k-2)] # k-2: Leave sample max
       b.sort                            # Only b[o..^2] can be out of order..
-      let xF = b.ere(a)
+      let xF = b.eRE(a)
       let tFinite = gNk0(xF, k, x)
       if tFinite > tThresh:
         if subTry == BLimit:
@@ -79,13 +79,13 @@ proc eve*(low=false, boot=32, BLimit=5, emit={eBound}, aFinite=0.05,
   if low: (x.reverse; for e in x.mitems: e = off - e)
   let k = if k > 0.0: k.int
           else: min(KMax, min(x.len div 2, int(pow(x.len.float, k.abs))))
-  var xF = x.ere(k.a_ik)
+  var xF = x.eRE(k.a_ik)
   let tFinite = gNk0(xF, k, x)
   let tThresh = -ln(-ln(1.0 - aFinite))
   if tFinite > tThresh:
     if eTail in emit: echo "tFinite: ",tFinite," > ",tThresh," => long-tailed"
   if eBound in emit:
-    let es = x.ese(k, boot, BLimit, aFinite)
+    let es = x.eSE(k, boot, BLimit, aFinite)
     xF = xF + shift*es              # Correct finite sample too big bias a bit
     if low: xF = off - xF           # ~Centers for U[-1,1],Triangle,Epanechnikov
     echo fmtUncertain(xF, es, e0= -2..5)

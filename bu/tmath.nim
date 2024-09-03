@@ -120,7 +120,7 @@ when isMainModule:
     for date in dates: echo julian(date)
   proc dates(jDays: seq[int]) =
     ## Get Gregorian date for a given Julian Day in 8 integer divides
-    for jday in jDays: echo date(jDay)
+    for jDay in jDays: echo date(jDay)
   proc rataDies(dates: seq[Date]) =
     ## Days since Gregorian 1/1/1 for given Y4-M-D dates (1div, 1cacheLn)
     for date in dates: echo rataDie(date)

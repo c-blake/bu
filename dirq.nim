@@ -74,7 +74,7 @@ Default events `closeWrite` (any writable fd-close) | `movedTo` (renamed into
 
 **dirq** can watch & dispatch for many dirs at once with repeated *--dir=A
 cmdPfx for A --dir=B cmdPfx for A* patterns; *events* & *wait* are global."""
-  dispatchDirq parseOnly=true
+  dispatchdirq parseOnly=true
   if clHelpOnly in parse:
     stdout.write parse[parse.next({clHelpOnly})].message; quit 0
   for pe in parse:

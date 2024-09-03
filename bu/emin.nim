@@ -14,9 +14,9 @@ template eMin*(k=2, n=7, m=3, get1): untyped =
     var samp: seq[float]
     for inner in 1..n: samp.add (block: get1)
     samp.sort
-    sest.push samp.ele(a) 
+    sest.push samp.eLE(a) 
     xall.add samp
-  (est: xall.ele(a_ik(2*k)), err: sest.standardDeviation) #/sqrt(m.float)4big m?
+  (est: xall.eLE(a_ik(2*k)), err: sest.standardDeviation) #/sqrt(m.float)4big m?
 
 when isMainModule:
   import cligen
@@ -24,7 +24,7 @@ when isMainModule:
     when not declared(addFloat): import std/formatFloat
     proc minE(k: int, x: seq[float]) =
       var x = x; x.sort
-      echo ele(x, k.a_ik)
+      echo eLE(x, k.a_ik)
       x.reverse; echo "flipped method, just basic estimate"
       let off = 2*x[0] + - x[^1]
       echo "off: ", off
@@ -38,7 +38,7 @@ when isMainModule:
       if x.len != warmup + n*m:
         quit "warmup, n, m mismatch given x[]; Run with --help for more.", 1
       var i = warmup - 1
-      let (est, err) = emin(k, n, m, (inc i; x[i]))
+      let (est, err) = eMin(k, n, m, (inc i; x[i]))
       echo fmtUncertain(est, err, e0= -2..5)
     dispatch minE,cmdName="emin", help={"x":"x1 x2..", "warmup":"initial skip",
-      "k":"k for ele", "n":"n for ele", "m":"outer reps", "ohead":"ignored"}
+      "k":"k for eLE", "n":"n for eLE", "m":"outer reps", "ohead":"ignored"}
