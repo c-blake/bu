@@ -74,7 +74,7 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
   if sno!=0 and wait4(pid,st.addr, 0, ruA)!=pid and errno!=ECHILD: err "WAIT4"
   t1.now                    # Record end time
   if sno != 0: s.add '\n'   # Ensure report begins at start of a terminal line
-  let pad = not fWrap and not fUnwrp
+  let pad = not fWrap and not fUnWrp
   if fTm:
     let tW  = (t1.ts_sec - t0.ts_sec) - (oh1.ts_sec - oh0.ts_sec)
     let tU  = tv_sec(r utime); let tS = tv_sec(r stime)
@@ -116,7 +116,7 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
     if fIO  : s.add &"{sIn}\n{sOu}\n{mjF}\n{mnF}\n{swp}\n"
     if fSwSh: s.add &"{vsw}\n{isw}\n{isr}\n{ixr}\n{idr}\n"
     if fComm: s.add &"{nsg}\n{msn}\n{mrc}\n"
-  elif not fUnwrp:
+  elif not fUnWrp:
     if fTm  : s.add &"{e0}TM{e1} {sTm}  {sUs}  {sSy}  {sUt} {sRS}\n"
     if fIO  : s.add &"{e0}IO{e1} {sIn}  {sOu}  {mjF}  {mnF}  {swp}\n"
     if fSwSh: s.add &"{e0}SwSh{e1} {vsw}  {isw}  {isr}  {ixr}   {idr}\n"
