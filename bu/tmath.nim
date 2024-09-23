@@ -1,6 +1,6 @@
 ## Various calendar & time-of-day math routines that operate directly on broken
 ## down representations with a convenient CLI.
-import strutils, strformat
+import std/[strutils, strformat]
 when not declared(addFloat): import std/formatfloat
 
 type Date* = tuple[year, month, day: int]
@@ -112,7 +112,7 @@ proc seconds*(hmses: seq[string]): seq[float] =
   for hms in hmses: result.add toSeconds(hms.parseHMS)
 
 when isMainModule:
-  import cligen, cligen/argcvt, parseutils
+  import cligen, cligen/argcvt, std/parseutils
 
   # 4 echoing, "vectorized" variants for the CLI; Q: Also accept input on stdin?
   proc julians(dates: seq[Date]) =

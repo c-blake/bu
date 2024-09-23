@@ -1,4 +1,4 @@
-import os, cligen/humanUt, cligen
+import std/os, cligen/humanUt, cligen
 when not declared(stdout): import std/syncio
 
 proc tattr(attrs: seq[string]) =

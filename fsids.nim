@@ -1,6 +1,6 @@
 when not declared(stderr): import std/syncio
 include cligen/unsafeAddr
-import tables, algorithm, posix, cligen/[dents, osUt, posixUt, statx]
+import std/[tables, algorithm, posix], cligen/[dents, osUt, posixUt, statx]
 type IdKind = enum user, group, all="both"
 type Order  = enum id, count
 

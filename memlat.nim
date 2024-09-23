@@ -1,4 +1,4 @@
-import random, times, strutils, stats, cligen
+import std/[random, times, strutils, stats], cligen
 when defined(release): randomize()
 
 when defined(mt):

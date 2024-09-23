@@ -1,5 +1,5 @@
 when not declared(stderr): import std/syncio
-import posix, strformat, os; include cligen/unsafeAddr
+import std/[posix, strformat, os]; include cligen/unsafeAddr
 template er(s) =
   let e {.inject,used.} = errno.strerror;stderr.write "execStr: ", s, '\n'
 

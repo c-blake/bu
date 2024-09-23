@@ -1,6 +1,5 @@
 import cligen/[mfile, mslice], cligen
-from parseutils import parseFloat
-import strutils except parseFloat
+import std/parseutils; import std/strutils except parseFloat
 when not declared(stderr): import std/syncio
 
 type DKind = enum absolute, ratio, relative, perCent

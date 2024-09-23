@@ -1,4 +1,4 @@
-import re, cligen
+import std/re, cligen
 when not declared(lines): import std/syncio
 
 iterator csplit(s: string, pat: Regex): tuple[body: string, sep: string] =

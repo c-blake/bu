@@ -1,4 +1,4 @@
-import cligen/mslice, parseutils; export initSep
+import cligen/mslice, std/parseutils; export initSep
 when not declared(File): import std/syncio
 
 proc labFloats*(f: File, sep: Sep): (seq[string], seq[seq[float]]) =

@@ -2,7 +2,7 @@ when not declared(stdin): import std/[syncio, formatfloat]
 import std/[strutils, strformat, algorithm]
 from spfun/binom import initBinomP, est, BinomPAlgo
 from bu/eve      import a_ik, gNk0, gNk0Thresh, eLE, eRE
-from math        import ln, sqrt, copySign
+from std/math    import ln, sqrt, copySign
 from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
 from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simultaneous, tube
