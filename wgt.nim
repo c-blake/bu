@@ -230,7 +230,7 @@ when isMainModule:
   include cligen/mergeCfgEnvMulti
   const hK="path to keys file"; const hW="path to weight source meta file"
   const hT="path to kLkO,WtWhy.NC3CS6C table"; const hO="only \\\\n-delim keys"
-  dispatchMulti ["multi", doc="weighted sampling maintainer", vars = @["dir"],
+  dispatchMulti ["multi", doc="Weighted Sampling Maintainer\n", vars = @["dir"],
                  mergeNames = @[ "wgt", "_" ], usage="""${doc}
 Usage:
 ⁞ $command [-d|--dir=(".")] {SUBCMD} [sub-command options & parameters]
