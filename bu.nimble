@@ -158,5 +158,5 @@ else:
  ]
 
 # Dependencies
-requires "nim >= 1.6.0", "cligen >= 1.7.2",
+requires "nim >= 2.0.0", "cligen >= 1.7.2",
          "adix >= 0.6.0", "nio >= 0.7.1", "fitl >= 0.5.7", "spfun >= 0.7.0"
