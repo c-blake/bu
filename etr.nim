@@ -48,7 +48,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
   ## `measure>0.0` seconds `etr` instead sleeps that long & uses the rate across
   ## the interval (unless `did` doesn't change across the sleep).  If `outp` is
   ## given, report includes expected total output byte/byte ratio.  Exit status
-  ## is 1 if *output:input > RatMin* after `estMin` progress.
+  ## is 2 if *output:input > RatMin* after `estMin` progress.
   let sigNo = kill.parseUnixSignal      # Early to fail on misspecification
   if did.len == 0:
     stderr.write "Need at least `did` & likely `pid`; --help says more\n"
@@ -74,8 +74,8 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
                 relTo.execProcess.strip.parseFloat except Ce:
                   stderr.write relTo, " output did not parse as a float\n"; 1.0)
     echo r," ",r.expSize(osz, if rTo > 0.0: rTo else: tot)," "
-    result = (r.done >= estMin and
-              osz > RatMin*r.done*(if rTo>0.0: rTo else: tot)).int
+    result = if r.done>=estMin and osz>RatMin*r.done*(if rTo>0:rTo else:tot): 2
+             else: 0
     if result != 0: discard posix.kill(pid.Pid, sigNo)
   else: echo r
 
