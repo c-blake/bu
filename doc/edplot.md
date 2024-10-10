@@ -245,7 +245,9 @@ long-option version in `~/.config/edplot` also works.
 
 [^8]: The claw is so named because its *density* looks like a 5-fingered animal
 paw.  https://people.maths.bris.ac.uk/~wavethresh/help/claw.htm has an image.
-There are others with even finer structure like "the comb" and so on.
+There are others with even finer structure like "the comb" and so on.  Many
+test distributions as well as basic probability theory are implemented over at
+https://github.com/c-blake/fitl/blob/main/fitl/dists.nim .
 
 [^9]: This means both old & forecast numbers are [independent & identically
 distributed](https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables)
