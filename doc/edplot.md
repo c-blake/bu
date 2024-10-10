@@ -243,9 +243,9 @@ by un-commenting `early = "set term png...; set out"` in my `~/.config/edplot`.
 For an interactive X Window, `-e 'set term x11' -l 'pause -1'` or the similar
 long-option version in `~/.config/edplot` also works.
 
-[^8]: There are others with even finer structure like "the comb" and so on.  The
-claw is so named because its *density* looks like a 5-fingered animal paw.  An
-image is here: https://people.maths.bris.ac.uk/~wavethresh/help/claw.htm
+[^8]: The claw is so named because its *density* looks like a 5-fingered animal
+paw.  https://people.maths.bris.ac.uk/~wavethresh/help/claw.htm has an image.
+There are others with even finer structure like "the comb" and so on.
 
 [^9]: This means both old & forecast numbers are [independent & identically
 distributed](https://en.wikipedia.org/wiki/Independent_and_identically_distributed_random_variables)
