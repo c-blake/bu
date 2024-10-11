@@ -168,7 +168,7 @@ when isMainModule:
     if irp.len > 1:                     # interrupt reports requested
       let t1 = timeOfDay(); var w: Timeval
       for i, r in rs:
-        if r.cmd.len>0: (w = nsToTimeVal(t1 - r.t0); ERR irp %
+        if r.cmd.len>0: (w = nsToTimeval(t1 - r.t0); ERR irp %
           ["tm",$t1, "i",$i, "nm",r.nm, "w",$w, "cmd",r.cmd, "sub",r.sub])
     quit(min(127, sumSt))               # stdlib saturates at 127
   setControlCHook(ctrlC)
