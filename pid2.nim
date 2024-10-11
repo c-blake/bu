@@ -1,6 +1,6 @@
 import std/[os, posix, parseutils]
 
-var pid  = getPid()
+var pid  = getpid()
 var last = 0.Pid
 var t    = 300  # Linux starts Process ID table @300
 var xSt: cint

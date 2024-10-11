@@ -92,7 +92,7 @@ proc wait(): int =
   if aft.len > 1:                       # Maybe report rusage
     let t1 = timeOfDay(); var w, ct: Timeval; var pc: string; var mr: string
     if fancy:
-      let dt     = t1 - rs[i].t0; w = dt.nsToTimeVal
+      let dt     = t1 - rs[i].t0; w = dt.nsToTimeval
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
       ct.tv_sec = Time(tSched div 1_000_000); ct.tv_usec = tSched mod 1_000_000
