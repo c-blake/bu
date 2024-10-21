@@ -203,18 +203,16 @@ proc assay*(tables: seq[string]) =
 iterator cappedSample*[T](x: openArray[T], cdf: openArray[float], n=1, m=3): T =
   ## Weighted sample of size `n` capping to `m` copies of any one element.  Use
   ## to get heavily weighted elements early in samples, but still limit copies.
-  ## Algo does not inf.loop, but does slows down for `n >~ m*keys.len`.
-  let nEffective = min(n, m * x.len)
   var count: CountTable[T]
-  for i in 0 ..< nEffective:    # Algo must infinite loop at >= nEffective
+  for i in 0 ..< min(n, m * x.len):     # Algo must infinite loop at >= this
     var k {.noinit.}: T
-    while true:                 # Becomes slow after n >=~ (m-1)*x.len
+    while true:                         # Slows down after n >=~ (m-1)*x.len
       k = sample(x, cdf); count.inc k
       if count[k] <= m: break
     yield k
 
 proc sample*(table="wt.NC3CS6C", keys="keys", n=4000, m=3) =
-  ## Emit `n`-sample of keys {nl-delim file} weighted by `table` weights
+  ## Emit `m`-capped `n`-sample of nl-delim `keys` weighted by `table`
   if dir != ".": setCurrentDir dir
   let wt = wopen(table, keys)               # Hash-not-file order to be 1-pass
   var kys: seq[MSlice]; var cdf: seq[float] # COULD make `cdf` persistent
