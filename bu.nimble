@@ -75,6 +75,7 @@ when defined(Windows):
   "dirq",       # Kind of its own system-building atom thing
 # "funnel",     # A reliable, record boundary respecting "FIFO funnel"
 # "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
+  "bu/rs",      # Reservoir Subset/Sampler Of Lines In A File/[T] library
   "wgt",        # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
   "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles
@@ -151,6 +152,7 @@ else:
   "dirq",       # Kind of its own system-building atom thing
   "funnel",     # A reliable, record boundary respecting "FIFO funnel"
   "stripe",     # Run jobs in parallel w/slot key vars/seqNos/shell elision
+  "bu/rs",      # Reservoir Subset/Sampler Of Lines In A File/[T] library
   "wgt",        # Weighted random sampler with fancy weighting
   "bu/zipf",    # Random samples according to Zipf distribution
   "niom",       # nio moments w/hard dep on adix efficient histogram/quantiles

@@ -160,6 +160,8 @@ Miscellaneous/Islands Unto Themselves
 
 [stripe - Run jobs in parallel w/slot key vars/seqNos/shell elision](doc/stripe.md)
 
+[bu/rs- Reservoir Subset/Sampler Of Lines In A File/[T] library](doc/rs.md)
+
 [wgt - Weighted random sampler with fancy weighting](doc/wgt.md)
 
 [zipf - Random samples according to Zipf distribution](doc/zipf.md)
