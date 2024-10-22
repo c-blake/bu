@@ -54,8 +54,10 @@ when isMainModule:      # Instantiate above generics as a simple CLI utility
           raise newException(HelpError,"Non-integral! Full ${HELP}")
         rs.add initReservoir[MSlice](n); os.add stdout
     for line in mSlices(input, mf=mf):
-      proc dup(x: MSlice): MSlice =
-        if mf.mem.isNil: result.mem = alloc x.len;copyMem result.mem,x.mem,x.len; result.len = x.len
+      proc dup(x: MSlice): MSlice =     # Program does not know until here..
+        if mf.mem.isNil:                #..if read-only memory map succeeded.
+          result = MSlice(mem: alloc x.len, len: x.len)
+          copyMem result.mem, x.mem, x.len  # Need a copy only if it failed.
         else: result = x
       proc del(x: MSlice) = (if mf.mem.isNil: dealloc x.mem else: discard)
       for r in mitems rs: r.add line, dup, del  # PROCESS INPUT
