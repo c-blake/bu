@@ -9,29 +9,34 @@ type              #..keywords "unequal probability sampling without replacement"
 proc init*[T](r: var Reservoir[T], size=0) = r.size = size      ## Initialize
 proc initReservoir*[T](size=0): Reservoir[T] = result.init size ## Factory
 
+proc setND[T](s:var seq[T], j:int, it:T, dup:Dup[T], del:Del[T]) {.nodestroy.} =
+  if dup.isNil: (when T is seq|string: s[j] = `=dup` it else: s[j] = it)
+  else: s[j] = dup it
+
+proc addND[T](s: var seq[T], it: T, dup: Dup[T], del: Del[T]) =
+  s.setLenUninit s.len + 1; s.setND s.len - 1, it, dup, del
+
 proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
-  ## Add an item to reservoir `r`
+  ## Add `item` to reservoir `r`, managing memory if `dup`, `del` non-nil.
   inc r.seen
-  template nix(j: int) = (if not del.isNil: del r.res[j])
-  template set(j: int, it: T) =
-    if not dup.isNil: r.res[j] = dup it
-    else: r.res[j] = it
+  template set(j: int, item: T) =
+    if not del.isNil: del r.res[j]
+    if not dup.isNil: r.res[j] = dup item else: r.res[j] = item
   if r.size > 0:                        # Subset mode (No Replacement)
     if r.res.len < r.size:              #   Just populating reservoir
-      r.res.setLen r.res.len + 1        #XXX T=string, `setLenUninit` fails
-      set r.res.len - 1, item
+      r.res.addND item, dup, del
     else:                               #   Random replacement in reservoir
       if 1.0.rand*r.seen.float < r.size.float:
         let j = rand(0..<r.size)
-        nix j; set j, item
+        set j, item
   elif r.size < 0:                      # Sample mode (Replacement)
     if r.seen == 1:                     #   First time: fill with item
-      r.res.setLen -r.size              #XXX T=string, `setLenUninit` fails
-      for j in 0 ..< -r.size: set(j, item)
+      r.res.setLenUninit -r.size
+      for j in 0 ..< -r.size: r.res.setND j, item, dup, del
     else:
       for j in 0 ..< -r.size:           #   For each slot independently:
         if 1.0.rand*r.seen.float < 1.0: #     replace w/P(U < 1/i) = 1/i
-          nix j; set j, item
+          set j, item
 
 when isMainModule:      # Instantiate above generics as a simple CLI utility
   import cligen, cligen/[mfile, mslice, osUt], std/[os, syncio]
