@@ -21,8 +21,7 @@ proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
       r.res.setLen r.res.len + 1        # `setLenUninit` needs {.nodestroy.}=>..
       set r.res.len - 1, item           #..need `=dup`=>No Faster for T=string.
     else:                               #   Random replacement in reservoir
-      if 1.0.rand*r.seen.float < r.size.float:
-        let j = rand(0..<r.size)
+      if (let j = rand(0..<r.seen); j < r.size):
         nix j; set j, item
   elif r.size < 0:                      # Sample mode (Replacement)
     if r.seen == 1:                     #   First time: fill with item
@@ -30,7 +29,7 @@ proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
       for j in 0 ..< -r.size: set(j, item)
     else:
       for j in 0 ..< -r.size:           #   For each slot independently:
-        if 1.0.rand*r.seen.float < 1.0: #     replace w/P(U < 1/i) = 1/i
+        if rand(0..<r.seen) == 0:       #     replace w/P(U < 1/seen) = 1/seen
           nix j; set j, item
 
 when isMainModule:      # Instantiate above generics as a simple CLI utility
