@@ -23,7 +23,7 @@ proc orD(s, default: string): string =  # little helper for accumulating params
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
 proc rp(prelude=es, begin=es, where="true",match="",stmts:seq[string],epilog=es,
         fields="", genF="$1", nim="nim", run=true, args="", cache="", verbose=0,
-        outp="/tmp/rpXXX", src=false, input="/dev/stdin", delim="white",
+        outp="/tmp/rpXXX", src=false, input="", delim="white",
         uncheck=false, MaxCols=0, Warn=""): int =
   ## Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
   ## against *input*.  Defined within *where* & every *stmt* are:
@@ -93,7 +93,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
   let nim  = "$1 $2 $3 $4 -o:$5 $6" % [nim, bke, args, verb, outp, outp]
   let f = mkdirOpen(outp & ".nim", fmWrite); f.write program; f.close
   if src: stderr.write program
-  execShellCmd nim & (if run: " < " & input else: "")
+  execShellCmd nim
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "prelude": "Nim code for prelude/imports section",
@@ -111,7 +111,7 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "verbose": "Nim compile verbosity level",
   "outp"   : "output executable; .nim NOT REMOVED",
   "src"    : "show generated Nim source on stderr",
-  "input"  : "path to mmap|read as input",
+  "input"  : "path to mmap|read; \"\"=stdin",
   "delim"  : "inp delim chars; Any repeats => fold",
   "uncheck": "do not check&skip header row vs fields",
   "MaxCols": "max split optimization; 0 => unbounded",
