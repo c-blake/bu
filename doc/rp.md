@@ -102,17 +102,21 @@ use case.  It may be nice to automatically open files like `print 1 > "myPath"`
 does in `awk`, for example, with some tiny `autorp.nim` module like this added
 as an import in `~/.config/rp` as `prelude = "import autorp"`:
 ```Nim
-import std/[re, tables], cligen/mslice; export re
+import std/[re, tables], cligen/print; export re, print
 # NOTE: more imports => slower compiles
 template af(nm, openMode) =         # Auto-File tables
   var `nm Tab`: Table[string, File]
   proc nm*(fNm: string): File =
     try: `nm Tab`[fNm] except: (let f = open(fNm, openMode); `nm Tab`[fNm]=f; f)
-af ar, fmRead; af aw, fmReadWrite; af aa, fmAppend
+af aw, fmReadWrite; af aa, fmAppend; af ar, fmRead      # `ar` least useful here
 
-var cpTab: Table[string, Regex]     # cached pattern: compiled expression
-proc cp*(pat: string): Regex =
-  try: cpTab[pat] except: (let f = pat.re; cpTab[pat] = f; f)
+var cpTab: Table[string, Regex]     # Cached Pattern: compiled expression
+proc cp*(pat: string): Regex =      # strHash lookups ~faster than rx compiles
+  try: cpTab[pat] except: (let f = pat.re; cpTab[pat] = f; f) # re"foo"->cp"foo"
+
+template p*(a: varargs[untyped]) = print a              # Auto-blank seps
+template ec*(a: varargs[untyped]) = echo a              # No auto-blank seps
+template wr*(f: File, a: varargs[untyped]) = write f, a # Ease "foo".aw.wr bar
 ```
 you can then just say with 54 [keydowns](keydowns.md) (including "rp ")[^3]:
 ```sh
@@ -159,12 +163,12 @@ base-code language or Ben's Go examples.
 
 [^1]: Down to 16+25+25+36+30+19+41=192 for `rp`.  Similar \\-optimizing for
 `awk` saves only 1 stroke at 215 for ***1.12x less key press work*** than `awk`.
-This can be improved by adding a more terse `e` for `echo`/`emit` to a standard
-prelude in ~/.config/rp saving 3\*6=18 more strokes for 174 v.215 or ***1.24x***
-fewer key presses.  But sure, there may be shells not needing braces protected,
-single quotes need less "inline thought" than backslash, 7 presses come just
-from from the length of `"rp"` vs. `"awk"`.  Even so, the main point of this
-key down comparison is that it becomes a hard case to make that `awk`'s syntax
+This can be improved by using a more terse `p` for `echo` in a user import in
+`~/.config/rp` saving 3\*6=18 more strokes for 174 v.215 or ***1.24x*** fewer
+key presses.  But sure, there may be shells not needing braces protected, single
+quotes need less "inline thought" than backslash, 7 presses come just from from
+the length of `"rp"` vs. `"awk"`.  Even so, the main point of this key down
+comparison is that it becomes a hard case to make that `awk`'s syntax
 optimization saves very much, but easy to argue it restricts libs & perf.
 
 [^2]: Ben's `prig` article (linked later) uses chars not key presses.  Visual
