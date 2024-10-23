@@ -34,31 +34,32 @@ Examples (most need data):
 
   seq 0 1000000 | rp -w'row.len<2'            # Print short rows
   rp 'echo s[1]," ",s[0]'                     # Swap field order
-  rp -b'var t=0' t+=nf -e'echo t'             # Print total field count
-  rp -b'var t=0' -w'0.i>0' t+=0.i -e'echo t'  # Total >0 field0 ints
+  rp -vt=0 t+=nf -e'echo t'                   # Print total field count
+  rp -vt=0 -w'0.i>0' t+=0.i -e'echo t'        # Total >0 field0 ints
   rp 'let x=0.f' 'echo (1+x)/x'               # cache field 0 parse
   rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'    # named fields (CSV)
   rp -mfoo echo\ s[2]                         # column of row matches
-  rp -pimport\ stats -bvar\ r:RunningStat r.push\ 0.f -eecho\ r
+  rp -pimport\ stats -vr:RunningStat r.push\ 0.f -eecho\ r # Moments
 
 Add niceties (eg. import lenientops) to prelude in ~/.config/rp.
 
 Options:
   -p=, --prelude= strings {}           Nim code for prelude/imports section
   -b=, --begin=   strings {}           Nim code for begin/pre-loop section
+  -v=, --var=     strings {}           preface begin w/"var "+these shorthand
   -w=, --where=   string  "true"       Nim code for row inclusion
   -m=, --match=   string  ""           row must match regex (IF -w="true")
   -e=, --epilog=  strings {}           Nim code for epilog/end loop section
   -f=, --fields=  string  ""           delim-sep field names (match row0)
   -g=, --genF=    string  "$1"         make field names from this fmt; eg c$1
   -n=, --nim=     string  "nim"        path to a nim compiler (>=v1.4)
-  -r, --run       bool    true         Run at once using nim r .. < input
+  -r, --run       bool    true         Run at once using nim r ..
   -a=, --args=    string  ""           "": -d:danger; '+' prefix appends
   -c=, --cache=   string  ""           "": --nimcache:/tmp/rp (--incr:on?)
-  -v=, --verbose= int     0            Nim compile verbosity level
+  -l=, --lgLevel= int     0            Nim compile verbosity level
   -o=, --outp=    string  "/tmp/rpXXX" output executable; .nim NOT REMOVED
   -s, --src       bool    false        show generated Nim source on stderr
-  -i=, --input=   string  "/dev/stdin" path to mmap|read as input
+  -i=, --input=   string  ""           path to mmap|read; ""=stdin
   -d=, --delim=   string  "white"      inp delim chars; Any repeats => fold
   -u, --uncheck   bool    false        do not check&skip header row vs fields
   -M=, --MaxCols= int     0            max split optimization; 0 => unbounded
@@ -69,16 +70,17 @@ Comparing Examples To `awk`
 ---------------------------
 Corresponding to our first 6 examples are these `awk` commands:
 ```
+                                             #  rp v. awk
 seq 0 1000000 | awk 'length<2'               # (17 v. 15) short rows
 awk '{print $2," ",$1}'                      # (25 v. 29) Swap fields
-awk '{t+=NF}END{print t}'                    # (32 v. 29) total fields
-awk '{if($1>0)t+=$1}END{print t}'            # (44 v. 35) Total >0 field0
+awk '{t+=NF}END{print t}'                    # (26 v. 29) total fields
+awk '{if($1>0)t+=$1}END{print t}'            # (38 v. 35) Total >0 field0
 awk '{x=0+$1;print(1+x)/x}'                  # (32 v. 33) cache parse
 awk '/foo/{print $3}'                        # (19 v. 24) column of row matches
 awk -F, 'BEGIN{a=1;b=2;c=3}{print $a,$b+$c}' # (41 v. 51) named CSV fields
 ```
 The numbers in ()s are (`rp` v. `awk` key presses) *counting* SHIFTs totaling
-210 for `rp` vs. 216 for `awk`.  That is with *minimal* SHIFT use (ie. ***one***
+198 for `rp` vs. 216 for `awk`.  That is with *minimal* SHIFT use (ie. ***one***
 SHIFT down to enter "}END{") for US keyboard layouts.  `awk` needs much more
 shifting and minimal ways may feel "unnatural" (most folks I know would not
 stay shifted through that "}END{" sequence).  Press counts for the Nim eg.s can
@@ -155,12 +157,15 @@ Few prog.langs have both easy to enter/terse expressions & fast compiles.  For a
 comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
 base-code language or Ben's Go examples.
 
-[^1]: Down to 16+25+30+41+30+19+41=202 for `rp`.  Similar \\-optimizing for
-`awk` saves only 1 stroke at 215 for ***7% less key press work*** than `awk`.
-But sure, there may be shells not needing braces protected, single quotes need
-less "inline thought" than backslash, 7 presses come just from from the length
-of `"rp"` vs. `"awk"`.  Even so, it becomes a hard case to make that `awk`'s
-syntax optimization saves much, but easy to argue it restricts libs & perf.
+[^1]: Down to 16+25+25+36+30+19+41=192 for `rp`.  Similar \\-optimizing for
+`awk` saves only 1 stroke at 215 for ***1.12x less key press work*** than `awk`.
+This can be improved by adding a more terse `e` for `echo`/`emit` to a standard
+prelude in ~/.config/rp which saves 3\*6=18 more strokes for 174 vs 215 or 1.24x
+fewer key presses.  But sure, there may be shells not needing braces protected,
+single quotes need less "inline thought" than backslash, 7 presses come just
+from from the length of `"rp"` vs. `"awk"`.  Even so, the main point of this
+key down comparison is that it becomes a hard case to make that `awk`'s syntax
+optimization saves very much, but easy to argue it restricts libs & perf.
 
 [^2]: Ben's `prig` article (linked later) uses chars not key presses.  Visual
 length is easier to measure and a more appropriate metric for code reading vs.
