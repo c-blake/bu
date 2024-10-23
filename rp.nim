@@ -21,9 +21,9 @@ proc orD(s, default: string): string =  # little helper for accumulating params
   if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
-proc rp(prelude=es, begin=es, where="true",match="",stmts:seq[string],epilog=es,
-        fields="", genF="$1", nim="nim", run=true, args="", cache="", verbose=0,
-        outp="/tmp/rpXXX", src=false, input="", delim="white",
+proc rp(prelude=es, begin=es,`var`=es, where="true",match="", stmts:seq[string],
+        epilog=es, fields="", genF="$1", nim="nim", run=true, args="", cache="",
+        lgLevel=0, outp="/tmp/rpXXX", src=false, input="", delim="white",
         uncheck=false, MaxCols=0, Warn=""): int =
   ## Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
   ## against *input*.  Defined within *where* & every *stmt* are:
@@ -34,16 +34,18 @@ proc rp(prelude=es, begin=es, where="true",match="",stmts:seq[string],epilog=es,
   ## If you know AWK & Nim, you can learn *rp* FAST.  Examples (most need data):
   ##   **seq 0 1000000|rp -w'row.len<2'**              # Print short rows
   ##   **rp 'echo s[1]," ",s[0]'**                     # Swap field order
-  ##   **rp -b'var t=0' t+=nf -e'echo t'**             # Print total field count
-  ##   **rp -b'var t=0' -w'0.i>0' t+=0.i -e'echo t'**  # Total >0 field0 ints
+  ##   **rp -vt=0 t+=nf -e'echo t'**                   # Print total field count
+  ##   **rp -vt=0 -w'0.i>0' t+=0.i -e'echo t'**        # Total >0 field0 ints
   ##   **rp 'let x=0.f' 'echo (1+x)/x'**               # cache field 0 parse
   ##   **rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'**    # named fields (CSV)
   ##   **rp -mfoo echo\\ s[2]**                         # column of row matches
-  ##   **rp -p'import stats' -b'var r:RunningStat' 'r.push 0.f' -e'echo r'**
+  ##   **rp -pimport\\ stats -vr:RunningStat r.push\\ 0.f -eecho\\ r** # Moments
   ## Add niceties (eg. `import lenientops`) to *prelude* in ~/.config/rp.
-  let amatch = where == "true" and match.len > 0      # auto-match filter
+  let amatch = match.len > 0            # auto-match filter
   let pre    = (if amatch: prelude & @["import std/re"] else: prelude).jn
-  let begin  = if amatch: "let rpRx = re\"" & match & "\"" & begin else: begin
+  let begin1 = if amatch: "let rpRx = re\"" & match & "\"" & begin else: begin
+  var vars = es; (for v in `var`: vars.add "var " & v)
+  let begin  = vars & begin1
   let stmts  = if stmts.len > 0: stmts
     else: @["discard stdout.writeBuffer(row.mem, row.len); stdout.write '\\n'"]
   let null   = when defined(windows): "NUL:" else: "/dev/null"
@@ -70,7 +72,7 @@ proc main() =
   var nr = 0
   let rpNmSepOb = initSep("$3") # {delim}
 $4 # {begin}
-  for row in mSlices("$5", eat='\0'): # {input} mmap|slices from stdio
+  for row in mSlices("$5", eat='\0'): # {input} mmap|slices from `input`
 ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
     let nf {.used.} = s.len
     if $8: # {where} auto ()s?
@@ -86,7 +88,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
   let bke  = if run: "r" else: "c"  # (b)ac(k) (e)nd; TODO cpp as well?
   let args = args.orD("-d:danger ") & " " & cache.orD("--nimcache:/tmp/rp ") &
              " " & Warn.orD("--warning[CannotOpenFile]=off ")
-  let verb = "--verbosity:" & $verbose
+  let verb = "--verbosity:" & $lgLevel
   let digs = count(outp, 'X')       # temp file rigamarole
   let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
   let outp = if digs > 0: outp[0 ..< ^digs] & hsh else: outp
@@ -98,6 +100,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
 when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "prelude": "Nim code for prelude/imports section",
   "begin"  : "Nim code for begin/pre-loop section",
+  "var"    : "preface begin w/\"var \"+these shorthand",
   "where"  : "Nim code for row inclusion",
   "match"  : "`row` must match regex (IF -w=\"true\")",
   "stmts"  : "Nim stmts to run (guarded by `where`); none => echo row",
@@ -105,10 +108,10 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "fields" : "`delim`-sep field names (match row0)",
   "genF"   : "make field names from this fmt; eg c$1",
   "nim"    : "path to a nim compiler (>=v1.4)",
-  "run"    : "Run at once using nim r .. < input",
+  "run"    : "Run at once using nim r ..",
   "args"   : "\"\": -d:danger; '+' prefix appends",
   "cache"  : "\"\": --nimcache:/tmp/rp (--incr:on?)",
-  "verbose": "Nim compile verbosity level",
+  "lgLevel": "Nim compile verbosity level",
   "outp"   : "output executable; .nim NOT REMOVED",
   "src"    : "show generated Nim source on stderr",
   "input"  : "path to mmap|read; \"\"=stdin",
