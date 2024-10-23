@@ -160,7 +160,7 @@ base-code language or Ben's Go examples.
 [^1]: Down to 16+25+25+36+30+19+41=192 for `rp`.  Similar \\-optimizing for
 `awk` saves only 1 stroke at 215 for ***1.12x less key press work*** than `awk`.
 This can be improved by adding a more terse `e` for `echo`/`emit` to a standard
-prelude in ~/.config/rp which saves 3\*6=18 more strokes for 174 vs 215 or 1.24x
+prelude in ~/.config/rp saving 3\*6=18 more strokes for 174 v.215 or ***1.24x***
 fewer key presses.  But sure, there may be shells not needing braces protected,
 single quotes need less "inline thought" than backslash, 7 presses come just
 from from the length of `"rp"` vs. `"awk"`.  Even so, the main point of this
@@ -177,6 +177,6 @@ logging over long, realistic sessions and real-time metrics use, but things then
 become rather user-idiosyncratic and you need pools of users.
 
 [^3]: Equivalent awk might be `awk '/w/{print$5>"myPath"}'` - only 33 keydowns,
-winning by quite a bit in this fancier case, at the cost of its bespoke syntax.
+winning by quite a bit in this fancier case, at the cost of its auto-inits.
 
 [^4]: [`newest`](newest.md) can ease that `mv $(newest -n2 /t/|g nim) x.nim`.
