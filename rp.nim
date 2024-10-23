@@ -25,22 +25,6 @@ proc rp(prelude=es, begin=es,`var`=es, where="true",match="", stmts:seq[string],
         epilog=es, fields="", genF="$1", nim="nim", run=true, args="", cache="",
         lgLevel=0, outp="/tmp/rpXXX", src=false, input="", delim="white",
         uncheck=false, MaxCols=0, Warn=""): int =
-  ## Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
-  ## against *input*.  Defined within *where* & every *stmt* are:
-  ##   *s[fieldIdx]* & *row* give `MSlice` (*$* to get a Nim *string*)
-  ##   *fieldIdx.i* gives a Nim *int*, *fieldIdx.f* a Nim *float*.
-  ##   *nf* & *nr* (like *AWK*);  NOTE: *fieldIdx* is **0-origin**.
-  ## A generated program is left at *outp*.nim, easily copied for "utilitizing".
-  ## If you know AWK & Nim, you can learn *rp* FAST.  Examples (most need data):
-  ##   **seq 0 1000000|rp -w'row.len<2'**              # Print short rows
-  ##   **rp 'echo s[1]," ",s[0]'**                     # Swap field order
-  ##   **rp -vt=0 t+=nf -e'echo t'**                   # Print total field count
-  ##   **rp -vt=0 -w'0.i>0' t+=0.i -e'echo t'**        # Total >0 field0 ints
-  ##   **rp 'let x=0.f' 'echo (1+x)/x'**               # cache field 0 parse
-  ##   **rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'**    # named fields (CSV)
-  ##   **rp -mfoo echo\\ s[2]**                         # column of row matches
-  ##   **rp -pimport\\ stats -vr:RunningStat r.push\\ 0.f -eecho\\ r** # Moments
-  ## Add niceties (eg. `import lenientops`) to *prelude* in ~/.config/rp.
   let amatch = match.len > 0            # auto-match filter
   let pre    = (if amatch: prelude & @["import std/re"] else: prelude).jn
   let begin1 = if amatch: "let rpRx = re\"" & match & "\"" & begin else: begin
@@ -118,4 +102,20 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "delim"  : "inp delim chars; Any repeats => fold",
   "uncheck": "do not check&skip header row vs fields",
   "MaxCols": "max split optimization; 0 => unbounded",
-  "Warn"   : "\"\": --warning[CannotOpenFile]=off"}
+  "Warn"   : "\"\": --warning[CannotOpenFile]=off"}, doc = """
+Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
+against *input*.  Defined within *where* & every *stmt* are:
+  *s[fieldIdx]* & *row* give `MSlice` (*$* to get a Nim *string*)
+  *fieldIdx.i* gives a Nim *int*, *fieldIdx.f* a Nim *float*.
+  *nf* & *nr* (like *AWK*);  NOTE: *fieldIdx* is **0-origin**.
+A generated program is left at *outp*.nim, easily copied for "utilitizing".
+If you know AWK & Nim, you can learn *rp* FAST.  Examples (most need data):
+  **seq 0 1000000|rp -w'row.len<2'**              # Print short rows
+  **rp 'echo s[1]," ",s[0]'**                     # Swap field order
+  **rp -vt=0 t+=nf -e'echo t'**                   # Print total field count
+  **rp -vt=0 -w'0.i>0' t+=0.i -e'echo t'**        # Total >0 field0 ints
+  **rp 'let x=0.f' 'echo (1+x)/x'**               # cache field 0 parse
+  **rp -d, -fa,b,c 'echo s[a],b.f+c.i.float'**    # named fields (CSV)
+  **rp -mfoo echo\\ s[2]**                         # column of row matches
+  **rp -pimport\\ stats -vr:RunningStat r.push\\ 0.f -eecho\\ r** # Moments
+Add niceties (eg. `import lenientops`) to *prelude* in ~/.config/rp."""
