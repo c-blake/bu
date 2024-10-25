@@ -69,7 +69,7 @@ Non-color styles are:
  * blink (slow) - most terminals support this..
  * BLINK (fast) - ..or the above, but often not 2 speeds
  * underline - sometimes mapped back/forth to italic
- * underdouble - kitty/alacrity added these extensions
+ * underdouble - kitty/alacritty added these extensions
  * underdot - ..The names after "under" refer to the
  * underdash - ..shape/style underneath the rendered
  * undercurl - ..text which can also have its own color.
