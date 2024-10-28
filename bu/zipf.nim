@@ -107,6 +107,7 @@ when isMainModule:
     else:
       for key in sample(n, alpha, wr, rd, keys): outu key, "\n"
 
+  include cligen/mergeCfgEnv
   dispatch zipf, help={"n"    : "sample size",
                        "alpha": "Zipf-ian parameter; > 1",
                        "wr"   : "write (binary) data to this",

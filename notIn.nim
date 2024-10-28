@@ -28,7 +28,7 @@ proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
       erru "could not recurse into ",root,"\n"
 
 when isMainModule:
-  import cligen
+  import cligen; include cligen/mergeCfgEnv
   dispatch doNotIn, cmdName="notIn", short={"invert": 'v'}, help={
     "file"   : "delimited input ( `\"\"` => ``stdin`` )",
     "delim"  : "input path delimiter",

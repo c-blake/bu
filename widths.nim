@@ -29,6 +29,6 @@ proc widths(outKind='\0', distro=false, paths: seq[string]) =
     for i, c in cnts:
       if c != 0: echo i, " ", c
 
-when isMainModule: dispatch widths, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch widths, help={
   "distro" : "emit a histogram, not individual widths",
   "outKind": "emit binary stream with this NIO format"}

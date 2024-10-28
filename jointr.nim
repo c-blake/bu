@@ -33,7 +33,8 @@ proc jointr*(cont=" <unfinished ...>", boc="<... ", eoc=" resumed>", all=false,
       outu alignLeft($pid, 5), rest     #..but that needs more subtle buffering
       outu cont, '\n'                   #..& never-resumed calls must be rare.
 
-dispatch jointr, help={"path": "strace log path (or none for stdin)",
+include cligen/mergeCfgEnv; dispatch jointr, help={
+  "path": "strace log path (or none for stdin)",
   "cont": "line suffix saying it continues",
   "boc" : "beg of contin. indication to eat",
   "eoc" : "end of contin. indication to eat",

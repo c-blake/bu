@@ -62,6 +62,7 @@ when isMainModule:
   proc argHelp(dfl: Mode; a: var ArgcvtParams): seq[string] =
     result = @[ a.argKeys, "Perm", &"{dfl:o}" ]
 
+  include cligen/mergeCfgEnv
   dispatch(chom, short = { "dry-run": 'n' }, help = {
              "verbose" : "print chown and chmod calls as they happen",
              "quiet"   : "suppress most OS error messages",

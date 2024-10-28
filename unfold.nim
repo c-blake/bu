@@ -47,7 +47,7 @@ proc unfold(sep="\t", n=0, before="", after="", ignore=false, extended=false) =
     raise newException(HelpError, "Set `n` | `before` | `after`; Full ${HELP}")
   if need: wrEOL()      # May need final \n (non-delimiting sep gives user clue)
 
-dispatch unfold, help={
+include cligen/mergeCfgEnv; dispatch unfold, help={
   "n"       : "Join `|n|` lines into 1",
   "after"   : "join blocks ending with a matching line",
   "before"  : "join blocks beginning with a matching line",

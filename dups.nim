@@ -175,7 +175,8 @@ when isMainModule:                        #Provide a useful CLI wrapper.
       stderr.write tot," extra bytes in ",nSet," sets of ",nFile," files\n"
     return if nSet > 0: 1 else: 0     #Exit with appropriate status
 
-  import cligen; dispatch dups, short={"follow": 'F'}, help={
+  import cligen; include cligen/mergeCfgEnv
+  dispatch dups, short={"follow": 'F'}, help={
              "file"  : "optional input ( `\"-\"` | !tty = ``stdin`` )",
              "delim" : "input file delimiter; `\\\\0` -> NUL",
              "recurse": "recurse n-levels on dirs; `0`: unlimited",

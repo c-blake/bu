@@ -33,7 +33,7 @@ proc fsids*(roots: seq[string], kind=all, order=id,
   if doU: print "#Uid", uids, users() , order
   if doG: print "#Gid", gids, groups(), order
 
-when isMainModule: import cligen; dispatch fsids, help = {
+when isMainModule:import cligen;include cligen/mergeCfgEnv;dispatch fsids,help={
   "kind"   : "kind of ids to report user, group, both",
   "order"  : "sort order: up by id or down by count",
   "recurse": "recursion limit for dirs in `roots`; 0=unbounded",

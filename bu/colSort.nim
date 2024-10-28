@@ -24,7 +24,7 @@ proc colSort*(pi="", po="", iDlm="\t", oDlm='\t', skip=0) =
              if po.len == 0: stdout else: open(po, fmWrite), iDlm, oDlm, skip
 
 when isMainModule:
-  import cligen
+  import cligen; include cligen/mergeCfgEnv
   dispatch (proc(pi,po,iDlm:string; oDlm:char; skip:int))colSort, help={
     "pi"  : "path to input ; \"\" => stdin",
     "po"  : "path to output; \"\" => stdout",

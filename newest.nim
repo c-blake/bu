@@ -32,7 +32,7 @@ proc newest*(n=1, time="m", recurse=1, chase=false, Deref=false, kinds={fkFile},
   for tp in t.ascending: stdout.write tp.path, outEnd # Emit in given tmOrd
 
 when isMainModule:  # Exercise this with an actually useful CLI wrapper.
-  dispatch newest, help = {
+  include cligen/mergeCfgEnv; dispatch newest, help={
     "n"      : "number of 'newest' files",
     "time"   : "timestamp to compare ({-}[bamcv]\\*)",
     "recurse": "recurse n-levels on dirs; 0:unlimited",

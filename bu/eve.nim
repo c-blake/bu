@@ -92,7 +92,7 @@ proc eve*(low=false, boot=32, BLimit=5, emit={eBound}, aFinite=0.05,
 
 when isMainModule:
   import cligen; when defined(release): randomize()
-  dispatch eve, help={
+  include cligen/mergeCfgEnv; dispatch eve, help={
     "low"      : "flip input to estimate *Left* Endpoint",
     "boot"     : "number of bootstrap replications",
     "BLimit"   : "re-tries per replication to get not-long",

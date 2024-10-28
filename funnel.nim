@@ -65,7 +65,8 @@ proc funnel*(fin="", rm=false, term='\n', uterm=add, sec=0.002,
       if path.cstring.unlink != 0:
         stderr.write &"{av}: rm(\"{path}\"): {errstr()}\n"
 
-when isMainModule: dispatch funnel, help={"fs": "FIFOs...",
+when isMainModule: include cligen/mergeCfgEnv; dispatch funnel, help={
+  "fs"    : "FIFOs...",
   "fin"   : "once `fin` exists, empty pipes => end",
   "rm"    : "unlink FIFOs `fs` when done",
   "term"  : "IO terminator",

@@ -47,6 +47,7 @@ proc lncs(paths: seq[string], file="", dlm='\n', recurse=1, chase=false, # in
   return min(127, nSet)             #Exit with appropriate status
 
 when isMainModule:                  #Provide a useful CLI wrapper.
+  include cligen/mergeCfgEnv
   dispatch lncs, help={ "paths"  : "filesystem roots",
                         "file"   : "optional input (\"-\"|!tty=stdin)",
                         "dlm"    : "input file delimiter (\\0->NUL)",

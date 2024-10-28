@@ -90,7 +90,7 @@ proc cstats*(delim="white", table="", hsep="strip", pm=" +- ", exp = -2..4,
       else: stdout.write con            # Non-Numeric
     stdout.write "\n"
 
-when isMainModule: import cligen; dispatch cstats, help={
+when isMainModule:import cligen;include cligen/mergeCfgEnv;dispatch cstats,help={
   "help"       : "print cligen-erated help",    # narrower than
   "help-syntax": "prepend, plurals..",          #..the defaults
   "delim"      : "inp delims; Repeats=>fold",

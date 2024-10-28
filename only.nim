@@ -76,6 +76,7 @@ when haveMagic:
   discard inp.pclose
 
  when isMainModule:
+  include cligen/mergeCfgEnv
   dispatch(only, help={ "gen"   : "generator cmd with dlr1 -> $1",
                         "dlr1"  : "$1 for gen fmt; Eg. *\". -type f\"*",
                         "trim"  : "output pfx to trim (when present)",

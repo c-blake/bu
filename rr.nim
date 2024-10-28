@@ -25,4 +25,5 @@ proc rr*(roots: seq[string], xdev=false, eof0=false): int =
   return 0
 
 when isMainModule:
+  include cligen/mergeCfgEnv
   dispatch(rr, help = { "xdev" : "block recursion across device boundaries" })

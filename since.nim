@@ -42,7 +42,7 @@ proc since*(refPath: string, refTime="", time="m", recurse=1, chase=false,
     do: recFailDefault("since", path)
 
 when isMainModule:  # Exercise this with an actually useful CLI wrapper.
-  dispatch since, short={"refTime": 'T', "refPath": 'p'}, help={
+  include cligen/mergeCfgEnv; dispatch since, help={
     "refPath": "path to ref file",
     "time"   : "stamp to compare ({-}[bamcv]\\*)",
     "refTime": "stamp of ref file to use (if different)",
@@ -56,4 +56,4 @@ when isMainModule:  # Exercise this with an actually useful CLI wrapper.
     "delim"  : "input file record delimiter",
     "eof0"   : "read dirents until 0 eof",
     "noDot"  : "remove a leading . from names",
-    "unique" : "only print a string once"}
+    "unique" : "only print a string once"}, short={"refTime":'T', "refPath":'p'}

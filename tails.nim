@@ -84,7 +84,7 @@ proc tails(head=0, tail=0, sep="--", compl=false, repeat=false, eor='\n',
     doTails(stdin)
 
 when isMainModule:
-  import cligen; dispatch(tails, short={"help": '?'}, help={
+  import cligen; include cligen/mergeCfgEnv; dispatch tails, help={
     "head"   : "number of rows at the start",
     "tail"   : "number of rows at the end",
     "compl"  : "complement of selected rows (body)",
@@ -92,4 +92,4 @@ when isMainModule:
     "repeat" : "repeat rows when head+tail>=n",
     "quiet"  : "never print headers giving file names",
     "verbose": "always print headers giving file names",
-    "eor"    : "end of row/record char"})
+    "eor"    : "end of row/record char"}, short={"help": '?'}

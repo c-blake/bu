@@ -42,7 +42,7 @@ proc niom(fmt=".4g", stats={mkMin, mkMax}, qs: seq[float] = @[],
     inp.close
 
 when isMainModule:
-  import cligen; dispatch niom, help={
+  import cligen; include cligen/mergeCfgEnv; dispatch niom, help={
     "paths": "[paths: 1|more paths to NIO files]",
     "fmt"  : "Nim floating point output format",
     "stats": "*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt* *histo*",

@@ -77,7 +77,8 @@ proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
       if verb: erru &"ctimeNsAt(\"{file}\", {sts[i].st_ctim}, {flagSt})\n"
       failedSet = ctimeNsAt(AT_FDCWD, path, sts[i], flags)
 
-when isMainModule: dispatch saft, help={"cmd": "[--] `cmd` opts/args.. [--]",
+when isMainModule: include cligen/mergeCfgEnv; dispatch saft, help={
+  "cmd": "[--] `cmd` opts/args.. [--]",
   "files" : "paths to files to preserve the file times of",
   "access": "preserve atime",
   "modify": "preserve mtime",

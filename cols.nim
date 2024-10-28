@@ -35,7 +35,7 @@ proc cols(input="/dev/stdin", rowDlm='\n', delim="white", output="/dev/stdout",
           wrote = true
     if wrote or blanksOk: outFile.urite term
 
-when isMainModule: dispatch cols, short={"O0": '0'}, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch cols, help={
   "colRanges": "colNums or A..B | X:Y (in|ex)clusive ranges thereof",
   "input"    : "path to mmap|read as input",
   "rowDlm"   : "inp *row* delimiter character",
@@ -46,4 +46,4 @@ when isMainModule: dispatch cols, short={"O0": '0'}, help={
   "cut"      : "cut/censor specified columns, not keep",
   "origin"   : "origin for colNums; 0=>signed indexing",
   "O0"       : "shorthand for `--origin=0`",
-  "term"     : "set output row terminator (e.g. \\\\0)"}
+  "term"     : "set output row terminator (e.g. \\\\0)"}, short={"O0": '0'}

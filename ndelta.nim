@@ -42,6 +42,7 @@ proc ndelta(paths: seq[string], kind=ratio, delims="white", n=3, sloppy=false) =
       else:                             # Same context/labels/etc.
         stdout.write tok0[i].ms
 
+include cligen/mergeCfgEnv
 dispatch ndelta,help={"kind"  : "DiffKind: absolute, ratio, relative, perCent",
                       "delims": "repeatable delim chars",
                       "n"     : "FP digits to keep",

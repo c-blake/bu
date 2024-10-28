@@ -35,6 +35,7 @@ proc fpr(file="", delim='\n', emit={summary}, paths: seq[string]): int =
          "% resident in ",nFile," files ",nErr," errors"
   min(nErr, 127)                        # Exit with appropriate status
 
+include cligen/mergeCfgEnv
 dispatch fpr, help={"file" : "optional input (\"-\"|!tty=stdin)",
                     "delim": "input file delimiter (\\0->NUL)",
                     "emit" : "Stuff to emit: *summary* *detail*"}

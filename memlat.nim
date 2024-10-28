@@ -76,6 +76,7 @@ proc lat*(kind=shuff, sizeKiB=1048576, nAcc=1_000_000,
   of ranElt: time(prepRanElt , runRanElt , n,nAcc,avgN,minN)
   of truRan: time(prepTrueRan, runTrue   , n,nAcc,avgN,minN)
 
+include cligen/mergeCfgEnv
 dispatch(lat, help = {"kind": "shuff: chase ran perm\n" &
                               "ranElt: access ran elt\n" &
                               "truRan: pre-read getrandom",

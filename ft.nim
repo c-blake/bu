@@ -62,7 +62,7 @@ proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, expr="e",
       inc st
   st
 
-when isMainModule: import cligen; dispatch ft, help={
+when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch ft, help={
   "file"   : "optional input ( `\"-\"` | !tty = ``stdin`` )",
   "delim"  : "input file delimiter; `\\\\0` -> NUL",
   "term"   : "output path terminator",

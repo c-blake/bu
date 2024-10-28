@@ -34,6 +34,7 @@ proc cfold(suppress=false, ignore=false, extended=false, file="-",
         stdout.write(segment.sep)
       stdout.write("\n")
 
+include cligen/mergeCfgEnv
 dispatch cfold, help={"file"    : "input file (\"-\" == stdin)",
                       "ignore"  : "add ignore case to re flags",
                       "extended": "nim re 'extended' syntax",

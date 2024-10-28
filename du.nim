@@ -105,6 +105,7 @@ proc du*(file="",delim='\n',oneFileSystem=false,chase=false, dereference=false,
   return min(127, nErr)
 
 when isMainModule:
+  include cligen/mergeCfgEnv
   dispatch(du,
            short={"oneFileSystem":'x', "dereference":'L', "countLinks":'l',
                   "excludeFrom":'X', "blockSize":'B', "help":'?', "total":'c'},

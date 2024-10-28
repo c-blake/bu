@@ -40,7 +40,7 @@ proc oft*(input="/dev/stdin", delim=" ", mxCol=0, errate=0.005, cover=0.98,
 
   if mf.mem.isNil: sweep(input, string) else: sweep(mf, MSlice)
 
-when isMainModule: dispatch oft, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch oft, help={
   "input" : "input data path",
   "delim" : "delimiting (repeats=>any num; \"white\")",
   "mxCol" : "max columns in input to parse",

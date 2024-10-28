@@ -42,7 +42,8 @@ proc sholes(format="", files: seq[string]) =
       if not userTerm and not needMap:
         stdout.write '\n'
 
-when isMainModule: import cligen; dispatch sholes, cmdName="holes", help={
+when isMainModule:
+ import cligen;include cligen/mergeCfgEnv;dispatch sholes,cmdName="holes",help={
   "format": """emit format interpolating (braces ok for flush-text):
   $count : number of data|hole segments
   $path  : path name of REGULAR FILE from $\*

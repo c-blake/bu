@@ -53,7 +53,7 @@ proc dirt*(roots: seq[string], verbose=false, quiet=false, dryRun=false,
   return min(127, n)
 
 when isMainModule:
-  dispatch(dirt, short = { "dry-run": 'n' }, help = {
+  include cligen/mergeCfgEnv; dispatch(dirt, short={"dry-run": 'n'}, help={
              "verbose": "print `utimes` calls as they happen",
              "quiet"  : "suppress most OS error messages",
              "dry-run": "only print what system calls are needed",

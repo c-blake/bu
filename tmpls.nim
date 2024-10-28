@@ -27,7 +27,7 @@ proc tmpls(inp="/dev/stdin", nl='\n', outp="/dev/stdout", term='\n', meta='%',
       f.urite term
 
 when isMainModule:
-  dispatch tmpls, help={"templates": "templates...",
+  include cligen/mergeCfgEnv; dispatch tmpls, help={"templates": "templates...",
     "inp"  : "input file of name 'stubs'",
     "nl"   : "input string terminator",
     "outp" : "output file of expansions",

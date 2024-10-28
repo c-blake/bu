@@ -43,7 +43,7 @@ proc fread*(bsz=65536, lim=0i64, nPass=1, off=64, verb=false,paths:seq[string])=
     let dt = epochTime() - t0
     echo "fread ",n," bytes in ",dt," s: ",n.float/dt/1e9," GB/s par",s and 1
 
-when isMainModule: import cligen; dispatch fread, help={
+when isMainModule:import cligen;include cligen/mergeCfgEnv;dispatch fread,help={
   "bsz": "buffer size for stdin IO", "lim": "max bytes to read; 0=>unlimited",
   "nPass": "passes per file", "off": "total [off*0-origin-pass within pages]",
   "verb": "print bytes read", "paths": "paths: paths to read in"}

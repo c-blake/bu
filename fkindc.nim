@@ -34,7 +34,8 @@ when haveMagic:
   for k, ct in histo: echo ct, '\t', k
 
  when isMainModule:
-  import cligen; dispatch fkindc, short={"excl": 'x'}, help={
+  import cligen; include cligen/mergeCfgEnv
+  dispatch fkindc, short={"excl": 'x'}, help={
     "gen" : "generator cmd with dlr1 -> $1",
     "dlr1": "$1 for gen fmt; Eg. *\". -type f\"*",
     "excl": "tests to exclude like `file(1)`",

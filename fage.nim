@@ -24,7 +24,7 @@ proc fage(Ref="", refTm='v', fileTm='v', self=false, verb=0, paths:seq[string])=
     if verb > 0:
       echo " ", path else: echo ""
 
-when isMainModule: dispatch fage, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch fage, help={
   "Ref"   : "path to ref file",
   "refTm" : "ref file stamp [bamcv]",
   "fileTm": "file time stamp [bamcv]",

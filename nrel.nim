@@ -116,7 +116,7 @@ proc nrel(vsn="", bump=patch, upDeps=false, msg="", stage=push, title="",
   run "gh release create \'"&newV&"\' -t '"&title&"' -F '"&rNotes&"'",
       "Error running gh release create; Manually do it on github", 8, dryRun
 
-when isMainModule: import cligen; dispatch nrel, help={
+when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch nrel,help={
   "vsn"   : "New version; \"\": auto bump",
   "bump"  : "Version slot to bump: Major, minor, patch",
   "upDeps": "Also auto-update >= version deps in .nimble",
