@@ -28,17 +28,18 @@ like in various files rather easily by just listing them.
 Usage
 -----
 ```
-  rs [optional-params] [pfx.][-]n.. output paths; NoPfx=stdout
+  rs [optional-params] [pfx.][-]n.. output paths; pfx""=>stdout
 
-Write ranSubsets|Samples of rows of input->prefix^ns; O(Σns) space.  If n>0 do
-random subsets else sample with replacement.  E.g.:
+Write ranSubsets|Samples of rows of input -> prefix.ns.  If n>0 do random
+subsets else sample with replacement.  O(Σns) space.  Examples:
 
-  seq 1 100 | rs 10 .-5 or
-  wkOn fifo1 & wkOn fifo2 & seq 1 1000|rs -f fifo1.10 fifo2.-20
+  seq 1 100 | rs 10 .-5 or (after maybe mkfifo f1 f2)
+  wkOn f1 & wkOn f2 & seq 1 1000 | rs -f f1.10 f2.-20
 
 Options:
-  -i=, --input= string ""    "" => stdin
-  -f, --flush   bool   false write to outs immediately
+  -i=, --input=   string "" "" => stdin
+  -f, --flush     bool      write to outs immediately
+  -r, --randomize bool      randomize() for non-deterministic filtering
 ```
 
 Examples

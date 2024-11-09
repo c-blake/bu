@@ -71,4 +71,5 @@ when isMainModule:      # Instantiate above generics as a simple CLI utility
           if r.res.len == 0: dec n
   include cligen/mergeCfgEnv
   dispatch rs, help={"prefixNs": "[pfx.][-]`n`.. output paths; pfx\"\"=>stdout",
-    "input": "\"\" => stdin", "flush": "write to outs immediately"}
+    "input": "\"\" => stdin", "flush": "write to outs immediately",
+    "randomize": "randomize() for non-deterministic filtering"}
