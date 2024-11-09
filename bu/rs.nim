@@ -35,10 +35,10 @@ proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
 when isMainModule:      # Instantiate above generics as a simple CLI utility
   import cligen, cligen/[mfile, mslice, osUt], std/[os, syncio]
   proc rs(input="", flush=false, randomize=false, prefixNs: seq[string]) =
-    ## Write ranSubsets|Samples of rows of `input`->prefix^`ns`; O(`Σns`) space.
-    ## If `n>0` do random subsets else sample with replacement.  E.g.:
-    ##   ``seq 1 100 | rs 10 .-5`` or
-    ##   ``wkOn fifo1 & wkOn fifo2 & seq 1 1000|rs -f fifo1.10 fifo2.-20``
+    ## Write ranSubsets|Samples of rows of `input` -> prefix.`ns`.  If `n>0` do
+    ## random subsets else sample with replacement.  O(`Σns`) space.  Examples:
+    ##   ``seq 1 100 | rs 10 .-5`` or (after maybe ``mkfifo f1 f2``)
+    ##   ``wkOn f1 & wkOn f2 & seq 1 1000 | rs -f f1.10 f2.-20``
     if randomize: randomize()
     var rs: seq[Reservoir[MSlice]]; var os: seq[File]; var mf: MFile; var e: int
     for pn in prefixNs:
@@ -70,5 +70,5 @@ when isMainModule:      # Instantiate above generics as a simple CLI utility
           if flush: flushFile os[j]
           if r.res.len == 0: dec n
   include cligen/mergeCfgEnv
-  dispatch rs, help={"prefixNs": "[pfx.][-]`n`.. output paths; NoPfx=stdout",
+  dispatch rs, help={"prefixNs": "[pfx.][-]`n`.. output paths; pfx\"\"=>stdout",
     "input": "\"\" => stdin", "flush": "write to outs immediately"}
