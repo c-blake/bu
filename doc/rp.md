@@ -80,12 +80,12 @@ awk '/foo/{print $3}'                        # (19 v. 24) column of row matches
 awk -F, 'BEGIN{a=1;b=2;c=3}{print $a,$b+$c}' # (41 v. 51) named CSV fields
 ```
 The numbers in ()s are (`rp` v. `awk` key presses) *counting* SHIFTs totaling
-198 for `rp` vs. 216 for `awk`.  That is with *minimal* SHIFT use (ie. ***one***
+197 for `rp` vs. 216 for `awk`.  That is with *minimal* SHIFT use (ie. ***one***
 SHIFT down to enter "}END{") for US keyboard layouts.  `awk` needs much more
 shifting and minimal ways may feel "unnatural" (most folks I know would not
 stay shifted through that "}END{" sequence).  Press counts for the Nim eg.s can
-also be better trimmed with `\` instead of `'`.[^1]  So, even biased towards
-`awk` a couple ways, `awk` is *still* more program entry work (barely).
+also be further trimmed.[^1]  So, even biased towards `awk` a couple ways, `awk`
+is *still* 10..30% more program entry work.
 
 The point of key press analysis is A) to observe any CLI is already "part DSL" -
 language boundaries can ease syntax requirements on both & B) just ballpark
@@ -161,15 +161,15 @@ Few prog.langs have both easy to enter/terse expressions & fast compiles.  For a
 comparison point, see `crp.md`/`crp.nim` in this repo which uses C for the
 base-code language or Ben's Go examples.
 
-[^1]: Down to 16+25+25+36+30+19+41=192 for `rp`.  Similar \\-optimizing for
-`awk` saves only 1 stroke at 215 for ***1.12x less key press work*** than `awk`.
-This can be improved by using a more terse `p` for `echo` in a user import in
-`~/.config/rp` saving 3\*6=18 more strokes for 174 v.215 or ***1.24x*** fewer
-key presses.  But sure, there may be shells not needing braces protected, single
-quotes need less "inline thought" than backslash, 7 presses come just from from
-the length of `"rp"` vs. `"awk"`.  Even so, the main point of this key down
-comparison is that it becomes a hard case to make that `awk`'s syntax
-optimization saves very much, but easy to argue it restricts libs & perf.
+[^1]: Down to 15+25+24+34+28+39+18=183 for `rp`. Similar \\-optimizing for `awk`
+saves only 1 stroke at 215 for ***1.18x less key press work*** than `awk`.  This
+can be improved using a `p` for `echo` from some `~/.config/rp` user import,
+saving 3\*6=18 more for 165 v.215 or ***1.30x*** fewer key presses.  But sure,
+some shells may not need {} protected, "'" need less "inline thought" than '\',
+7 presses come just from from the length of `"rp"` v.  `"awk"`, and not counting
+ENTER keystrokes maybe mis-normalizes.  Even so, the main point of this key down
+comparison is that it is hard to argue that `awk`'s syntax optimization saves
+much, yet easy to argue that it restricts libs & perf.
 
 [^2]: Ben's `prig` article (linked later) uses chars not key presses.  Visual
 length is easier to measure and a more appropriate metric for code reading vs.
