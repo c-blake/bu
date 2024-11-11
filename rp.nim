@@ -86,7 +86,7 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "begin"  : "Nim code for begin/pre-loop section",
   "var"    : "preface begin w/\"var \"+these shorthand",
   "where"  : "Nim code for row inclusion",
-  "match"  : "`row` must match regex (IF -w=\"true\")",
+  "match"  : "`row` must match regex",
   "stmts"  : "Nim stmts to run (guarded by `where`); none => echo row",
   "epilog" : "Nim code for epilog/end loop section",
   "fields" : "`delim`-sep field names (match row0)",

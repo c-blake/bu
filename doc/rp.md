@@ -48,7 +48,7 @@ Options:
   -b=, --begin=   strings {}           Nim code for begin/pre-loop section
   -v=, --var=     strings {}           preface begin w/"var "+these shorthand
   -w=, --where=   string  "true"       Nim code for row inclusion
-  -m=, --match=   string  ""           row must match regex (IF -w="true")
+  -m=, --match=   string  ""           row must match regex
   -e=, --epilog=  strings {}           Nim code for epilog/end loop section
   -f=, --fields=  string  ""           delim-sep field names (match row0)
   -g=, --genF=    string  "$1"         make field names from this fmt; eg c$1
