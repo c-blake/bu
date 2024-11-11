@@ -21,7 +21,7 @@ proc orD(s, default: string): string =  # little helper for accumulating params
   if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
-proc rp(prelude=es, begin=es,`var`=es, where="true",match="", stmts:seq[string],
+proc rp(prelude=es, begin=es,`var`=es, match="",where="true", stmts:seq[string],
         epilog=es, fields="", genF="$1", nim="nim", run=true, args="", cache="",
         lgLevel=0, outp="/tmp/rpXXX", src=false, input="", delim="white",
         uncheck=false, MaxCols=0, Warn=""): int =
@@ -33,15 +33,14 @@ proc rp(prelude=es, begin=es,`var`=es, where="true",match="", stmts:seq[string],
   let stmts  = if stmts.len > 0: stmts
     else: @["discard stdout.writeBuffer(row.mem, row.len); stdout.write '\\n'"]
   let null   = when defined(windows): "NUL:" else: "/dev/null"
-  let input  = if input=="/dev/stdin" and stdin.isatty: null else: input
+  let input  = if input.len==0 and stdin.isatty: null else: input
   let fields = if fields.len == 0: fields else: toDef(fields, delim, genF)
   let check  = (if fields.len == 0: "    " elif not uncheck: """
     if nr == 0:
       if row == rpNmFields: inc nr; continue # {fields} {!uncheck}
       else: stderr.write "row0 \"",row,"\" != \"",rpNmFields,"\"\n"; quit 1
     """else:"    ")&(if amatch:"if row !=~ rpRx: inc nr; continue\n    "else:"")
-  var program = """when not declared(stdout): import std/syncio
-when not declared(addFloat): import std/formatFloat
+  var program = """when not declared(stdout): import std/[syncio, formatFloat]
 import cligen/[mfile, mslice]
 $1 # {pre}
 when declared Regex:
@@ -63,8 +62,6 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
 """ % [pre, fields, delim, indent(begin.jn, 2), input, check, $MaxCols, where]
   for i, stmt in stmts:
     program.add "      " & stmt & " # {stmt" & $i & "}\n"
-  if stmts.len == 0:
-    program.add "      discard\n"
   program.add   "    inc nr\n"
   program.add   indent(epilog.jn, 2)
   program.add   " # {epilogue}\n\nmain()\n"
@@ -85,8 +82,8 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "prelude": "Nim code for prelude/imports section",
   "begin"  : "Nim code for begin/pre-loop section",
   "var"    : "preface begin w/\"var \"+these shorthand",
+  "match"  : "`row` must match this regex",
   "where"  : "Nim code for row inclusion",
-  "match"  : "`row` must match regex",
   "stmts"  : "Nim stmts to run (guarded by `where`); none => echo row",
   "epilog" : "Nim code for epilog/end loop section",
   "fields" : "`delim`-sep field names (match row0)",
