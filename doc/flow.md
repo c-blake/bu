@@ -1,6 +1,6 @@
 ## Motivation
 
-This is a row-optimizer "columnizer" program that can reduce output terminal
+This is a height-optimizing "tabulator" program that can reduce output terminal
 scrolling by several dozen times.  (E.g., 40..80 per row for 1 byte columns.)
 
 ## Example With 28X Improvement
@@ -18,8 +18,8 @@ $ seq 1 84|flow     # Run on an 80-column terminal
 ```
   flow [optional-params] 
 
-Read maybe utf8 & colored lines from input & then flow them into shortest height
-table of top-to-bottom, left-to-right columns & write to output.
+Read maybe utf8-colored lines from input & flow them into shortest height table
+of top-to-bottom, left-to-right columns & write to output.
 
 Options:
   -i=, --input=  string ""    use this input file; ""=>stdin

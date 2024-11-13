@@ -2,8 +2,8 @@ when not declared stdin: import std/syncio
 import std/[algorithm, sugar], cligen/[textUt, tab], cligen
 
 proc flow*(input="", output="", pfx="", width=0, gap=1, byLen=false, maxPad=99)=
-  ## Read maybe utf8 & colored lines from `input` & then flow them into shortest
-  ## height table of top-to-bottom, left-to-right columns & write to `output`.
+  ## Read maybe utf8-colored lines from `input` & flow them into shortest height
+  ## table of top-to-bottom, left-to-right columns & write to `output`.
   let i = if input.len  > 0: open(input) else: stdin
   var strs = collect(for line in i.lines: line)
   if byLen: strs.sort cmp=proc(a, b: string): int = a.printedLen - b.printedLen

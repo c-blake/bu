@@ -38,7 +38,7 @@ when defined(Windows):
   "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
-  "flow",       # Simpler than `align` - just flow text into columns
+  "flow",       # Flow text lines into as many columns as fit with aligned output
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK
@@ -116,7 +116,7 @@ else:
   "keydowns",   # Assess string complexity in terms of a human cost
 
   "align",      # Align text with better ergonomics than BSD `column`
-  "flow",       # Simpler than `align` - just flow text into columns
+  "flow",       # Flow text lines into as many columns as fit with aligned output
   "tails",      # Generalizes head & tail into one with all-but compliments
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK

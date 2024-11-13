@@ -81,7 +81,7 @@ Row/Column/Text Table Things
 
 [align - align text with better ergonomics than BSD `column`](doc/align.md)
 
-[flow - Simpler than `align` - just flow text into columns](doc/flow.md)
+[flow - flow text lines into as many columns as fit with aligned output](doc/flow.md)
 
 [tails - Generalizes head & tail into one with all-but compliments](doc/tails.md)
 
