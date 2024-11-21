@@ -27,7 +27,7 @@ proc val(t: WTab    , i: int): Ww     = cast[pua KWw](t.wgts.mem)[i].ww
 proc used(t: WTab   , i: int): bool   = t.val(i).w != 0
 var nUsed: int # Avoid file complexity w/global; Not MT-SAFE; Can `make` only 1
 oatCounted t, WTab, nUsed #..table @time, but doesn't interleave work anyway.
-#when WTab is VOat[Key,MSlice,Ww]: {.warning: "WTab is VOat"} # Nice BUT BREAKS
+#when WTab is VPOat[Key,MSlice,Ww]: {.warning: "WTab is VPOat"}
 
 let dk = "dark" in getEnv("LC_THEME", "darkBG") # Formatting helper defs
 let UP = if dk: "\e[97m" else: "\e[1;32m"       # Could do conf obj like `lc`..
@@ -61,7 +61,8 @@ proc parseSource*(weights=""): (seq[MSlice], seq[uint16], seq[MSlice]) =
 
 proc globalStats*(wt: WTab): (MovingStat[float, uint16], Hash) =## stats&why.sig
   result[0].init 0.5, 65535.5, 1024, {OrderStats}
-  for ww in wt.values: result[0].push ww.w.float; result[1]=result[1] !& ww.why.int
+  for ww in values[Key,MSlice,Ww](wt):
+    result[0].push ww.w.float; result[1] = result[1] !& ww.why.int
   result[1] = !$result[1]
 
 proc fmt[F: SomeFloat, C: SomeInteger](s: MovingStat[F,C]): seq[string] =
@@ -94,13 +95,13 @@ proc cmp(sOld, sNew: WTab; labs: seq[MSlice], only="") =
   var hq = HeapQueue[HQR]()
   if only.len > 0:                      # 2 loop structures more thrifty here
     for key in only.toMSlice.mSlices(sep='\n'):
-      let ol = sOld.getOrDefault(key)   # w=why=0 ok for missing
-      let nw = sNew.getOrDefault(key)   # w=why=0 ok for missing
+      let ol = getOrDefault[Key,MSlice,Ww](sOld, key)   # w=why=0 ok for missing
+      let nw = getOrDefault[Key,MSlice,Ww](sNew, key)   # w=why=0 ok for missing
       if ol != nw: hq.push labs.wdiff(key, ol, nw, kMx, cMx)
   else:
-    for key, nw in sNew:                # skip 1 hash lookup
+    for key, nw in pairs[Key,MSlice,Ww](sNew):       # skip 1 hash lookup
       let kq = sNew.keyQ(key)
-      let ol = sOld.getOrDefault(kq)    # w=why=0 appropriate for missing old
+      let ol = getOrDefault[Key,MSlice,Ww](sOld, kq) # Ww=0 fine for missing old
       if ol != nw: hq.push labs.wdiff(kq, ol, nw, kMx, cMx)
   while hq.len > 0:
     let (_, key, chg, bg) = hq.pop
@@ -179,10 +180,12 @@ proc print*(table="wt.NC3CS6C", keys="keys", weights="weights",fmt="$w $k $why",
   if dir != ".": setCurrentDir dir
   let wt = wopen(table, keys); let (_, _, labs) = parseSource(weights)
   let cs = fmt.tmplParsed; let labTab = fmt.toTab(cs, labs)
-  if ks.len == 0: (for k, ww in wt: wt.rend(fmt,cs, labs,labTab, k,ww))
+  if ks.len == 0:
+    for k, ww in pairs[Key,MSlice,Ww](wt): wt.rend(fmt,cs, labs,labTab, k,ww)
   else:                 #   No `ks` => all in hash-order else ..
     for k in ks:        #.. `ks` => requested order w/lookups.
-      let ww = wt.getOrDefault(k.toMSlice); wt.rend(fmt,cs, labs,labTab, k,ww)
+      let ww = getOrDefault[Key,MSlice,Ww](wt, k.toMSlice)
+      wt.rend(fmt,cs, labs,labTab, k,ww)
 
 proc assay*(tables: seq[string]) =
   ## Emit aggregate stats assay for given .NC3CS6C files
@@ -192,7 +195,8 @@ proc assay*(tables: seq[string]) =
     let (st, _) = wt.globalStats
     let sf = st.fmt; let nTot = st.n.float; let wTot = st.sum
     outu &"SCORE:\n"; for e in sf: outu "  ", e, "\n"
-    var wd = collect(for ww in wt.values: ww.w.int); wd.sort; wd.cumsum
+    var wd = collect(for ww in values[Key,MSlice,Ww](wt): ww.w.int)
+    wd.sort; wd.cumsum
     outu "FrWt\tFrEntry\tNinBin\tPinBin\n"
     var n0 = 0; var p0 = 0.0
     for q in 1..9:
@@ -216,7 +220,7 @@ proc sample*(table="wt.NC3CS6C", keys="keys", n=4000, m=3) =
   if dir != ".": setCurrentDir dir
   let wt = wopen(table, keys)               # Hash-not-file order to be 1-pass
   var kys: seq[MSlice]; var cdf: seq[float] # COULD make `cdf` persistent
-  for k, ww in wt:
+  for k, ww in pairs[Key,MSlice,Ww](wt):
     kys.add wt.keyQ k; cdf.add (if cdf.len==0: 0.0 else: cdf[^1]) + ww.w.float
   if m>0: (for k in kys.cappedSample(cdf, n, m): outu k, "\n")
   else  : (for i in 1..n: outu kys.sample(cdf), "\n")
