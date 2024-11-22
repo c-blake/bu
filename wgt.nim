@@ -3,6 +3,7 @@
 import std/[os,strutils,math,random,strformat,heapqueue,algorithm,sugar,hashes],
   std/tables, cligen,cligen/[mfile,mslice,osUt,strUt,textUt], adix/[oats,mvstat]
 when not declared(addFloat): import std/[syncio, formatfloat]
+template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 type
   Key = distinct uint32         # Offset & length
   Ww {.packed.} = object        # Weight & Why Size=8B
@@ -27,7 +28,7 @@ proc val(t: WTab    , i: int): Ww     = cast[pua KWw](t.wgts.mem)[i].ww
 proc used(t: WTab   , i: int): bool   = t.val(i).w != 0
 var nUsed: int # Avoid file complexity w/global; Not MT-SAFE; Can `make` only 1
 oatCounted t, WTab, nUsed #..table @time, but doesn't interleave work anyway.
-#when WTab is VPOat[Key,MSlice,Ww]: {.warning: "WTab is VPOat"}
+#when WTab is VPOat[Key,MSlice,Ww]: {.warning: "WTab is VPOat[Key,MSlice,Ww]"}
 
 let dk = "dark" in getEnv("LC_THEME", "darkBG") # Formatting helper defs
 let UP = if dk: "\e[97m" else: "\e[1;32m"       # Could do conf obj like `lc`..
