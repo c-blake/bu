@@ -22,7 +22,7 @@ proc mkNoD(cmd: seq[string], rules: seq[ApeRule]): seq[bool] =
 
 proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
                args: seq[string]): int = ## `bu/doc/ac.md` has usage details.
-  var opts = {poUsePath}
+  var opts = {poUsePath, poParentStreams}
   var cmd  = args               # Aped command being built
   var eP   = envs               # Environ Passed to command
   var wd   = pwd                # workingDir used for startProcess
