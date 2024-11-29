@@ -68,7 +68,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
   program.add   "block:\n let o{.used.}=stdout\n let d{.used.}= $1.0\n"
   let bke  = if run: "r" else: "c"  # (b)ac(k) (e)nd; TODO cpp as well?
   let args = args.orD("-d:danger ") & " " & cache.orD("--nimcache:/tmp/rp ") &
-             " " & Warn.orD("--warning[CannotOpenFile]=off ")
+    " " & Warn.orD("--warning:CannotOpenFile:off --warning:Uninit:off --warning:ProveInit:off ")
   let verb = "--verbosity:" & $lgLevel
   let digs = count(outp, 'X')       # temp file rigamarole
   let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
