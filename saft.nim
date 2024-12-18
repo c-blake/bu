@@ -1,6 +1,6 @@
 when not declared(stderr): import std/syncio
 include cligen/unsafeAddr
-import cligen, cligen/[osUt, posixUt], std/[posix, strformat]
+import cligen, cligen/[osUt, posixUt, strUt], std/[posix, strformat]
 
 template eStr: untyped = $strerror(errno)       # Error string for last errno
 
@@ -27,14 +27,17 @@ proc ctimeNsAt*(dirfd: cint; path: cstring; st: Stat; flags: cint): bool =
     erru "saft:clock_settime: ",eStr,'\n'
     return true
 
-proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
-          link=false, verb=false, cmd: seq[string]): int =
-  ## Runs `cmd` on a set of files with save & restore [amc]time of said files.
-  ## E.g.: `saft -fA -fB -- sed -si s/,2018/,2018,2019/g --` can add a copyright
-  ## year in files A,B without causing file time-based rebuilds.  NOTE:
-  ## `cInode` on many files causes "time storms".
-  if files.len<1: raise newException(HelpError, "Need >= 1 file; Full ${HELP}")
+proc saft(access=false, modify=true, cInode=false, link=false, verb=false,
+          cmdFiles: seq[string]): int =
+  ## Preserve file times while running `cmd files`. Eg.: `saft -- sed -si
+  ## s/X/Y/g -- A B` may edit `X` -> `Y` in files `A B` without causing file
+  ## time-based remake. { `cInode` on many files causes "time storms" }.
+  let cmdFiles = cmdFiles.split("--")
+  if cmdFiles.len != 2:
+    raise newException(HelpError, "Need exactly cmd,files; Full ${HELP}")
+  let cmd = cmdFiles[0]; let files = cmdFiles[1]
   if cmd.len < 1: raise newException(HelpError, "Need Some Cmd; Full ${HELP}")
+  if files.len<1: raise newException(HelpError, "Need >= 1 file; Full ${HELP}")
   let flags = if link: AT_SYMLINK_NOFOLLOW else: 0.cint
   let flagSt = if link: "SYMLINK_NOFOLLOW" else: "0"
 
@@ -78,8 +81,7 @@ proc saft(files: seq[string] = @[], access=false, modify=true, cInode=false,
       failedSet = ctimeNsAt(AT_FDCWD, path, sts[i], flags)
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch saft, help={
-  "cmd": "[--] `cmd` opts/args.. [--]",
-  "files" : "paths to files to preserve the file times of",
+  "cmdFiles": "[--] `cmd opts&args..` -- `files to preserve times`",
   "access": "preserve atime",
   "modify": "preserve mtime",
   "cInode": "preserve ctime (need CAP_SYS_TIME/root; Sets & Restores clock!)",

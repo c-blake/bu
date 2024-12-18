@@ -4,33 +4,34 @@ Almost all the time you want to let the system update file times, but once in a
 while you would like to "wrap" a command in something instead preserving them.
 This could be work-consequential (e.g. not rebuilding from source based on
 changes in comments) or might relate to time-sorted file listings or any number
-of other things.  Enter `saft`.
+of other things where you want file-times to mean something.  Enter `saft`.
 
-As a concrete follow-up, `saft -fA -fB -- sed -si s/,2018/,2018,2019/g --` can
-add a copyright year in files A,B without causing file time-based rebuilds
-(assuming no space between the ',' and the year & an existing sequence).
+As a concrete idea, `saft sed -si s/,2018/,2018,2019/g -- A B` might add a
+copyright year in files A,B without causing file time-based rebuilds (assuming
+no space between the ',' and the year & an existing sequence).
 
 Usage
 =====
 ```
-  saft [optional-params] [--] `cmd` opts/args.. [--]
+  saft [optional-params] [--] cmd opts&args.. -- files to preserve times
 
-Runs cmd on a set of files with save & restore [amc]time of said files.
-NOTE: cInode on many files causes "time storms".
+Preserve file times while running cmd files. Eg.: saft sed -si s/X/Y/g -- A B
+may edit X -> Y in files A B without causing file time-based remake. { cInode on
+many files causes "time storms" }.
 
-Options:
-  -f=, --files= strings {}    paths to files to preserve the file times of
-  -a, --access  bool    false preserve atime
-  -m, --modify  bool    true  preserve mtime
-  -c, --cInode  bool    false preserve ctime (need CAP_SYS_TIME/root; Sets &
-                              Restores clock!)
-  -l, --link    bool    false save times of symLink not target if OS supports
-  -v, --verb    bool    false emit various activities to stderr
+  -a, --access  bool  false  preserve atime
+  -m, --modify  bool  true   preserve mtime
+  -c, --cInode  bool  false  preserve ctime (need CAP_SYS_TIME/root; Sets &
+                             Restores clock!)
+  -l, --link    bool  false  save times of symLink not target if OS supports
+  -v, --verb    bool  false  emit various activities to stderr
 ```
 
 A Big Example:
 --------------
-A script like this (`sudo` & group id `0` in chgrp may differ on your system):
+Note that the first `"--"` is only needed if you are also using `'-'` options
+on `cmd`, but the second "divider" is always needed.  A script like this (`sudo`
+& group id `0` in chgrp may differ on your system):
 ```sh
 rm -rf j; mkdir j; cd j
 touch foo
@@ -38,23 +39,23 @@ ln -s foo bar; sync
 echo "AccessTime ModifyTime CinodeTime PATH"
 find -not -type d -printf '%As %Ts %Cs %p\n'; echo
 sleep 1
-saft -va -ffoo touch; sync
+saft -va touch -- foo; sync
 echo "same AM on foo in spite of touch (edits both):"
 find -name foo -printf '%As %Ts %Cs %p\n'; echo
 sleep 1
-sudo saft -vac -ffoo touch; sync
+sudo saft -vac touch -- foo; sync
 echo "same AMC on foo in spite of touch:"
 find -name foo -printf '%As %Ts %Cs %p\n'; echo
 sleep 1
-saft -vla -fbar -- touch -h; sync
+saft -vla -- touch -h -- bar; sync
 echo "same AM on bar in spite of \`touch -h\`:"
 find -name bar -printf '%As %Ts %Cs %p\n'; echo
 sleep 1
-saft -vla -fbar readlink >/dev/null; sync
+saft -vla readlink -- bar >/dev/null; sync
 echo "same AM on bar in spite of readlink (edits A):"
 find -name bar -printf '%As %Ts %Cs %p\n'; echo
 sleep 1
-sudo saft -vlmc -fbar -- chgrp -h 0; sync
+sudo saft -vlmc -- chgrp -h 0 -- bar; sync
 echo "same C on bar in spite of \`chgrp -h\`:"
 find -name bar -printf '%As %Ts %Cs %p\n'
 ```
