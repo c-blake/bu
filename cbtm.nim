@@ -96,19 +96,25 @@ proc filter*(input="/dev/stdin", output="/dev/stdout", root="", quiet=false,
       outp.wr lSt, path                        # So, use inode instead.
     elif not quiet: erru path, ": diff: ", diff, '\n'
 
-proc tXf(ts: StatxTs): int64 {.inline.} = (ts.tv_sec shl 32) or ts.tv_nsec
+proc tXf(ts: StatxTs): int64  = (ts.tv_sec shl 32) or ts.tv_nsec
+proc tXfB(ts: StatxTs): int64 = # New post kernel 5.10/xfsprogs-5.15 on-disk fmt
+  (ts.tv_sec + 2147483648)*1_000_000_000 + ts.tv_nsec
 
-type FSKind* = enum fsXFS = "xfs", fsExt4 = "ext4"
+type FSKind* = enum fsXFS = "xfs", fsOldXFS = "oldXfs", fsExt4 = "ext4"
 
 proc restore*(input="/dev/stdin", kind=fsXFS) =
   ## Generate commands to restore [cb]time `input`
   let inp = if input == "/dev/stdin": stdin else: open(input)
   for (lSt, path) in inp.recs:
     case kind
-    of fsXFS:
+    of fsOldXFS:
       echo "inode ", lSt.stx_ino    # xfs_db path quote|esc broken; Use inode
       echo "write core.ctime.sec ", lSt.stx_ctime.tXf #..and also <<32|nsec;
       echo "write v3.crtime.sec " , lSt.stx_btime.tXf #..Cannot wr raw sec|nsec
+    of fsXFS:
+      echo "inode ", lSt.stx_ino                      # Similar to above..
+      echo "write core.ctime ", lSt.stx_ctime.tXfB    #..but newer "bigtime"
+      echo "write v3.crtime " , lSt.stx_btime.tXfB    #..on-disk format.
     of fsExt4:
       echo "sif foo/bar ctime 20130503145204"         #y4mdHMS; Bit of work..
 #     echo "sif foo/bar ctime_extra ", lSt.stx_ctime.tv_nsec
