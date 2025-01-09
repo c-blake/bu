@@ -254,8 +254,11 @@ distributed](https://en.wikipedia.org/wiki/Independent_and_identically_distribut
 is an essential pre-condition for pooling numbers in the first place.  These
 assumptions ideally should be verified, e.g. distributional similarity across
 time for identicality & serial autocorrelation of various lags for independence
-via permutation testing.  Ensuring future samples are from the same process is
-also hard, of course.
+via permutation testing.  For timings of computer activity, it should be noted
+that almost everything modern OSes/CPUs do makes times "dependent by design".
+Ensuring future samples are from the same process is also hard.  If, however,
+the variable in question is a *min time*, as in [`tim`](tim.md), you may have a
+less hostile problem setting (a big motivation for min times/that loop nesting).
 
 [^10]: In fact, https://github.com/c-blake/fitl/blob/main/fitl/cds.nim is one
 such way to generate such a swarm via interpolated re-sampling.
