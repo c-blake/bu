@@ -141,11 +141,11 @@ Finally, `edplot -w.87 -w.13 -bt -ob triang perturb`: ![tubes](tubes.png) shows
 the lower & upper bounds of each bands as a darker, more solid region with the
 "definitely at least this uncertain at this CI" bands in the middle.
 
-Personally, I find the 2nd or 3rd variants the easiest to read, but I do like
-how the final variant most boldly emphasizes what one most surely knows about
-the true distribution functions, and I also have some affection for the first
-as a more classic shade most darkly closest to the center of an estimate.  Hence
-all remain represented with different CL options.
+Personally, I find the 3rd variant best, but I do like how the final variant
+most boldly emphasizes what one most surely knows about the true distribution
+functions, and I also have some affection for the first as a more classic
+shading most darkly closest to the center of an estimate.  Hence all remain
+represented with different CL options.
 
 If you have a series of colors you like, just put `wvls=0.87`, `wvls=0.13`,
 `band=tube`, etc. in your `~/.config/edplot` config file, and similarly for
@@ -196,6 +196,9 @@ powerful tests suggest it is getting unlikely at 2% and 1% alpha levels.
 Knowing the answer, it is easy to fool oneself in thinking any visualization
 says more than it really does.  The challenge is: How to present evidence that
 suggests conclusions of just the right strength to those with minimal training?
+Also of note, is that in this somewhat larger sample, the Massart Bound is
+actually fairly tight which is why the 3rd form above should probably be your
+"graphical go to".
 
 The bottom line is that if this data sample is supposed to say something about
 other samples from The Same[^9] process, you should really only look at "large
