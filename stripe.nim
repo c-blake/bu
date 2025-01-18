@@ -1,5 +1,5 @@
 {.push hint[Performance]: off.}         # No warn about token copy in bu/execstr
-import std/[strutils, parseutils, os, posix, random],
+import std/[strutils, parseutils, os, posix, random, osproc],
        cligen, cligen/posixUt, bu/execstr
 when not declared(stderr): import std/syncio
 when defined(release): randomize()
@@ -129,8 +129,8 @@ proc stripe(jobs: File, secs = 0.0, load = -1): int =
 
 proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
          irupt="", posArgs: seq[string]) =
-  ## where `posArgs` is either a number `<N>` *or* `<sub1 sub2..subM>`, reads
-  ## job lines from *stdin* and keeps up to `N` | `M` running at once.
+  ## where `posArgs` is a number `<N>` *or* `<sub1 sub2..subM>`, reads job lines
+  ## from *stdin* and keeps up to `N` | `M` running at once.  `N=0` => nCPU.
   ##
   ## In sub mode, each job has **$STRIPE_SUB** set, in turn, to `subJ`.  Eg.:
   ##   ``find . -printf "ssh $STRIPE_SUB FileJob \'%P\'\\n" | stripe X Y``
@@ -149,8 +149,9 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
   fancy = "$w" in aft or "$pcpu" in aft or "$m" in aft
   numMo = posArgs.len == 1
   if numMo:                             # FIXED NUM JOBS MODE
-    var n: int; if parseInt(posArgs[0], n) == 0 or n <= 0:
-      raise newException(ValueError, "Only one slot but not a positive int.")
+    var n: int; if parseInt(posArgs[0], n) == 0 or n < 0:
+      raise newException(ValueError, "Only one slot but not int >= 0.")
+    if n == 0: n = countProcessors()
     rs.setLen n                         #   impossible zero PIDs
     for i in 0 ..< n: rs[i].nm = $i     #   slot names == nums
     if n == 1 and(let ss = getEnv("STRIPE_SUB", ""); ss.len > 0): rs[0].sub = ss
