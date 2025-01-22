@@ -35,8 +35,8 @@ proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
 when isMainModule:      # Instantiate above generics as a simple CLI utility
   import cligen, cligen/[mfile, mslice, osUt], std/[os, syncio]
   proc rs(input="", flush=false, randomize=false, prefixNs: seq[string]) =
-    ## Write ranSubsets|Samples of rows of `input` -> prefix.`ns`.  If `n>0` do
-    ## random subsets else sample with replacement.  O(`Σns`) space.  Examples:
+    ## Reservoir Sampled ranSubsets|Samples of rows of `input` -> prefix.`ns`.
+    ## If `n<0` sample w/replacement else do subsets. O(`Σns`) space. Examples:
     ##   ``seq 1 100 | rs 10 .-5`` or (after maybe ``mkfifo f1 f2``)
     ##   ``wkOn f1 & wkOn f2 & seq 1 1000 | rs -f f1.10 f2.-20``
     if randomize: randomize()
