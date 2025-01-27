@@ -46,7 +46,7 @@ Add niceties (eg. import lenientops) to prelude in ~/.config/rp.
 Options:
   -p=, --prelude= strings {}           Nim code for prelude/imports section
   -b=, --begin=   strings {}           Nim code for begin/pre-loop section
-  -v=, --var=     strings {}           preface begin w/"var "+these shorthand
+  -v=, --var=     strings {}           begin starts w/"var "+these shorthand
   -m=, --match=   string  ""           row must match this regex
   -w=, --where=   string  "true"       Nim code for row inclusion
   -e=, --epilog=  strings {}           Nim code for epilog/end loop section

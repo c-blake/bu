@@ -81,7 +81,7 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
 when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "prelude": "Nim code for prelude/imports section",
   "begin"  : "Nim code for begin/pre-loop section",
-  "var"    : "preface begin w/\"var \"+these shorthand",
+  "var"    : "begin starts w/\"var \"+these shorthand",
   "match"  : "`row` must match this regex",
   "where"  : "Nim code for row inclusion",
   "stmts"  : "Nim stmts to run (guarded by `where`); none => echo row",
