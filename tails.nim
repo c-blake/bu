@@ -1,6 +1,7 @@
 when not declared(stdout): import std/syncio
+from std/strutils import `%`, strip
 include cligen/unsafeAddr
-from cligen/osUt import getDelims, uriteBuffer, ureadBuffer, c_getdelim
+from cligen/osUt import getDelims, urite, uriteBuffer, ureadBuffer, c_getdelim
 proc free(pointr: cstring) {.importc, header: "<stdlib.h>".}
 
 proc wrec(cs: cstring, n: int, eor: char): bool {.inline.} = # NOTE n-1
@@ -10,13 +11,13 @@ proc bumpMod(j: var int; m: int): int {.inline.} = # circ.buffer helper
   j.inc; if j >= m: j = 0
   j
 
-proc outer(f: File, head=0, tail=0, eor='\n', sep="--", repeat=false): int =
+proc outer(f: File; head,tail: int; ird,eor: char; sep="--",repeat=false): int =
   var tBuf = newSeq[cstring](max(1, tail))
   var tLen = newSeq[int](max(1, tail))
   var room = newSeq[csize_t](max(1, tail))
   var i, j: int
   var wrote = false
-  while (let n = c_getdelim(tBuf[j].addr, room[j].addr, cint('\n'), f);n)+1 > 0:
+  while (let n = c_getdelim(tBuf[j].addr, room[j].addr, cint(ird), f);n)+1 > 0:
     tLen[j] = n
     if i < head:
       if wrec(tBuf[j], tLen[j].int, eor): return 1 #Q: chk for disk full/ENOSPC?
@@ -36,13 +37,13 @@ proc outer(f: File, head=0, tail=0, eor='\n', sep="--", repeat=false): int =
     if j.bumpMod(tail) == j0:
       break
 
-proc inner(f: File, head=0, tail=0, eor='\n'): int =
+proc inner(f: File; head,tail: int; ird,eor: char): int =
   var i = 0
   if tail > 0:                          # Inefficient/high resource use case
     var bBuf: string                    # O(input - (head+tail)) body buffer
     var rows = newSeq[int](head + tail) # offset can be a circ.buf, though.
     var j = 0
-    for (cs, n) in f.getDelims:
+    for (cs, n) in f.getDelims(ird):
       if i >= head:
         rows[j.bumpMod tail] = bBuf.len
         bBuf.setLen bBuf.len + n
@@ -65,31 +66,38 @@ proc inner(f: File, head=0, tail=0, eor='\n'): int =
             break
       i.inc
 
-template doTails(f) =
-  if compl: (if f.inner(head, tail, eor) != 0: return 1)
-  else    : (if f.outer(head, tail, eor, sep, repeat) != 0: return 1)
-
-proc tails(head=0, tail=0, sep="--", compl=false, repeat=false, eor='\n',
-           quiet=false, verbose=false, paths: seq[string]): int =
-  ## Generalized tail(1); Can do both head & tail of streams w/o tee FIFO.
+proc tails(head=0, tail=0, follow=false, bytes=false, sep="--", body=false,
+           repeat=false, header="", quiet=false, verbose=false, ird='\n',
+           eor='\n', paths: seq[string]): int =
+  ## Emit|cut head|tail|both.  This combines & generalizes normal head/tail.
+  let header = if header.len > 0: header else: "\n==> $1 <==\n"
   let doPrint = verbose or (not quiet and paths.len > 1)
-  if paths.len > 0:
-    for path in paths:
-      if doPrint: echo "==> ", path, " <=="
-      var f = open(path)
-      doTails(f)
-      f.close
-  else:
-    if doPrint: echo "==> standard input <=="
-    doTails(stdin)
+  var firstHeader = true
+  for path in (if paths.len > 0: paths else: @[""]):
+    if doPrint:
+      let path = if path.len > 0: path else: "standard input"
+      if firstHeader:                     # Strip only leading newlines
+        firstHeader = false
+        stdout.urite header.strip(trailing=false, chars={'\n'})%path
+      else: stdout.urite header%path
+    var f = if path.len > 0: open(path) else: stdin
+    if body: (if f.inner(head, tail, ird, eor) != 0: return 1)
+    else   : (if f.outer(head, tail, ird, eor, sep, repeat) != 0: return 1)
+    if f != stdin: f.close
 
 when isMainModule:
-  import cligen; include cligen/mergeCfgEnv; dispatch tails, help={
-    "head"   : "number of rows at the start",
-    "tail"   : "number of rows at the end",
-    "compl"  : "complement of selected rows (body)",
+  import cligen; include cligen/mergeCfgEnv
+  dispatch tails, short={"help": '?', "bytes": 'c', "header": 'H'}, help={
+    "paths"  : "[paths: string...; '' => stdin]",
+    "head"   : "number of rows at the start",   # TODO <0
+    "tail"   : "number of rows at the end",     # TODO <0
+    "follow" : "CLIGEN-NOHELP", # --follow & --bytes are To Be Done
+    "bytes"  : "CLIGEN-NOHELP", # units of `head` & `tail` are bytes
     "sep"    : "separator, for non-contiguous case",
-    "repeat" : "repeat rows when head+tail>=n",
-    "quiet"  : "never print headers giving file names",
-    "verbose": "always print headers giving file names",
-    "eor"    : "end of row/record char"}, short={"help": '?'}
+    "body"   : "body not early/late tail",
+    "repeat" : "repeat rows when head + tail >= n",
+    "header" : "header format; \"\" => \\n==> $1 <==\\n",
+    "quiet"  : "never print file name headers", # --silent alias?
+    "verbose": "always print file name headers",
+    "ird"    : "input record delimiter",
+    "eor"    : "output end of row/record char"}
