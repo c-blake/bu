@@ -15,17 +15,19 @@ Usage:
   tails [optional-params] [paths: string...; '' => stdin]
 
 Emit|cut head|tail|both.  This combines & generalizes normal head/tail.
+"/[n]" for head|tail infers a num.rows s.t. output for n files fits in
+${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
 
-  -h=, --head=   int    0     number of rows at the start
-  -t=, --tail=   int    0     number of rows at the end
-  -s=, --sep=    string "--"  separator, for non-contiguous case
-  -b, --body     bool   false body not early/late tail
-  -r, --repeat   bool   false repeat rows when head + tail >= n
-  -H=, --header= string ""    header format; "" => n==> $1 <==n
-  -q, --quiet    bool   false never print file name headers
-  -v, --verbose  bool   false always print file name headers
-  -i=, --ird=    char   '\n'  input record delimiter
-  -e=, --eor=    char   '\n'  output end of row/record char
+  -h=, --head=   int|/[n] 0     number of rows at the start
+  -t=, --tail=   int|/[n] 0     number of rows at the end
+  -s=, --sep=    string   "--"  separator, for non-contiguous case
+  -b, --body     bool     false body not early/late tail
+  -r, --repeat   bool     false repeat rows when head + tail >= n
+  -H=, --header= string   ""    header format; "" => n==> $1 <==n
+  -q, --quiet    bool     false never print file name headers
+  -v, --verbose  bool     false always print file name headers
+  -i=, --ird=    char     '\n'  input record delimiter
+  -e=, --eor=    char     '\n'  output end of row/record char
 ```
 
 Examples
