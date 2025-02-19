@@ -1,6 +1,6 @@
 when not declared(stdout): import std/syncio
-from std/strutils import `%`, strip, count; from parseutils import parseInt
-import std/[os, terminal]; include cligen/unsafeAddr
+import std/[os, terminal, parseutils]; import std/strutils except parseInt
+include cligen/unsafeAddr
 from cligen/osUt import getDelims, urite, uriteBuffer, ureadBuffer, c_getdelim
 proc free(pointr: cstring) {.importc, header: "<stdlib.h>".}
 
@@ -116,7 +116,30 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, sep="--",
     if f != stdin: f.close
 
 when isMainModule:
-  import cligen, cligen/argcvt; include cligen/mergeCfgEnv
+  import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
+
+  let argc {.importc: "cmdCount".}: cint        # Use ACTUAL OS-passed $0, ..
+  let argv {.importc: "cmdLine".}: cstringArray # not the cligen-passed one.
+  proc mergeParams(cmdNames:seq[string],cmdLine=commandLineParams()):seq[string]=
+    let cn = splitPath($argv[0]).tail   # Like `cligen/mergeCfgEnv` BUT adapt..
+    let up = cn.toUpperAscii            #..$0 = head|tail -[nc] to "-ch|-ct".
+    var cf = getEnv(up & "_CONFIG")     # Check for $(HEAD|TAIL|TAILS)_CONFIG
+    if cf.len == 0:                     # No $X_CONFIG override, go by $0
+      cf = getConfigDir()/cn/"config"
+      if not cf.fileExists: cf = cf[0..^8]
+    if cf.fileExists: result.add cf.cfToCL
+    result.add envToCL(up)              # Does not handle combiners like "-fn5"
+    result.add cmdLine                  #..but such are super rare usage; POSIX
+    if cn == "head":                    #..`head` literally only has -n option. 
+      for clp in mitems result:
+        if clp == "--": break   
+        if   clp.startsWith("-n"): clp = "-h"  & clp[2..^1]
+        elif clp.startsWith("-c"): clp = "-ch" & clp[2..^1]
+    elif cn == "tail":
+      for clp in mitems result:
+        if clp == "--": break   
+        if   clp.startsWith("-n"): clp = "-t"  & clp[2..^1]
+        elif clp.startsWith("-c"): clp = "-ct" & clp[2..^1]
 
   proc argParse*(dst: var NRow, dfl: NRow; a: var ArgcvtParams): bool =
     let s = a.val.strip                 # Accept tail -n/3, tail -n+2, head -n5
