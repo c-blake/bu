@@ -89,7 +89,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, sep="--",
   var hdr, hdr1: string; var nH, nH1: int
   if doHeaders:
     hdr = if header.len>0: header else: $eor & "==> $1 <==" & $eor
-    hdr1 = header.strip(trailing=false, chars={eor})
+    hdr1 = hdr.strip(trailing=false, chars={eor})
     nH = header.count(eor); nH1 = hdr1.count(eor)
   let height = if head.kind != fitN and tail.kind != fitN: 0
                elif (let i=toI(getEnv("LC_LINES",getEnv("LINES",""))); i > 0): i
@@ -106,10 +106,10 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, sep="--",
   for path in paths:
     if doHeaders:
       let path = if path.len > 0: path else: "standard input"
-      if firstHeader:                     # Strip only leading newlines
+      if firstHeader:                   # Strip only leading newlines
         firstHeader = false
         stdout.urite hdr1%path
-      else: stdout.urite header%path
+      else: stdout.urite hdr%path
     var f = if path.len > 0: open(path) else: stdin
     if body: (if f.inner(head.n, tail.n, ird, eor) != 0: return 1)
     else   : (if f.outer(head.n, tail.n, ird, eor, sep, repeat) != 0: return 1)
