@@ -2,7 +2,7 @@ when not declared(stdout): import std/syncio
 import std/[os, terminal, parseutils]; import std/strutils except parseInt
 
 proc bump(j: var int, m: int) = (inc j; if j == m: j = 0) # Ring index helper
-template headTail*(R: type; get,put,copy,drop,rest; head, tail: int; divide) =
+template headTail*(R,E: type; get,put,copy,drop,rest; head, tail: int; divide) =
   ## 1-pass, small mem Python-like b<0 [a:b] slices | their logical complements.
   ## Here head<0 drops@start & tail<0 drops@end (swapped from GNU coreutils -n).
   var r: R
@@ -13,7 +13,7 @@ template headTail*(R: type; get,put,copy,drop,rest; head, tail: int; divide) =
     if head < 0: rest r                 # Copy rest of file
     r.drop; return                      # Done
   let nTail = tail.abs              ##### MAYBE EMIT|BUFFER !TAIL
-  var buf = newSeq[string](nTail)       # Cyclic buf for TAIL
+  var buf = newSeq[E](nTail)            # Cyclic buf for TAIL
   var i, j: int                         # Total (from EOHead) & Cyclic index
   while r.get:                          # Get new record | EOF
     if tail < 0 and i >= nTail:         # If clipping tail & have enough, emit..
@@ -28,7 +28,15 @@ template headTail*(R: type; get,put,copy,drop,rest; head, tail: int; divide) =
   r.drop                                # Free input buffer
 
 from cligen/osUt import urite, uriteBuffer, ureadBuffer, c_getdelim
-proc doFilter(f: File; head,tail: int; ird,eor: char; divider="--"): bool =
+template rest(r) =    # Input buffer to drop on write error
+  var buf = newString(65536)
+  while true:         # Nixing stdio use can elim work; Also sendfile/splice?
+    let n = f.ureadBuffer(buf[0].addr, buf.len)
+    if n > 0 and stdout.uriteBuffer(buf[0].addr, n) < n:
+      r.drop; return true               # Write Error => true
+    if n < buf.len: break
+
+proc rowFilter(f: File; head,tail: int; ird,eor: char; divr="--\n"): bool =
   proc free(pointr: cstring) {.importc, header: "stdlib.h".}
   type Rec = tuple[cs: cstring; len: int; room: uint]
   template get(r): untyped =
@@ -41,20 +49,28 @@ proc doFilter(f: File; head,tail: int; ird,eor: char; divider="--"): bool =
     if stdout.uriteBuffer(b[0].addr, n) < n or
        stdout.uriteBuffer(eor.addr, 1) < 1:
       r.drop; return true               # Write error; Return true
-  template rest(r) =    # Input buffer to drop on write error
-    var buf = newString(65536)
-    while true:         # Nixing stdio use can elim work; Also sendfile/splice?
-      let n = f.ureadBuffer(buf[0].addr, buf.len)
-      if n > 0:
-        if stdout.uriteBuffer(buf[0].addr, n) < n:
-          r.drop; return true           # Write error; Return true
-      if n < buf.len:
-        break
   template divide(r) =
-    if divider.len > 0 and
-       stdout.uriteBuffer(divider[0].addr, divider.len) < divider.len:
+    if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
       r.drop; return true               # Write error; Return true
-  headTail Rec, get, put, copy, drop, rest, head, tail, divide
+  headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
+
+proc byteFilter(f: File; head,tail: int; divr="--\n"): bool =
+  when defined(linux) and not defined(android):
+    proc fgetc(f: File): cint {.importc: "fgetc_unlocked".}
+    proc putchar(c: cint): cint {.importc: "putchar_unlocked".}
+  else:
+    proc fgetc(f: File): cint {.importc.}
+    proc putchar(c: cint): cint {.importc.}
+  type Rec = tuple[cs: char]
+  template get(r): untyped = (let i = f.fgetc; r.cs = char(i); i >= 0)
+  template copy(d, s) = d = s.cs
+  template drop(r) = discard
+  template put(b, r) =  # Buffer to write, Input buffer to drop on write error
+    if putchar(b.cint) < 0: return true # Write error; Return true
+  template divide(r) =  # A bit questionable if both-mode+bytes should divide.
+    if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
+      r.drop; return true               # Write error; Return true
+  headTail Rec, char, get, put, copy, drop, rest, head, tail, divide
 
 type NKind = enum doN=0, plusN, fitN
 type NRow = object
@@ -103,7 +119,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
         stdout.urite hdr1%path
       else: stdout.urite hdr%path
     let f = if path.len > 0: open(path) else: stdin
-    if f.doFilter(head.n, tail.n, ird, eor, divider): return 1
+    if bytes: (if f.byteFilter(head.n, tail.n, divider): return 1)
+    else: (if f.rowFilter(head.n, tail.n, ird, eor, divider): return 1)
     if f != stdin: f.close
 
 when isMainModule:
@@ -157,8 +174,8 @@ when isMainModule:
     "head"   : ">0 emit | <0 cut this many @start",
     "tail"   : ">0 emit | <0 cut this many @end;\n" &
                "Leading \"+\" => `head` = 1 - THIS.",
-    "bytes"  : "CLIGEN-NOHELP", # units of `head` & `tail` are bytes
-    "follow" : "CLIGEN-NOHELP", # --follow & --bytes are To Be Done
+    "bytes"  : "`head` & `tail` units are bytes not rows",
+    "follow" : "CLIGEN-NOHELP", # --follow is To Be Done
     "divide" : "separator, for non-contiguous case",
     "header" : "header format; \"\" => \\n==> $1 <==\\n",
     "quiet"  : "never print file name headers", # --silent alias?
