@@ -36,7 +36,7 @@ template rest(r) =    # Input buffer to drop on write error
       r.drop; return true               # Write Error => true
     if n < buf.len: break
 
-#TODO Handle EWOULDBLOCK for unseekable inputs
+#TODO Handle EWOULDBLOCK for unseekable inputs; Optimize file IO for seekable.
 proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
   proc free(pointr: cstring) {.importc, header: "stdlib.h".}
   type Rec = tuple[cs: cstring; len: int; room: uint]
