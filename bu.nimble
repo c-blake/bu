@@ -39,7 +39,7 @@ when defined(Windows):
 
   "align",      # Align text with better ergonomics than BSD `column`
   "flow",       # Flow text lines into as many columns as fit with aligned output
-  "tails",      # Generalizes head & tail into one with all-but compliments
+  "tails",      # Generalizes head & tail into one with all-but complements
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
@@ -117,7 +117,7 @@ else:
 
   "align",      # Align text with better ergonomics than BSD `column`
   "flow",       # Flow text lines into as many columns as fit with aligned output
-  "tails",      # Generalizes head & tail into one with all-but compliments
+  "tails",      # Generalizes head & tail into one with all-but complements
   "cols",       # Extract just some columns from a text file/stream
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`

@@ -83,7 +83,7 @@ Row/Column/Text Table Things
 
 [flow - flow text lines into as many columns as fit with aligned output](doc/flow.md)
 
-[tails - Generalizes head & tail into one with all-but compliments](doc/tails.md)
+[tails - Generalizes head & tail into one with all-but complements](doc/tails.md)
 
 [cols - extract just some columns from a text file/stream](doc/cols.md)
 
