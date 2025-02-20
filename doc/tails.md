@@ -23,6 +23,7 @@ ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
   -h=, --head=   int|/[n] 0     >0 emit | <0 cut this many @start
   -t=, --tail=   int|/[n] 0     >0 emit | <0 cut this many @end;
                                 Leading "+" => head = 1 - THIS.
+  -f, --follow   bool     false output added data as files get it
   -c, --bytes    bool     false head & tail units are bytes not rows
   -d=, --divide= string   "--"  separator, for non-contiguous case
   -H=, --header= string   ""    header format; "" => n==> $1 <==n
