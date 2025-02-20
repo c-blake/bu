@@ -36,7 +36,8 @@ template rest(r) =    # Input buffer to drop on write error
       r.drop; return true               # Write Error => true
     if n < buf.len: break
 
-proc rowFilter(f: File; head,tail: int; ird,eor: char; divr="--\n"): bool =
+#TODO Handle EWOULDBLOCK for unseekable inputs
+proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
   proc free(pointr: cstring) {.importc, header: "stdlib.h".}
   type Rec = tuple[cs: cstring; len: int; room: uint]
   template get(r): untyped =
@@ -54,7 +55,7 @@ proc rowFilter(f: File; head,tail: int; ird,eor: char; divr="--\n"): bool =
       r.drop; return true               # Write error; Return true
   headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
 
-proc byteFilter(f: File; head,tail: int; divr="--\n"): bool =
+proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): bool =
   when defined(linux) and not defined(android):
     proc fgetc(f: File): cint {.importc: "fgetc_unlocked".}
     proc putchar(c: cint): cint {.importc: "putchar_unlocked".}
@@ -111,6 +112,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   elif head.kind == fitN: head.n = height.nToFit(nH1, nH, head.n)
   elif tail.kind == fitN: tail.n = height.nToFit(nH1, nH, tail.n)
   var firstHeader = true
+  var fs: seq[(string, File, bool)]     # For tails --follow
   for path in paths:
     if doHeaders:
       let path = if path.len > 0: path else: "standard input"
@@ -119,9 +121,24 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
         stdout.urite hdr1%path
       else: stdout.urite hdr%path
     let f = if path.len > 0: open(path) else: stdin
-    if bytes: (if f.byteFilter(head.n, tail.n, divider): return 1)
-    else: (if f.rowFilter(head.n, tail.n, ird, eor, divider): return 1)
-    if f != stdin: f.close
+    let seekable = (try: (setFilePos(f, 0); true) except: false)
+    if bytes: (if f.byteFilter(head.n, tail.n, divider, seekable): return 1)
+    else: (if f.rowFilter(head.n, tail.n, ird,eor, divider, seekable): return 1)
+    if follow: fs.add (path, f, seekable)
+    elif f != stdin: f.close
+  if follow:
+    var buf = newString(65536)
+    while true:         # Handle partial rows somehow (if not bytes).
+      for (path, f, seekable) in fs:
+        if seekable:
+          var did = false
+          while true:
+            let n = f.ureadBuffer(buf[0].addr, buf.len)
+            if doHeaders and n>0 and not did: stdout.urite hdr%path; did = true
+            if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: return 1 # WrErr=>die
+            if n<buf.len: break
+        else: discard   # poll/select to see if ready, then like above
+      sleep 40          # Good enough for Hollywood; TODO: add --sleep-interval
 
 when isMainModule:
   import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
@@ -175,7 +192,7 @@ when isMainModule:
     "tail"   : ">0 emit | <0 cut this many @end;\n" &
                "Leading \"+\" => `head` = 1 - THIS.",
     "bytes"  : "`head` & `tail` units are bytes not rows",
-    "follow" : "CLIGEN-NOHELP", # --follow is To Be Done
+    "follow" : "output added data as files get it",
     "divide" : "separator, for non-contiguous case",
     "header" : "header format; \"\" => \\n==> $1 <==\\n",
     "quiet"  : "never print file name headers", # --silent alias?
