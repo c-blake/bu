@@ -128,7 +128,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
     elif f != stdin: f.close
   if follow:
     var buf = newString(65536)
-    while true:         # Handle partial rows somehow (if not bytes).
+    while true:         #TODO Handle partial rows like `funnel` (if not bytes).
       for (path, f, seekable) in fs:
         if seekable:
           var did = false
