@@ -3,26 +3,25 @@ Usage
 ```
   funnel [optional-params] FIFOs...
 
-Read term-terminated records from FIFOS fs as ready, writing ONLY WHOLE records
-to stdout.
+Read term-inated records from FIFOS as ready, writing ONLY WHOLE RECORDS to
+stdout.
 
-Options:
-  -f=, --fin=   string ""    once fin exists, empty pipes => end
-  -r, --rm      bool   false unlink FIFOs fs when done
-  -t=, --term=  char   '\n'  IO terminator
-  -u=, --uterm= Unterm add   unterminated last record: add=Add term as needed
-                             log=write labeled to stderr; drop=discard data
-  -s=, --sec=   float  0.002 select timeout in seconds
-  -i=, --ibuf=  int    4096  initial input buf size (doubled as needed)
-  -o=, --obuf=  int    65536 output buf size
+  -f=, --fin=    string ""    once fin exists, empty pipes => end
+  -r, --rm       bool   false unlink FIFOs fs when done
+  -t=, --term=   char   '\n'  IO terminator
+  -u=, --unterm= Unterm add   unterminated last record: add=AddTermAsNeeded
+                              log=LogLabeledToStderr; drop=DiscardData
+  -s=, --sec=    float  0.002 select timeout in seconds (to look for fin)
+  -i=, --ibuf=   int    4096  initial input buf size (doubled as needed)
+  -o=, --obuf=   int    65536 output buf size
 ```
 
 Motivation
 ----------
-`tail -q -n+1 -f --pid=stopIfGone A B..` is wary of partial lines with input
-from stdin pipes but NOT multi-input FIFOs.  If you are ok with PID wraparound
-races, this program may be unneeded -- someday.  If you are not or that never
-gets fixed then this program may be useful to you.
+`tail -qfn+1 --pid=stopIfGone A B..` is wary of partial lines with input from
+stdin pipes but NOT multi-input FIFOs.  If you are ok with PID wraparound races,
+this program may be unneeded -- someday.  If you are not or that never gets
+fixed then this program may be useful to you.
 
 Example `xargs` Wrapper Script
 ------------------------------
