@@ -6,7 +6,7 @@ const av = "funnel"
 proc funnel*(fin="", rm=false, term='\n', uterm=add, sec=0.002,
              ibuf=4096, obuf=65536, fs: seq[string]) =
   ## Read `term`-terminated records from FIFOS `fs` as ready, writing ONLY WHOLE
-  ## records to stdout.  (`tail -q -n+1 -f --pid=stopIfGone A B..` is wary of
+  ## RECORDS to stdout.  (GNU `tail -qfn+1 --pid=stopIfGone A B..` is wary of
   ## partial lines w/input from *stdin* pipes but NOT multi-input FIFOs.  If you
   ## are ok with PID wraparound races, this program may be unneeded -- someday.)
   let nF = fs.len
