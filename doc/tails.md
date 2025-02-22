@@ -1,18 +1,32 @@
+Motivation/Overview
+-------------------
 This generalizes `head` & `tail` into one program which can also do things which
 would require (at least!) fancy FIFO tricks to otherwise accomplish (like both
-the beginning & end of the same stream or its complement).  `tails` is intended
-to be mnemonic for "tails of a probability distribution" (i.e. the low & high
-sides of a 1-D range).
+the beginning & end of the same stream).  `tails` is intended to be mnemonic for
+"tails of a probability distribution" (i.e. low & high sides of a 1-D range).
+It also adds abstract input & output records, a config file, and user-customized
+cycling headers.
 
-It also adds a config file as well as abstract input & output records.  It also
-allows setting `header` for, e.g. ANSI SGR highlighting codes to make file name
-headers "really pop" out at you on color terminals.  For compatibility, when
-invoked with an argv[0]/$0 of `head` or `tail`, arguments are massaged to match
-GNU coreutils `head` / `tail`.
+Good application of the config file & cycling headers is to put 3..9 (whatever
+you can easily remember) instances of `header` in the config file.  Most
+graphical plotting facilities have this feature for line styles.  I use varying
+color, but if you hate color you can also use different textual embellishment
+such as many stars, slashes, ampersands, etc.  And like plotting line styles,
+there is nothing stopping you from using *both* the equivalent of color and
+solid, dots & dashes.  This eases distinguishing file names from each other
+& from surrounding text.  It eases so much that you can usually avoid the
+blank line preceding headers common in other head/tail impls (particularly for
+background dominant "inverse modes").  This distinguishing is always helpful,
+but particularly so for output from multiple files as `tails -f A B C..` might
+produce.
 
+For compatibility, when invoked with an argv[0]/$0 of `head` or `tail`,
+arguments are massaged to match GNU coreutils `head` / `tail` (including `-c` &
+negative `-n` args, but not *all* features).
+
+Usage
+-----
 ```
-Usage:
-
     tails [optional-params] [paths: string...; '' => stdin]
 
 Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]"
@@ -26,7 +40,8 @@ ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
   -f, --follow   bool     false output added data as files get it
   -c, --bytes    bool     false head & tail units are bytes not rows
   -d=, --divide= string   "--"  separator, for non-contiguous case
-  -H=, --header= string   ""    header format; "" => n==> $1 <==n
+  -H=, --header= strings  {}    header formats (used cyclically);
+                                "" => n==> $1 <==n
   -q, --quiet    bool     false never print file name headers
   -v, --verbose  bool     false always print file name headers
   -i=, --ird=    char     '\n'  input record delimiter
@@ -35,7 +50,6 @@ ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
 
 Examples
 --------
-
 ```
 seq 1 99|tails -h3 -t3|tr \\n ' '
 ```
@@ -77,10 +91,11 @@ check "-t+4"      "4 5 6 7 8 9 "       tP
 A terminal example { with terminal no wrap wrapper script sending escape codes
 mentioned over in [tw](tw.md) }:
 ```
-nw tails -t/ log.1 log.2 log.3
+nw tails -ft/ log.1 log.2 log.3
 ```
-should show with a colorized file name header (if so configured) as much of the
-ends of the logs as fits on one screen.
+should show with colorized file name headers (if so configured) as much of the
+ends of the logs as fits on one screen, and then follow each one.  You could
+cycle backgorund color of text through red, green, blue, etc.
 
 Related Work
 ------------

@@ -85,8 +85,8 @@ proc nToFit(height, nH1, nH, nF: int): int =
   if result*nF > budget: dec result
 
 proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
-           header="", quiet=false, verbose=false, ird='\n', eor='\n',
-           paths: seq[string]): int =
+           header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
+           eor='\n', paths: seq[string]): int =
   ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
   ## `head|tail` infers a num.rows s.t. output for n files fits in
   ## ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
@@ -94,11 +94,11 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   let divider = divide & $eor
   var head = head; var tail = tail
   let doHeaders = verbose or (not quiet and paths.len > 1)
-  var hdr, hdr1: string; var nH, nH1: int
+  var hdr1: string; var hdrs: seq[string]; var nH, nH1: int
   if doHeaders:
-    hdr = if header.len>0: header else: $eor & "==> $1 <==" & $eor
-    hdr1 = hdr.strip(trailing=false, chars={eor})
-    nH = header.count(eor); nH1 = hdr1.count(eor)
+    hdrs = if header.len>0: header else: @[ $eor & "==> $1 <==" & $eor ]
+    hdr1 = hdrs[0].strip(trailing=false, chars={eor})
+    nH = hdrs[0].count(eor); nH1 = hdr1.count(eor) #TODO Loop over hdrs & total
   let height = if head.kind != fitN and tail.kind != fitN: 0
                elif (let i=toI(getEnv("LC_LINES",getEnv("LINES",""))); i > 0): i
                else: terminalHeight()
@@ -113,13 +113,13 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   elif tail.kind == fitN: tail.n = height.nToFit(nH1, nH, tail.n)
   var firstHeader = true
   var fs: seq[(string, File, bool)]     # For tails --follow
-  for path in paths:
+  for i, path in pairs paths:
     if doHeaders:
       let path = if path.len > 0: path else: "standard input"
       if firstHeader:                   # Strip only leading newlines
         firstHeader = false
         stdout.urite hdr1%path
-      else: stdout.urite hdr%path
+      else: stdout.urite hdrs[i mod hdrs.len]%path
     let f = if path.len > 0: open(path) else: stdin
     let seekable = (try: (setFilePos(f, 0); true) except: false)
     if bytes: (if f.byteFilter(head.n, tail.n, divider, seekable): return 1)
@@ -134,7 +134,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
         if seekable:
           while true:
             let n = f.ureadBuffer(buf[0].addr, buf.len)
-            if doHeaders and n>0 and i != i0: stdout.urite hdr%path; i0 = i
+            if doHeaders and n>0 and i != i0:
+              stdout.urite hdrs[i mod hdrs.len]%path; i0 = i
             if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: return 1 # WrErr=>die
             if n<buf.len: break
         else: discard   # poll/select to see if ready, then like above
@@ -194,7 +195,8 @@ when isMainModule:
     "bytes"  : "`head` & `tail` units are bytes not rows",
     "follow" : "output added data as files get it",
     "divide" : "separator, for non-contiguous case",
-    "header" : "header format; \"\" => \\n==> $1 <==\\n",
+    "header" : "header formats (used cyclically);\n" &
+               "\"\" => \\n==> $1 <==\\n",
     "quiet"  : "never print file name headers", # --silent alias?
     "verbose": "always print file name headers",
     "ird"    : "input record delimiter",
