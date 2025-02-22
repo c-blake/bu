@@ -95,7 +95,7 @@ nw tails -ft/ log.1 log.2 log.3
 ```
 should show with colorized file name headers (if so configured) as much of the
 ends of the logs as fits on one screen, and then follow each one.  You could
-cycle backgorund color of text through red, green, blue, etc.
+cycle background color of text through red, green, blue, etc.
 
 Related Work
 ------------
