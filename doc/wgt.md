@@ -54,5 +54,4 @@ total weights on a per token basis (`print`).
 
 Related Work
 ------------
-More a TODO than related - I should port my reservoir sampling with and without
-replacement ways to Nim/cligen and add that flat-weighted sampler.
+[rs](rs.md) is a flat-weighted sampler.
