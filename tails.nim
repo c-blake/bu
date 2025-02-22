@@ -128,13 +128,13 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
     elif f != stdin: f.close
   if follow:
     var buf = newString(65536)
+    var i0 = fs.len - 1                 # index of last header written
     while true:         #TODO Handle partial rows like `funnel` (if not bytes).
-      for (path, f, seekable) in fs:
+      for i, (path, f, seekable) in pairs fs:
         if seekable:
-          var did = false
           while true:
             let n = f.ureadBuffer(buf[0].addr, buf.len)
-            if doHeaders and n>0 and not did: stdout.urite hdr%path; did = true
+            if doHeaders and n>0 and i != i0: stdout.urite hdr%path; i0 = i
             if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: return 1 # WrErr=>die
             if n<buf.len: break
         else: discard   # poll/select to see if ready, then like above
