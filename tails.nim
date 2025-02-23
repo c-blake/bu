@@ -80,13 +80,13 @@ type NRow = object
 
 proc toI(a:string):int = (if a.len>0 and parseInt(a, result)<a.len: result = 0)
 proc nToFit(height, nH1, nH, nF: int): int =
-  let budget = height - 1 - nH1 - (nF - 1)*nH # - shellPrompt 1stHeader OtherHdr
+  let budget = height - 1 - nH1 - nH    # - shellPrompt 1stHeader OtherHdrs
   result = budget div nF
   if result*nF > budget: dec result
 
 proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
            header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
-           eor='\n', paths: seq[string]): int =
+           eor='\n', sleepInterval=0.25, paths: seq[string]): int =
   ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
   ## `head|tail` infers a num.rows s.t. output for n files fits in
   ## ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
@@ -98,16 +98,18 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   if doHeaders:
     hdrs = if header.len>0: header else: @[ $eor & "==> $1 <==" & $eor ]
     hdr1 = hdrs[0].strip(trailing=false, chars={eor})
-    nH = hdrs[0].count(eor); nH1 = hdr1.count(eor) #TODO Loop over hdrs & total
+    for i in 0 ..< paths.len:
+      if i == 0: nH1 = hdr1.count(eor)
+      else: nH += hdrs[i mod hdrs.len].count(eor)
   let height = if head.kind != fitN and tail.kind != fitN: 0
                elif (let i=toI(getEnv("LC_LINES",getEnv("LINES",""))); i > 0): i
                else: terminalHeight()
   if head.kind == fitN and head.n == 0: head.n = paths.len
   if tail.kind == fitN and tail.n == 0: tail.n = paths.len
   elif tail.kind == plusN: head.n = 1-tail.n; tail.kind = doN; tail.n = 0
-  if head.kind==fitN and tail.kind==fitN: # Approximate; Could be enhanced.
-    let nSep = divider.count(eor)         # E.g., -h2 -t4 => 2x more hd than tl.
-    let n2 = height.nToFit(nH1+nSep, nH+nSep, max(head.n, tail.n))
+  if head.kind==fitN and tail.kind==fitN: # Approximate; Could be enhanced. E.g.
+    let nSep = divider.count(eor)         #.. -h2/ -t/ => 2x more hd than tl.
+    let n2 = height.nToFit(nH1+nSep, nH+nSep*(paths.len-1), max(head.n, tail.n))
     head.n = n2 div 2; tail.n = n2 div 2
   elif head.kind == fitN: head.n = height.nToFit(nH1, nH, head.n)
   elif tail.kind == fitN: tail.n = height.nToFit(nH1, nH, tail.n)
@@ -138,8 +140,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
               stdout.urite hdrs[i mod hdrs.len]%path; i0 = i
             if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: return 1 # WrErr=>die
             if n<buf.len: break
-        else: discard   # poll/select to see if ready, then like above
-      sleep 40          # Good enough for Hollywood; TODO: add --sleep-interval
+        else: discard   #TODO poll/select to see if ready, then like above
+      sleep int(sleepInterval*1000.0)
 
 when isMainModule:
   import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
@@ -192,7 +194,7 @@ when isMainModule:
     "head"   : ">0 emit | <0 cut this many @start",
     "tail"   : ">0 emit | <0 cut this many @end;\n" &
                "Leading \"+\" => `head` = 1 - THIS.",
-    "bytes"  : "`head` & `tail` units are bytes not rows",
+    "bytes"  : "`head` & `tail` are bytes not rows",
     "follow" : "output added data as files get it",
     "divide" : "separator, for non-contiguous case",
     "header" : "header formats (used cyclically);\n" &
@@ -200,4 +202,5 @@ when isMainModule:
     "quiet"  : "never print file name headers", # --silent alias?
     "verbose": "always print file name headers",
     "ird"    : "input record delimiter",
-    "eor"    : "output end of row/record char"}
+    "eor"    : "output end of row/record char",
+    "sleep-interval": "this many seconds between -f loops"}
