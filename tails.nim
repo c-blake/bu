@@ -36,7 +36,7 @@ template rest(r) =    # Input buffer to drop on write error
       r.drop; return true               # Write Error => true
     if n < buf.len: break
 
-#TODO Handle EWOULDBLOCK for unseekable inputs; Optimize file IO for seekable.
+#TODO Seekable: mmap, memrchr; Unseekable -> NonBlocking & stop at EWOULDBLOCK.
 proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
   proc free(pointr: cstring) {.importc, header: "stdlib.h".}
   type Rec = tuple[cs: cstring; len: int; room: uint]
@@ -72,6 +72,23 @@ proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): bool =
     if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
       r.drop; return true               # Write error; Return true
   headTail Rec, char, get, put, copy, drop, rest, head, tail, divide
+
+type Files = seq[tuple[path: string; f: File; seekable: bool]]
+proc track(fs: Files; bytes,doHeaders: bool; hdrs: seq[string]; slp: float) =
+  var buf = newString(65536)
+  var i0 = fs.len - 1                   # index of last header written
+  while true:         #TODO Handle partial rows like `funnel` (if not bytes).
+    for i, (path, f, seekable) in pairs fs:
+      if seekable:
+        while true:
+          let n = f.ureadBuffer(buf[0].addr, buf.len)
+          if doHeaders and n>0 and i != i0:
+            stdout.urite hdrs[i mod hdrs.len]%path; i0 = i
+          if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: quit 1 # WrErr=>die
+          if n<buf.len: break
+      else:           #TODO select to see if ready, then like above, but only
+        discard       #..loop until EWOULDBLOCK.
+    sleep int(slp*1000.0)
 
 type NKind = enum doN=0, plusN, fitN
 type NRow = object
@@ -114,7 +131,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   elif head.kind == fitN: head.n = height.nToFit(nH1, nH, head.n)
   elif tail.kind == fitN: tail.n = height.nToFit(nH1, nH, tail.n)
   var firstHeader = true
-  var fs: seq[(string, File, bool)]     # For tails --follow
+  var fs: Files                         # For tails --follow
   for i, path in pairs paths:
     if doHeaders:
       let path = if path.len > 0: path else: "standard input"
@@ -128,20 +145,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
     else: (if f.rowFilter(head.n, tail.n, ird,eor, divider, seekable): return 1)
     if follow: fs.add (path, f, seekable)
     elif f != stdin: f.close
-  if follow:
-    var buf = newString(65536)
-    var i0 = fs.len - 1                 # index of last header written
-    while true:         #TODO Handle partial rows like `funnel` (if not bytes).
-      for i, (path, f, seekable) in pairs fs:
-        if seekable:
-          while true:
-            let n = f.ureadBuffer(buf[0].addr, buf.len)
-            if doHeaders and n>0 and i != i0:
-              stdout.urite hdrs[i mod hdrs.len]%path; i0 = i
-            if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: return 1 # WrErr=>die
-            if n<buf.len: break
-        else: discard   #TODO poll/select to see if ready, then like above
-      sleep int(sleepInterval*1000.0)
+  if follow: fs.track bytes, doHeaders, hdrs, sleepInterval
 
 when isMainModule:
   import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
