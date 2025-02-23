@@ -33,19 +33,20 @@ Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]"
 for head|tail infers a num.rows s.t. output for n files fits in
 ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
 
-  -?, --help                    print this cligen-erated help
-  -h=, --head=   int|/[n] 0     >0 emit | <0 cut this many @start
-  -t=, --tail=   int|/[n] 0     >0 emit | <0 cut this many @end;
-                                Leading "+" => head = 1 - THIS.
-  -f, --follow   bool     false output added data as files get it
-  -c, --bytes    bool     false head & tail units are bytes not rows
-  -d=, --divide= string   "--"  separator, for non-contiguous case
-  -H=, --header= strings  {}    header formats (used cyclically);
-                                "" => n==> $1 <==n
-  -q, --quiet    bool     false never print file name headers
-  -v, --verbose  bool     false always print file name headers
-  -i=, --ird=    char     '\n'  input record delimiter
-  -e=, --eor=    char     '\n'  output end of row/record char
+  -?, --help                            print this cligen-erated help
+  -h=, --head=           int|/[n] 0     >0 emit | <0 cut this many @start
+  -t=, --tail=           int|/[n] 0     >0 emit | <0 cut this many @end;
+                                        Leading "+" => head = 1 - THIS.
+  -f, --follow           bool     false output added data as files get it
+  -c, --bytes            bool     false head & tail are bytes not rows
+  -d=, --divide=         string   "--"  separator, for non-contiguous case
+  -H=, --header=         strings  {}    header formats (used cyclically);
+                                        "" => n==> $1 <==n
+  -q, --quiet            bool     false never print file name headers
+  -v, --verbose          bool     false always print file name headers
+  -i=, --ird=            char     '\n'  input record delimiter
+  -e=, --eor=            char     '\n'  output end of row/record char
+  -s=, --sleep-interval= float    0.25  this many seconds between -f loops
 ```
 
 Examples
