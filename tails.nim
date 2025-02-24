@@ -163,11 +163,13 @@ when isMainModule:
     result.add envToCL(up)              # Does not handle combiners like "-fn5"
     result.add cmdLine                  #..but such are super rare usage; POSIX
     if cn == "head":                    #..`head` literally only has -n option. 
+      result = "-h10" & result
       for clp in mitems result:
         if clp == "--": break           # Also translate -z -> -i\0 \e\0
         if   clp.startsWith("-n"): clp = "-h"  & clp[2..^1]
         elif clp.startsWith("-c"): clp = "-ch" & clp[2..^1]
     elif cn == "tail":
+      result = "-t10" & result
       for clp in mitems result:
         if clp == "--": break           # Also translate -z -> -i\0 \e\0  
         if   clp.startsWith("-n"): clp = "-t"  & clp[2..^1]
@@ -176,12 +178,12 @@ when isMainModule:
   proc argParse*(dst: var NRow, dfl: NRow; a: var ArgcvtParams): bool =
     let s = a.val.strip                 # Accept tail -n/3, tail -n+2, head -n5
     if s.len > 0 and s[0] == '/':
-      dst.kind = fitN
+      dst.kind = fitN; dst.n = 0
       if s.len > 1 and parseInt(s, dst.n, start=1) + 1 < s.len:
         a.msg = "Bad value: \"$1\" for \"$2\"; expecting \"/\" | \"/int\"\n$3" %
                 [a.val, a.key, a.help]; return false
     elif s.len > 0 and s[0] == '+':
-      dst.kind = plusN
+      dst.kind = plusN; dst.n = 0
       if s.len == 1 or parseInt(s, dst.n) < s.len:
         a.msg = "Bad value: \"$1\" for \"$2\"; expecting \"+INTEGER\"\n$3" %
                 [a.val, a.key, a.help]; return false
