@@ -47,6 +47,9 @@ ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
   -i=, --ird=            char     '\n'  input record delimiter
   -e=, --eor=            char     '\n'  output end of row/record char
   -s=, --sleep-interval= float    0.25  this many seconds between -f loops
+  -D=, --delimit=        string   ""    if non-"" (eg. "..."), source switch
+                                        headers begin with THIS + eor when 
+                                        no eor is present at switch-time.
 ```
 
 Examples
