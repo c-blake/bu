@@ -27,7 +27,18 @@ template headTail*(R,E: type; get,put,copy,drop,rest; head, tail: int; divide) =
       put buf[j], r; j.bump nTail       #..emit & cycle forward.
   r.drop                                # Free input buffer
 
-from cligen/osUt import urite, uriteBuffer, ureadBuffer, c_getdelim
+from cligen/osUt import c_getdelim, ureadBuffer, uriteBuffer
+
+var gLast = '\n'; var gEOR = '\n'; var gDelimit = ""
+proc uriteBuffer(f: File, buffer: pointer, len: Natural): int =
+  if len > 0: gLast = cast[cstring](buffer)[len - 1]
+  osUt.uriteBuffer f, buffer, len
+proc uriteHdr*(f: File, h: string) =
+  if gDelimit.len > 0 and h[0] != gEOR and gLast != gEOR:
+    let sep = gDelimit & $gEOR
+    discard uriteBuffer(f, sep[0].addr, sep.len)
+  if h.len > 0: discard tails.uriteBuffer(f, h[0].addr, h.len)
+
 template rest(r) =    # Input buffer to drop on write error
   var buf = newString(65536)
   while true:         # Nixing stdio use can elim work; Also sendfile/splice?
@@ -43,12 +54,12 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
   template get(r): untyped =
     r.len = c_getdelim(r.cs.addr, r.room.addr, cint(ird), f)
     r.len + 1 > 0
-  template copy(d, s) = d.setLen s.len; copyMem d[0].addr, s.cs, s.len - 1
+  template copy(d, s) = d.setLen s.len; copyMem d[0].addr, s.cs, s.len
   template drop(r) = free(r.cs)
   template put(b, r) =  # Buffer to write, Input buffer to drop on write error
-    let n = b.len - 1
-    if stdout.uriteBuffer(b[0].addr, n) < n or
-       stdout.uriteBuffer(eor.addr, 1) < 1:
+    let n = b.len
+    if b[n-1] == ird: b[n-1] = eor
+    if stdout.uriteBuffer(b[0].addr, n) < n:
       r.drop; return true               # Write error; Return true
   template divide(r) =
     if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
@@ -83,7 +94,7 @@ proc track(fs: Files; bytes,doHeaders: bool; hdrs: seq[string]; slp: float) =
         while true:
           let n = f.ureadBuffer(buf[0].addr, buf.len)
           if doHeaders and n>0 and i != i0:
-            stdout.urite hdrs[i mod hdrs.len]%path; i0 = i
+            stdout.uriteHdr hdrs[i mod hdrs.len]%path; i0 = i
           if n>0 and stdout.uriteBuffer(buf[0].addr, n)<n: quit 1 # WrErr=>die
           if n<buf.len: break
       else:           #TODO select to see if ready, then like above, but only
@@ -103,12 +114,12 @@ proc nToFit(height, nH1, nH, nF: int): int =
 
 proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
            header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
-           eor='\n', sleepInterval=0.25, paths: seq[string]): int =
+           eor='\n', sleepInterval=0.25, delimit="", paths: seq[string]): int =
   ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
   ## `head|tail` infers a num.rows s.t. output for n files fits in
   ## ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
   let paths = if paths.len > 0: paths else: @[""]
-  let divider = divide & $eor
+  let divider = divide & $eor; gDelimit = delimit; gEOR = eor
   var head = head; var tail = tail
   let doHeaders = verbose or (not quiet and paths.len > 1)
   var hdr1: string; var hdrs: seq[string]; var nH, nH1: int
@@ -137,8 +148,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
       let path = if path.len > 0: path else: "standard input"
       if firstHeader:                   # Strip only leading newlines
         firstHeader = false
-        stdout.urite hdr1%path
-      else: stdout.urite hdrs[i mod hdrs.len]%path
+        stdout.uriteHdr hdr1%path
+      else: stdout.uriteHdr hdrs[i mod hdrs.len]%path
     let f = if path.len > 0: open(path) else: stdin
     let seekable = (try: (setFilePos(f, 0); true) except: false)
     if bytes: (if f.byteFilter(head.n, tail.n, divider, seekable): return 1)
@@ -195,7 +206,7 @@ when isMainModule:
   proc argHelp*(defVal: NRow, a: var ArgcvtParams): seq[string] =
     @[a.argKeys, "int|/[n]", "0"]
 
-  dispatch tails, short={"help": '?', "bytes": 'c', "header": 'H'}, help={
+  dispatch tails,short={"help":'?',"bytes":'c',"header":'H',"delimit":'D'},help={
     "paths"  : "[paths: string...; '' => stdin]",
     "head"   : ">0 emit | <0 cut this many @start",
     "tail"   : ">0 emit | <0 cut this many @end;\n" &
@@ -209,4 +220,7 @@ when isMainModule:
     "verbose": "always print file name headers",
     "ird"    : "input record delimiter",
     "eor"    : "output end of row/record char",
-    "sleep-interval": "this many seconds between -f loops"}
+    "sleep-interval": "this many seconds between -f loops",
+    "delimit": "if non-\"\" (eg. \"...\"), source switch\n" &
+               "headers begin with THIS + `eor` when \n" &
+               "no `eor` is present at switch-time."}
