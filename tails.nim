@@ -161,10 +161,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
 when isMainModule:
   import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
 
-  let argc {.importc: "cmdCount".}: cint        # Use ACTUAL OS-passed $0, ..
-  let argv {.importc: "cmdLine".}: cstringArray # not the cligen-passed one.
   proc mergeParams(cmdNames:seq[string],cmdLine=commandLineParams()):seq[string]=
-    let cn = splitPath($argv[0]).tail   # Like `cligen/mergeCfgEnv` BUT adapt..
+    let cn = 0.paramStr.splitPath.tail  # Like `cligen/mergeCfgEnv` BUT adapt..
     let up = cn.toUpperAscii            #..$0 = head|tail -[nc] to "-ch|-ct".
     var cf = getEnv(up & "_CONFIG")     # Check for $(HEAD|TAIL|TAILS)_CONFIG
     if cf.len == 0:                     # No $X_CONFIG override, go by $0
