@@ -3,7 +3,7 @@ Motivation
 There are many "quality of life" decoders - `zcat`, `bzcat`, `xzcat`, `lz4cat`,
 `zstdcat`, the list goes on.  For each one (aping a pattern established by
 `gzip`) there are "sometimes" variously some subset of `z[fe]*grep`, `zdiff`,
-`zcmp`, `zless`, `zmore`, etc. analogues totally like 8 programs per format.
+`zcmp`, `zless`, `zmore`, etc. analogues totaling like 8 programs per format.
 Adapter duplication sucks & coding diversity isn't going away.  A general
 decoder tool + one per-use-case tool is far better.[^1]  That's `catz`.
 
