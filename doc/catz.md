@@ -2,9 +2,10 @@ Motivation
 ==========
 There are many "quality of life" decoders - `zcat`, `bzcat`, `xzcat`, `lz4cat`,
 `zstdcat`, the list goes on.  For each one (aping a pattern established by
-`gzip`) there are "sometimes" variously some subset of `zgrep`, `zdiff`, `zcmp`,
-etc. analogues.  Specialization duplication sucks.  One general decoder tool and
-one per-use-case tool is better.[^1]  That's `catz`.
+`gzip`) there are "sometimes" variously some subset of `z[fe]*grep`, `zdiff`,
+`zcmp`, `zless`, `zmore`, etc. analogues totally like 8 programs per format.
+Adapter duplication sucks & coding diversity isn't going away.  A general
+decoder tool + one per-use-case tool is far better.[^1]  That's `catz`.
 
 Briefly, `catz` generalizes `zcat` to many encodings, not merely `gzip`.  Tools
 like `zgrep` are diverse - more or less by definition - and not yet distributed
@@ -72,9 +73,10 @@ tool that works in `...|catz` settings.[^4]
 
 [^1]: Of course, zero decoders and the original utilities are even better *and*
 this can be done with compressed/encoded block devices, file systems, and FUSE
-auto-decoder filesystem wrappers.  Sadly these ideas post-date what most folks
-think of as minimum viable OS services.  Often one wants more portable tools for
-reasons.
+auto-decoder filesystem wrappers.  A "file" system is the OG [narrow
+waist](https://www.oilshell.org/cross-ref.html?tag=narrow-waist#narrow-waist).
+These ideas post-date what most folks think of as minimum viable OS services &
+one often wants more portable tools for reasons.
 
 [^2]: Yes, it would be better to have a `~/.config/catz` direct this but then
 you need a syntax.  As it is, personally I have only had to change the compiled
