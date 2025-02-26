@@ -51,7 +51,7 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
   proc memrchr(s: pointer, c: char, n: csize_t): cstring {.header: "string.h".}
   if sk and head == 0 and tail > 0 and eor == ird:
     let mf = mopen(f.getFileHandle)
-    if mf == nil: return true
+    if mf == nil: return mf.fi.size > 0 # Zero size seekable=no-ops without err
     try: f.setFilePos mf.mslc.len except: discard # In case of a later `track`
     var n = mf.mslc.len.csize_t
     var e = mf.mslc.mem; var E: pointer # Current & NEXT End of record ptrs
