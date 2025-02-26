@@ -27,7 +27,7 @@ template headTail*(R,E: type; get,put,copy,drop,rest; head, tail: int; divide) =
       put buf[j], r; j.bump nTail       #..emit & cycle forward.
   r.drop                                # Free input buffer
 
-from cligen/osUt import c_getdelim, ureadBuffer, uriteBuffer
+import cligen/[osUt, mfile, mslice]
 
 var gLast = '\n'; var gEOR = '\n'; var gDelimit = ""
 proc uriteBuffer(f: File, buffer: pointer, len: Natural): int =
@@ -47,24 +47,37 @@ template rest(r) =    # Input buffer to drop on write error
       r.drop; return true               # Write Error => true
     if n < buf.len: break
 
-#TODO Seekable: mmap, memrchr; Unseekable -> NonBlocking & stop at EWOULDBLOCK.
 proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
-  proc free(pointr: cstring) {.importc, header: "stdlib.h".}
-  type Rec = tuple[cs: cstring; len: int; room: uint]
-  template get(r): untyped =
-    r.len = c_getdelim(r.cs.addr, r.room.addr, cint(ird), f)
-    r.len + 1 > 0
-  template copy(d, s) = d.setLen s.len; copyMem d[0].addr, s.cs, s.len
-  template drop(r) = free(r.cs)
-  template put(b, r) =  # Buffer to write, Input buffer to drop on write error
-    let n = b.len
-    if b[n-1] == ird: b[n-1] = eor
-    if stdout.uriteBuffer(b[0].addr, n) < n:
-      r.drop; return true               # Write error; Return true
-  template divide(r) =
-    if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
-      r.drop; return true               # Write error; Return true
-  headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
+  proc memrchr(s: pointer, c: char, n: csize_t): cstring {.header: "string.h".}
+  if sk and head == 0 and tail > 0 and eor == ird:
+    let mf = mopen(f.getFileHandle)
+    if mf == nil: return true
+    var n = mf.mslc.len.csize_t
+    var e = mf.mslc.mem; var E: pointer # Current & NEXT End of record ptrs
+    for i in 0..tail:                   # File termination => start @0 not 1
+      E = memrchr(mf.mslc.mem, ird, n)
+      if E.isNil: e = mf.mslc.mem; break
+      else: e = E; n = csize_t(e -! mf.mslc.mem)
+    if not E.isNil: e = e +! 1          # Ordinary 0..tail loop exit; jump ird
+    let m = int(mf.mslc.mem +! mf.mslc.len -! e)
+    if stdout.uriteBuffer(e, m) < m: return true
+  else:                                 # TODO Handle EWOULDBLOCK
+    proc free(pointr: cstring) {.importc, header: "stdlib.h".}
+    type Rec = tuple[cs: cstring; len: int; room: uint]
+    template get(r): untyped =
+      r.len = c_getdelim(r.cs.addr, r.room.addr, cint(ird), f)
+      r.len + 1 > 0
+    template copy(d, s) = d.setLen s.len; copyMem d[0].addr, s.cs, s.len
+    template drop(r) = free(r.cs)
+    template put(b, r) =  # Buffer to write, Input buffer to drop on write error
+      let n = b.len
+      if b[n-1] == ird: b[n-1] = eor
+      if stdout.uriteBuffer(b[0].addr, n) < n:
+        r.drop; return true             # Write error; Return true
+    template divide(r) =
+      if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
+        r.drop; return true             # Write error; Return true
+    headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
 
 proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): bool =
   when defined(linux) and not defined(android):
