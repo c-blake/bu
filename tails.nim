@@ -213,6 +213,7 @@ when isMainModule:
     elif s.len == 0 or parseInt(s, dst.n) < s.len:
       a.msg = "Bad value: \"$1\" for option \"$2\"; expecting int\n$3" %
               [a.val, a.key, a.help]; return false
+    else: dst.kind = doN
     return true
 
   proc argHelp*(defVal: NRow, a: var ArgcvtParams): seq[string] =
