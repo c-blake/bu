@@ -50,8 +50,8 @@ proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, expr="e",
          paths: seq[string]): int =
   ## Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
   ## that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
-  ## also read stdin as in `find -type f|ft -ew`.  (Yes, could cobble together
-  ## with GNU `find -files0-from` less tersely & with more quoting concerns.)
+  ## also read stdin as in `find -type f|ft -ew`. (Yes, can cobble together less
+  ## tersely w/GNU `find -files0-from` | `find GLOB -maxdepth 0 PREDICATE`.)
   ## Maybe counter-intuitively, exit with status = match count (0=NONE).
   let (euid, egid) = (geteuid(), getegid())     # only do this *once*
   let it = both(paths, fileStrings(file, delim))

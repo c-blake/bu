@@ -15,11 +15,12 @@ Usage
 -----
 ```
   ft [optional-params] [paths: string...]
-Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
-that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
-also read stdin as in `find -type f|ft -ew`.  (Yes, could cobble together
-with GNU `find -files0-from` less tersely & with more quoting concerns.) Maybe
-counter-intuitively, exit with status = match count (0=NONE).
+
+Batch (in both predicates & targets) test / [ .  Emit subset of paths that
+pass expr.  E.g.: $(ft -eL *) =~ Zsh extended glob *(@).  Can also read stdin
+as in find -type f|ft -ew. (Yes, can cobble together less tersely w/GNU find
+-files0-from | find GLOB -maxdepth 0 PREDICATE.) Maybe counter-intuitively,
+exit with status = match count (0=NONE).
 
   -f=, --file=     string  ""     optional input ( `"-"` | !tty = ``stdin`` )
   -d=, --delim=    char    '\n'   input file delimiter; `\\0` -> NUL
