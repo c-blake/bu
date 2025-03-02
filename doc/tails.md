@@ -116,6 +116,7 @@ cycle background color of text through red, green, blue, etc.  Here is an
 example of pinging two hosts: ![tFping](tFping.gif).
 which came from a `~/.config/tails` file abbreviated as:
 ```
+# Nim parsecfg strips first \n; So for leading \n you must put in 2 line breaks.
 header = """%[WHITE on_blue]==>    $1    <==%[none]
 """
 header = """%[WHITE on_red]==>    $1    <==%[none]
