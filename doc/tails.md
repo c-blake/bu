@@ -43,6 +43,7 @@ Usage
 Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]"
 for head|tail infers a num.rows s.t. output for n files fits in
 ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
+header, delimit & divide all expand lc attrs like %[WHITE on_red].
 
   -?, --help                            print this cligen-erated help
   -h=, --head=           int|/[n] 0     >0 emit | <0 cut this many @start
@@ -61,6 +62,7 @@ ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
   -D=, --delimit=        string   ""    if non-"" (eg. "..."), source switch
                                         headers begin with THIS + eor when 
                                         no eor is present at switch-time.
+  -p, --plain            bool     false plain text; No color escape sequences
 ```
 
 Examples
@@ -112,6 +114,15 @@ should show with colorized file name headers (if so configured) as much of the
 ends of the logs as fits on one screen, and then follow each one.  You could
 cycle background color of text through red, green, blue, etc.  Here is an
 example of pinging two hosts: ![tFping](tFping.gif).
+which came from a `~/.config/tails` file abbreviated as:
+```
+header = """%[WHITE on_blue]==>    $1    <==%[none]
+"""
+header = """%[WHITE on_red]==>    $1    <==%[none]
+"""
+delimit = "%[inverse blink]…%[none]"
+divide = "%[bold]_-^-_-^-_-^-_-^-_-^-_-^-_-^-_-^-_%[none]"
+```
 
 Related Work
 ------------

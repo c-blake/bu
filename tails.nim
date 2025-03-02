@@ -27,7 +27,7 @@ template headTail*(R,E: type; get,put,copy,drop,rest; head, tail: int; divide) =
       put buf[j], r; j.bump nTail       #..emit & cycle forward.
   r.drop                                # Free input buffer
 
-import cligen/[osUt, mfile, mslice]
+import cligen/[osUt, mfile, mslice, humanUt]
 
 var gLast = '\n'; var gEOR = '\n'; var gDelimit = ""
 proc uriteBuffer(f: File, buffer: pointer, len: Natural): int =
@@ -128,17 +128,21 @@ proc nToFit(height, nH1, nH, nF: int): int =
 
 proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
            header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
-           eor='\n', sleepInterval=0.25, delimit="", paths: seq[string]): int =
+           eor='\n', sleepInterval=0.25, delimit="", plain=false,
+           paths: seq[string]): int =
   ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
   ## `head|tail` infers a num.rows s.t. output for n files fits in
   ## ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
+  ## `header`, `delimit` & `divide` all expand `lc` attrs like %[WHITE on_red].
+  template hl(s: string): untyped = s.specifierHighlight({},plain,keepPct=false)
   let paths = if paths.len > 0: paths else: @[""]
-  let divider = divide & $eor; gDelimit = delimit; gEOR = eor
+  let divider = divide.hl & $eor; gDelimit = delimit.hl; gEOR = eor
   var head = head; var tail = tail
   let doHeaders = verbose or (not quiet and paths.len > 1)
   var hdr1: string; var hdrs: seq[string]; var nH, nH1: int
   if doHeaders:
-    hdrs = if header.len>0: header else: @[ $eor & "==> $1 <==" & $eor ]
+    if header.len>0: (for h in header: hdrs.add h.hl)
+    else: hdrs = @[ $eor & "==> $1 <==" & $eor ]
     hdr1 = hdrs[0].strip(trailing=false, chars={eor})
     for i in 0 ..< paths.len:
       if i == 0: nH1 = hdr1.count(eor)
@@ -228,7 +232,7 @@ when isMainModule:
     "follow" : "output added data as files get it",
     "divide" : "separator, for non-contiguous case",
     "header" : "header formats (used cyclically);\n" &
-               "\"\" => \\n==> $1 <==\\n",
+               "\"\" => \\n==> $1 <==\\n\n",
     "quiet"  : "never print file name headers", # --silent alias?
     "verbose": "always print file name headers",
     "ird"    : "input record delimiter",
@@ -236,4 +240,5 @@ when isMainModule:
     "sleep-interval": "this many seconds between -f loops",
     "delimit": "if non-\"\" (eg. \"...\"), source switch\n" &
                "headers begin with THIS + `eor` when \n" &
-               "no `eor` is present at switch-time."}
+               "no `eor` is present at switch-time.",
+    "plain"  : "plain text; No color escape sequences"}
