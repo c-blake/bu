@@ -1,5 +1,5 @@
-import std/[strutils, os, hashes, sets, terminal] # % exec* hash HashSet isatty
-import cligen,cligen/[osUt, mslice, parseopt3] # mkdirOpen split optionNormalize
+import std/[strutils,os,hashes,sets,terminal,sugar] #% exec* hash HashSet isatty
+import cligen,cligen/[osUt, mslice, parseopt3] #writeCont* split optionNormalize
 when not declared(stderr): import std/syncio
 
 proc toDef(fields, delim, genF: string): string =
@@ -20,16 +20,16 @@ proc toDef(fields, delim, genF: string): string =
 proc orD(s, default: string): string =  # little helper for accumulating params
   if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 
+
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
-proc rp(prelude=es, begin=es,`var`=es, match="",where="true", stmts:seq[string],
-        epilog=es, fields="", genF="$1", nim="nim", run=true, args="", cache="",
-        lgLevel=0, outp="/tmp/rpXXX", src=false, input="", delim="white",
-        uncheck=false, MaxCols=0, Warn=""): int =
+proc rp(prelude=es, vars=es, begin=es, match="",where="true", stmts:seq[string],
+        epilog=es, delim="white", fields="", MaxCols=0, genF="$1", input="",
+        uncheck=false, src=false, nim="", run=true, args="", cache="",
+        lgLevel=0, outp="/tmp/rpXXX", Warn=""): int =
   let amatch = match.len > 0            # auto-match filter
   let pre    = (if amatch: prelude & @["import std/re"] else: prelude).jn
   let begin1 = if amatch: "let rpRx = re\"" & match & "\"" & begin else: begin
-  var vars = es; (for v in `var`: vars.add "var " & v)
-  let begin  = vars & begin1
+  let begin  = collect(for v in vars: "var " & v) & begin1
   let stmts  = if stmts.len > 0: stmts
     else: @["discard stdout.writeBuffer(row.mem, row.len); stdout.write '\\n'"]
   let null   = when defined(windows): "NUL:" else: "/dev/null"
@@ -66,39 +66,36 @@ ${6}rpNmSepOb.split(row, s, $7) # {MaxCols}
   program.add   indent(epilog.jn, 2)
   program.add   " # {epilogue}\n\nmain()\n"
   program.add   "block:\n let o{.used.}=stdout\n let d{.used.}= $1.0\n"
-  let bke  = if run: "r" else: "c"  # (b)ac(k) (e)nd; TODO cpp as well?
+  if src: stderr.write program
+  let oNm  = writeContAddrTempFile(outp, ".nim", program)
+  let subc = if run: "r" else: "c" # sub-command; TODO cpp as well? Bubble-up?
   let args = args.orD("-d:danger ") & " " & cache.orD("--nimcache:/tmp/rp ") &
              " " & Warn.orD("--warning[CannotOpenFile]=off ")
   let verb = "--verbosity:" & $lgLevel
-  let digs = count(outp, 'X')       # temp file rigamarole
-  let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
-  let outp = if digs > 0: outp[0 ..< ^digs] & hsh else: outp
-  let nim  = "$1 $2 $3 $4 -o:$5 $6" % [nim, bke, args, verb, outp, outp]
-  let f = mkdirOpen(outp & ".nim", fmWrite); f.write program; f.close
-  if src: stderr.write program
-  execShellCmd nim
+  let cmd  = if nim.len > 0: nim else: "nim $1 $2 $3" % [subc, args, verb]
+  execShellCmd cmd & (" -o:$1 $1" % oNm)
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "prelude": "Nim code for prelude/imports section",
+  "vars"   : "begin starts w/\"var \"+these shorthand",
   "begin"  : "Nim code for begin/pre-loop section",
-  "var"    : "begin starts w/\"var \"+these shorthand",
   "match"  : "`row` must match this regex",
   "where"  : "Nim code for row inclusion",
   "stmts"  : "Nim stmts to run (guarded by `where`); none => echo row",
   "epilog" : "Nim code for epilog/end loop section",
+  "delim"  : "inp delim chars; Any repeats => fold",
   "fields" : "`delim`-sep field names (match row0)",
+  "MaxCols": "max split optimization; 0 => unbounded",
   "genF"   : "make field names from this fmt; eg c$1",
-  "nim"    : "path to a nim compiler (>=v1.4)",
+  "input"  : "path to mmap|read; \"\"=stdin",
+  "uncheck": "do not check&skip header row vs fields",
+  "src"    : "show generated Nim source on stderr",
+  "nim"    : "\"\" => nim {if run:r else:c} {args}",
   "run"    : "Run at once using nim r ..",
   "args"   : "\"\": -d:danger; '+' prefix appends",
   "cache"  : "\"\": --nimcache:/tmp/rp (--incr:on?)",
   "lgLevel": "Nim compile verbosity level",
   "outp"   : "output executable; .nim NOT REMOVED",
-  "src"    : "show generated Nim source on stderr",
-  "input"  : "path to mmap|read; \"\"=stdin",
-  "delim"  : "inp delim chars; Any repeats => fold",
-  "uncheck": "do not check&skip header row vs fields",
-  "MaxCols": "max split optimization; 0 => unbounded",
   "Warn"   : "\"\": --warning[CannotOpenFile]=off"}, doc = """
 Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
 against *input*.  Defined within *where* & every *stmt* are:

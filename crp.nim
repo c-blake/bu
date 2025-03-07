@@ -1,5 +1,5 @@
-import std/[strutils, os, hashes, sets, terminal] # % exec* hash HashSet isatty
-import cligen,cligen/[osUt, mslice, parseopt3] # mkdirOpen split optionNormalize
+import std/[strutils,os,hashes,sets,terminal,sugar] #% exec* hash HashSet isatty
+import cligen,cligen/[osUt, mslice, parseopt3] #writeCont* split optionNormalize
 when not declared(stderr): import std/syncio
 
 proc toDef(fields, delim, genF: string): string =
@@ -18,14 +18,13 @@ proc toDef(fields, delim, genF: string): string =
       stderr.write "crp: WARNING: ", nm, " collides with earlier field\n"
 
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
-proc crp(prelude=es, begin=es, `var`=es, match="", where="1", stmts:seq[string],
-    epilog=es, fields="", genF="$1", comp="", run=true, args="",
-    outp="/tmp/crpXXX", input="", delim=" \t", uncheck=false, MaxCols=0): int =
+proc crp(prelude=es, vars=es, begin=es, match="", where="1", stmts:seq[string],
+    epilog=es, delim=" \t", fields="", MaxCols=0, genF="$1", input="",
+    uncheck=false, comp="", run=true, args="", outp="/tmp/crpXXX"): int =
   let amatch = match.len > 0            # auto-match filter
   let pre    = (if amatch: prelude & @["#include <regex.h>"] else: prelude).jn
   let begin1 = if amatch: "regex_t rpRx; regmatch_t rpRm[128];\nregcomp(&rpRx, \"" & match & "\", REG_EXTENDED)" & begin else: begin
-  var vars = es; (for v in `var`: vars.add "double " & v & ";")
-  let begin  = vars & begin1
+  let begin  = collect(for v in vars: "double " & v & ";") & begin1
   let stmts  = if stmts.len > 0: stmts
     else: @["fwrite(row, rowLen, 1, stdout); fputc('\\n', stdout)"]
   let null   = when defined(windows): "NUL:" else: "/dev/null"
@@ -68,7 +67,7 @@ char **rpNmSplit(char **toks, size_t *nAlloc,
     }           /*..instead we keep it so user-code referencing s[0] is ok. */
     toks[0] = str; toks[1] = NULL; *nSeen = 1;
     return toks;
-  }
+  } /*NOTE! strtok* FOLD MULTIPLE DELIMITER CHARS INTO ONE DELIMITER! */
   for (toks[n]=strtok_r(str, dlm, &p); toks[n] && (maxSplit==0 || n < maxSplit);
        toks[++n]=strtok_r(0, dlm, &p))
     if (n+2 > *nAlloc && !(toks=realloc(toks, (*nAlloc *= 2) * sizeof*toks))) {
@@ -99,48 +98,42 @@ ${6}s = rpNmSplit(s, &rpNmAlloc, row, "$3", $7, &nf); // {delim,maxSplit}
   program.add "    }\n    nr++;\n  }\n"
   program.add indent(epilog.jn, 2)
   program.add "; // {epilogue}\n}\n"
+  let oNm  = writeContAddrTempFile(outp, ".c", program)
   let mode = if run: "-run" else: ""
   let args = if args.len > 0: args else: "-I$HOME/s -O"
-  let digs = count(outp, 'X')
-  let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
-  let outp = if digs > 0: outp[0 ..< ^digs] & hsh else: outp
-  let comp = if comp.len > 0: comp else: "tcc $1 $2 -o$3 $4" % [
-                                         mode, args, outp, outp & ".c"]
-  let f = mkdirOpen(outp & ".c", fmWrite)
-  f.write program
-  f.close
-  let inp = if input.len > 0: " < " & input else: ""
-  execShellCmd(comp & (if run: inp else: ""))
+  let c = if comp.len>0:comp else:"tcc $1 $2 -o$3 $4" % [mode,args,oNm,oNm&".c"]
+  let inp  = if input.len > 0: " < " & input else: ""
+  execShellCmd c & (if run: inp else: "")
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch crp, help={
   "prelude": "C code for prelude/include section",
+  "vars"   : "preface begin with `double` var decl",
   "begin"  : "C code for begin/pre-loop section",
-  "var"    : "preface begin with `double` var decl",
   "match"  : "row must match this regex",
   "where"  : "C code for row inclusion",
   "stmts"  : "C stmts to run (guarded by `where`); none => echo row",
   "epilog" : "C code for epilog/end loop section",
+  "delim"  : "inp delim chars for strtok",
   "fields" : "`delim`-sep field names (match row0)",
+  "MaxCols": "max split optimization; 0 => unbounded",
   "genF"   : "make Field names from this Fmt;Eg c_$1",
+  "input"  : "path to read as input; \"\"=stdin",
+  "uncheck": "do not check&skip header row vs fields",
   "comp"   : "\"\" => tcc {if run: \"-run\"} {args}",
   "run"    : "Run at once using tcc -run .. < input",
   "args"   : "\"\" => -I$HOME/s -O",
-  "outp"   : "output executable; .c NOT REMOVED",
-  "input"  : "path to read as input; \"\"=stdin",
-  "delim"  : "inp delim chars for strtok",
-  "uncheck": "do not check&skip header row vs fields",
-  "MaxCols": "max split optimization; 0 => unbounded"}, doc="""
+  "outp"   : "output executable; .c NOT REMOVED"}, doc="""
 Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
 against *input*.  Defined within *where* & every *stmt* are:
   *s[idx]* & *row* => C strings, *i(idx)* => int64, *f(idx)* => double.
   *nf* & *nr* (*AWK*-ish), *rowLen*=strlen(row);  *idx* is **0-origin**.
 A generated program is left at *outp*.c, easily copied for "utilitizing".
 If you know *AWK* & *C*, you can learn *crp* FAST.  Examples (most need data):
-  **seq 0 1000000|crp -w'rowLen<2'**                # Print short rows
-  **crp 'printf("%s %s\\n", s[1], s[0])'**           # Swap field order
-  **crp -vt=0 t+=nf -e'printf("%g\\n", t)'**         # Prn total field count
+  **seq 0 1000000|crp -w'rowLen<2'**                       # Print short rows
+  **crp 'printf("%s %s\\n", s[1], s[0])'**                  # Swap field order
+  **crp -vt=0 t+=nf -e'printf("%g\\n", t)'**                # Total field count
   **crp -vt=0 -w'i(0)>0' 't+=i(0)' -e'printf("%g\\n", t)'** # Total>0
-  **crp 'float x=f(0)' 'printf("%g\\n", (1+x)/x)'**  # cache field 0 parse
+  **crp 'float x=f(0)' 'printf("%g\\n", (1+x)/x)'**         # cache field 0 parse
   **crp -d, -fa,b,c 'printf("%s %g\\n",s[a],f(b)+i(c))'**   # named fields
-  **crp -mfoo 'printf("%s\\n", s[2])'**              # column if row matches
+  **crp -mfoo 'printf("%s\\n", s[2])'**                     #Column if row match
 Add niceties (eg. prelude="#include <mystuff.h>") to ~/.config/crp."""
