@@ -104,7 +104,7 @@ proc fdCopy(src, dst: cint) =           # File descriptor copy loop
   var nR: int
   while (nR = read(src, buf[0].addr, buf.sizeof); nR) > 0:
     if writeAll(dst, buf, nR) != nR: quit(17)
-  if nR < 0: quit("catz: read: {errstr()}", 3)
+  if nR < 0: quit(&"catz: read: {errstr()}", 3)
 
 proc oneFile(path: string; do_fork: bool) = # Dispatch just one file
   var hdr = newStringOfCap(PEEK)
