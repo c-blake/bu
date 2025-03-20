@@ -48,6 +48,7 @@ when defined(Windows):
 
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "tw",         # terminal-width clip/cropper with m-row bounding capability
+  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
@@ -126,6 +127,7 @@ else:
 
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "tw",         # terminal-width clip/cropper with m-row bounding capability
+  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper

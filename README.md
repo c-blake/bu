@@ -102,6 +102,8 @@ Freeform Text Things
 
 [tw - terminal-width clip/cropper with m-row bounding capability](doc/tw.md)
 
+[tslice - UTF8-ANSI SGR aware text slicer with Python-like ':'](doc/tslice.md)
+
 [cfold - Context folding (like csplit but to wrap lines)](doc/cfold.md)
 
 [unfold - Oft neglected inverse-to-wrapping/folding process](doc/unfold.md)
