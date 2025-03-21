@@ -2,6 +2,8 @@ iterator printedChars*(s:openArray[char],skip=0,lim=int.high): (Slice[int],int)=
   ## 1-pass iterate over SGR-embellished utf8 `s` yielding slices rendering to
   ## 0|1|2 terminal char cells & number of cells rendered.  Includes trailing
   ## SGR codes & allows skipping `skip` cells & limiting to <= `lim` cells.
+  const eoSGR = {'m', 'K'}
+  const inSGR = {'0'..'9', ';'} + eoSGR
   let lim = if lim >= 0: skip + lim else: int.high
   var pastLim = false
   var i, wDid: int
@@ -10,8 +12,8 @@ iterator printedChars*(s:openArray[char],skip=0,lim=int.high): (Slice[int],int)=
     if s[i] == '\e':                    # ANSI SGR seqs match \e[[0-9;]*m
       if i+1 < s.len and s[i+1] == '[':
         i += 2
-        while i < s.len and (s[i] in {'0'..'9', ';', 'm'}):
-          if s[i] == 'm': isSGR = true; break
+        while i < s.len and (s[i] in inSGR):
+          if s[i] in eoSGR: isSGR = true; break
           i += 1
         i += 1                          # Include 'm'
     elif (let c = s[i].uint; c > 127):  # UTF8 multi-byte input
