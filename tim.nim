@@ -9,8 +9,11 @@ let timeScales={"n":1e9, "nano":1e9, "micro":1e6, "u":1e6, "μ":1e6, "m":1e3,
                 "milli":1e3, "":1.0, "min":1.0/60.0, "minute":1.0/60.0}.toTable
 var dtScale = 1.0
 
+var seqNo = 0
 proc sample1(f: File; cmd, prepare, cleanup: string): float =
-  template runOrQuit(c, x) = (if execShellCmd(c)!=0: quit "\""&c&"\" failed", x)
+  template runOrQuit(c, x) =
+    inc seqNo; putEnv "TIM_SEQ", $seqNo # Exported sequence number
+    if execShellCmd(c)!=0: quit "\""&c&"\" failed", x
   if prepare.len > 0: prepare.runOrQuit 2                          # Maybe prep
   let t0 = epochTime(); cmd.runOrQuit 3; let dt = epochTime() - t0 # Time
   if cleanup.len > 0: cleanup.runOrQuit 4                          # Maybe Clean
