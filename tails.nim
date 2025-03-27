@@ -44,14 +44,14 @@ template rest(r) =    # Input buffer to drop on write error
   while true:         # Nixing stdio use can elim work; Also sendfile/splice?
     let n = f.ureadBuffer(buf[0].addr, buf.len)
     if n > 0 and stdout.uriteBuffer(buf[0].addr, n) < n:
-      r.drop; return true               # Write Error => true
+      r.drop; return -result            # Write Error => flip accum sign
     if n < buf.len: break
 
-proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
+proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
   proc memrchr(s: pointer, c: char, n: csize_t): cstring {.header: "string.h".}
   if sk and head == 0 and tail > 0 and eor == ird:
-    let mf = mopen(f.getFileHandle)
-    if mf == nil: return mf.fi.size > 0 # Zero size seekable=no-ops without err
+    let mf = mopen(f.getFileHandle)             # Zero size seekable =>
+    if mf == nil: return -int(mf.fi.size > 0)   #..no-ops without err.
     try: f.setFilePos mf.mslc.len except: discard # In case of a later `track`
     var n = mf.mslc.len.csize_t
     var e = mf.mslc.mem; var E: pointer # Current & NEXT End of record ptrs
@@ -61,12 +61,13 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
       else: e = E; n = csize_t(e -! mf.mslc.mem)
     if not E.isNil: e = e +! 1          # Ordinary 0..tail loop exit; jump ird
     let m = int(mf.mslc.mem +! mf.mslc.len -! e)
-    if stdout.uriteBuffer(e, m) < m: return true
+    if stdout.uriteBuffer(e, m) < m: return -result
   else:                                 # TODO Handle EWOULDBLOCK
     proc free(pointr: cstring) {.importc, header: "stdlib.h".}
     type Rec = tuple[cs: cstring; len: int; room: uint]
     template get(r): untyped =
       r.len = c_getdelim(r.cs.addr, r.room.addr, cint(ird), f)
+      inc result
       r.len + 1 > 0
     template copy(d, s) = d.setLen s.len; copyMem d[0].addr, s.cs, s.len
     template drop(r) = free(r.cs)
@@ -74,13 +75,13 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true):bool =
       let n = b.len
       if b[n-1] == ird: b[n-1] = eor
       if stdout.uriteBuffer(b[0].addr, n) < n:
-        r.drop; return true             # Write error; Return true
+        r.drop; return -result          # Write error; Return true
     template divide(r) =
       if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
-        r.drop; return true             # Write error; Return true
+        r.drop; return -result          # Write error; Return true
     headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
 
-proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): bool =
+proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): int =
   when defined(linux) and not defined(android):
     proc fgetc(f: File): cint {.importc: "fgetc_unlocked".}
     proc putchar(c: cint): cint {.importc: "putchar_unlocked".}
@@ -88,14 +89,15 @@ proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): bool =
     proc fgetc(f: File): cint {.importc.}
     proc putchar(c: cint): cint {.importc.}
   type Rec = tuple[cs: char]
-  template get(r): untyped = (let i = f.fgetc; r.cs = char(i); i >= 0)
+  template get(r): untyped =
+    let i = f.fgetc; r.cs = char(i); result += (i >= 0).int; i >= 0
   template copy(d, s) = d = s.cs
   template drop(r) = discard
   template put(b, r) =  # Buffer to write, Input buffer to drop on write error
-    if putchar(b.cint) < 0: return true # Write error; Return true
+    if putchar(b.cint) < 0: return -result # Write error; Return < 0
   template divide(r) =  # A bit questionable if both-mode+bytes should divide.
     if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
-      r.drop; return true               # Write error; Return true
+      r.drop; return -result            # Write error; Return < 0
   headTail Rec, char, get, put, copy, drop, rest, head, tail, divide
 
 type Files = seq[tuple[path: string; f: File; seekable: bool]]
@@ -128,7 +130,7 @@ proc nToFit(height, nH1, nH, nF: int): int =
 
 proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
            header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
-           eor='\n', sleepInterval=0.25, delimit="", plain=false,
+           eor='\n', sleepInterval=0.25, delimit="", Count=0, plain=false,
            paths: seq[string]): int =
   ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
   ## `head|tail` infers a num.rows s.t. output for n files fits in
@@ -161,6 +163,7 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
   elif tail.kind == fitN: tail.n = height.nToFit(nH1, nH, tail.n)
   var firstHeader = true
   var fs: Files                         # For tails --follow
+  var cnt: int                          # Row|byte count from (row|byte)Filter
   for i, path in pairs paths:
     if doHeaders:
       let path = if path.len > 0: path else: "standard input"
@@ -170,8 +173,10 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
       else: stdout.uriteHdr hdrs[i mod hdrs.len]%path
     let f = if path.len > 0: open(path) else: stdin
     let seekable = (try: (setFilePos(f, 0); true) except: false)
-    if bytes: (if f.byteFilter(head.n, tail.n, divider, seekable): return 1)
-    else: (if f.rowFilter(head.n, tail.n, ird,eor, divider, seekable): return 1)
+    if bytes: cnt = f.byteFilter(head.n, tail.n, divider, seekable)
+    else: cnt = f.rowFilter(head.n, tail.n, ird,eor, divider, seekable)
+    if Count != 0: write(Count.cint, $abs(cnt) & "\n")
+    if cnt < 0: return 1
     if follow: fs.add (path, f, seekable)
     elif f != stdin: f.close
   if follow: fs.track bytes, doHeaders, hdrs, sleepInterval
@@ -241,4 +246,5 @@ when isMainModule:
     "delimit": "if non-\"\" (eg. \"...\"), source switch\n" &
                "headers begin with THIS + `eor` when \n" &
                "no `eor` is present at switch-time.",
+    "Count"  : "emit total input count to this fd",
     "plain"  : "plain text; No color escape sequences"}

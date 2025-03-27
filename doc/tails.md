@@ -62,6 +62,7 @@ header, delimit & divide all expand lc attrs like %[WHITE on_red].
   -D=, --delimit=        string   ""    if non-"" (eg. "..."), source switch
                                         headers begin with THIS + eor when 
                                         no eor is present at switch-time.
+  -C=, --Count=          int      0     emit total input count to this fd
   -p, --plain            bool     false plain text; No color escape sequences
 ```
 
