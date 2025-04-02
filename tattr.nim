@@ -7,7 +7,7 @@ proc tattr(attrs: seq[string]) =
   ##
   ## Non-color styles (prefix with '-' to turn off):
   ##   bold, faint, italic, inverse, struck, blink (slow), BLINK (fast),
-  ##   under{line double dot dash curl}.
+  ##   under{line double dot dash curl}, overline.
   ##
   ## Regular color keywords are in lower case; Bright bank in UPPER CASE:
   ##   black, red, green, yellow, blue, purple, cyan, white
@@ -25,6 +25,9 @@ proc tattr(attrs: seq[string]) =
   ## where only `hue` and `wLen` take [,sat,val] optionally.
   ## "wLen" is for "waveLength" - (yes, I know RGB light is a mixture; terms are
   ## just to contrast with "frequency order" or hot..cold / cold..hot).
+  ##
+  ## -fg, -bg turn off ForeGround, BackGround embellishment.  off, none, NONE
+  ## turn off all special graphics renditions.
   if attrs.len == 0:
     raise newException(ValueError, "\n  Need >= 1 attrs.  See tattr --help")
   stdout.write textAttrOn(attrs, plain=existsEnv("NO_COLOR"))
