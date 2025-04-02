@@ -73,8 +73,11 @@ Non-color styles are:
  * underdot - ..The names after "under" refer to the
  * underdash - ..shape/style underneath the rendered
  * undercurl - ..text which can also have its own color.
+ * overline - text with a line above, opposed to underline
 
-These can be prefixed with '-' for the turn off esc sequence.
+These can be prefixed with '-' for the turn off esc sequence, including -fg and
+-bg for foreground & background colors.  Use `tattr -- string` to pass a
+specifier beginning with a '-'.
 
 Rationale/Related Work
 ----------------------
