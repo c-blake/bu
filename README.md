@@ -10,8 +10,7 @@ a general vibe similar to [util-linux](https://en.wikipedia.org/wiki/Util-linux)
 or [moreutils](https://www.putorius.net/moreutils.html).  A great many are Unix
 only tools, but some may be more cross-platform.
 
-File Typology (What/Whether)
-----------------------------
+# File Typology (What/Whether)
 
 [ft - file typer {i-node type, not file(1)/libmagic(3) type}](doc/ft.md)
 
@@ -23,8 +22,7 @@ File Typology (What/Whether)
 
 [catz - Generalize `zcat` to many encodings, not merely `gzip`](doc/catz.md)
 
-Space Management (How Much/Where)
----------------------------------
+# Space Management (How Much/Where)
 
 [dfr - d)isk fr)ee; `df` with color coding & modern units](doc/dfr.md)
 
@@ -38,8 +36,7 @@ Space Management (How Much/Where)
 
 [fpr - File Pages Resident reporting utility like fincore](doc/fpr.md)
 
-File Time Related (When)
-------------------------
+# File Time Related (When)
 
 [cbtm - Back up & restore new Linux b-time stamps (creation/birth)](doc/cbtm.md)
 
@@ -57,8 +54,7 @@ File Time Related (When)
 
 [mk1 - Very fast `make` for many 1-to-1 input-output mappings](doc/mk1.md)
 
-Benchmarking Related Utilities (How Long)
------------------------------------------
+# Benchmarking Related Utilities (How Long)
 
 [memlat - measure memory latency at various size scales](doc/memlat.md)
 
@@ -76,8 +72,7 @@ Benchmarking Related Utilities (How Long)
 
 [keydowns - Assess string complexity in terms of a human cost](doc/keydowns.md)
 
-Row/Column/Text Table Things
-----------------------------
+# Row/Column/Text Table Things
 
 [align - align text with better ergonomics than BSD `column`](doc/align.md)
 
@@ -95,14 +90,7 @@ Row/Column/Text Table Things
 
 [cstats - preserve Context/Compute Column stats filter](doc/cstats.md)
 
-Freeform Text Things
---------------------
-
-[noc - stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs](doc/noc.md)
-
-[tw - terminal-width clip/cropper with m-row bounding capability](doc/tw.md)
-
-[tslice - UTF8-ANSI SGR aware text slicer with Python-like ':'](doc/tslice.md)
+# Freeform Text Things
 
 [cfold - Context folding (like csplit but to wrap lines)](doc/cfold.md)
 
@@ -118,17 +106,15 @@ Freeform Text Things
 
 [tmpls - A fast string template interpolater](doc/tmpls.md)
 
-Pipeline Calculation Tools
---------------------------
+# Pipeline Calculation Tools
 
-[topn - Fast streaming 1-pass top-N over M columns](doc/topn.md)
+[topn - Fast, streaming 1-pass top-N over M columns](doc/topn.md)
 
 [oft - Approximately most often items via a low-memory algorithm](doc/oft.md)
 
 [uce - Unique/distinct Count Estimate via a low-memory algorithm](doc/uce.md)
 
-System Administration on Unix/POSIX/Linux
------------------------------------------
+# System Administration on Unix/POSIX/Linux
 
 [holes - count/map hole & data segments of files](doc/holes.md)
 
@@ -142,15 +128,19 @@ System Administration on Unix/POSIX/Linux
 
 [sr - System Request Key - rapidly act on Linux systems](doc/sr.md)
 
-Tty Handling
-------------
+# Terminal/Rich Text Handling
+
+[noc - stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs](doc/noc.md)
+
+[tw - terminal-width clip/cropper with m-row bounding capability](doc/tw.md)
+
+[tslice - UTF8-ANSI SGR aware text slicer with Python-like ':'](doc/tslice.md)
 
 [tattr - Terminal attribute access (like cligen/humanUt)](doc/tattr.md)
 
 [wsz - Report terminal size in cells, pixels, and cell size](doc/wsz.md)
 
-Miscellaneous/Islands Unto Themselves
--------------------------------------
+# Miscellaneous/Islands Unto Themselves
 
 [noa - "--"-aware Python-like indexing of non-option arguments](doc/noa.md)
 

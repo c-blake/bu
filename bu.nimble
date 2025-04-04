@@ -46,9 +46,6 @@ when defined(Windows):
   "bu/colSort", # Sort *within* the columns of rows
   "cstats",     # Preserve Context/Compute Column stats filter
 
-  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
-  "tw",         # terminal-width clip/cropper with m-row bounding capability
-  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
@@ -57,7 +54,7 @@ when defined(Windows):
   "ndelta",     # Numerical difference between two reports utility
   "tmpls",      # A fast string template interpolater
 
-  "topn",       # Fast streaming 1-pass top-N over M columns
+  "topn",       # Fast, streaming 1-pass top-N over M columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
@@ -68,6 +65,9 @@ when defined(Windows):
 # "pid2",       # Wrap Linux process PID table to first past target
 # "sr",         # System Request Key; Rapidly act on Linux systems
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
+  "tw",         # terminal-width clip/cropper with m-row bounding capability
+  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "tattr",      # Terminal attribute access (like cligen/humanUt)
 # "wsz",        # Report terminal size in cells, pixels, and cell size
 
@@ -125,9 +125,6 @@ else:
   "bu/colSort", # Sort *within* the columns of rows
   "cstats",     # Preserve Context/Compute Column stats filter
 
-  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
-  "tw",         # terminal-width clip/cropper with m-row bounding capability
-  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "cfold",      # Context folding (like csplit but to wrap lines)
   "unfold",     # Oft neglected inverse-to-wrapping/folding process
   "ww",         # Dynamic programming based word wrapper
@@ -136,7 +133,7 @@ else:
   "ndelta",     # Numerical difference between two reports utility
   "tmpls",      # A fast string template interpolater
 
-  "topn",       # Fast streaming 1-pass top-N over M columns
+  "topn",       # Fast, streaming 1-pass top-N over M columns
   "oft",        # Approximately most often items via a low-memory algorithm
   "uce",        # Unique/distinct Count Estimate via a low-memory algorithm
 
@@ -147,6 +144,9 @@ else:
   "pid2",       # Wrap Linux process PID table to first past target
   "sr",         # System Request Key; Rapidly act on Linux systems
 
+  "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
+  "tw",         # terminal-width clip/cropper with m-row bounding capability
+  "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
   "tattr",      # Terminal attribute access (like cligen/humanUt)
   "wsz",        # Report terminal size in cells, pixels, and cell size
 
