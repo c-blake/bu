@@ -114,9 +114,9 @@ zle -N h-vip; bindkey '^R' h-vip                # Create & bind widget
 
 ## Video Demo Of Zsh W/Key Stroke Log
 
-         Key Strokes      |   Terminal Output
-:------------------------:|:-------------------:
- ![Key Strokes](vipK.gif) | ![Output](vipO.gif)
+|        Key Strokes         |   Terminal Output   |
+| -------------------------- | ------------------- |
+| ![Key Strokes](vipK.gif)   | ![Output](vipO.gif) |
 
 # Performance
 
