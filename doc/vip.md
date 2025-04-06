@@ -163,8 +163,9 @@ Tamas Patrovics surely knows more.  Someone should ask him for background.
 
 [percol](https://github.com/mooz/percol) also mentions zaw & peco and a pure Zsh
 approach that in said purity allows preserving Zsh syntax highlighting is
-[hsmw-highlight](/zdharma-continuum/history-search-multi-word).  I'd expect
-there are dozens more projects.  Happy to list them here if told about them.
+[hsmw-highlight](https://github.com/zdharma-continuum/history-search-multi-word).
+I'd expect there are dozens more projects.  Happy to list them here if told
+about them.
 
 There was some historical Unix `vip` vi-like program, but it's not installed
 anywhere these days and 40+ years is long enough to recycle a name.
