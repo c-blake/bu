@@ -65,6 +65,7 @@ when defined(Windows):
 # "pid2",       # Wrap Linux process PID table to first past target
 # "sr",         # System Request Key; Rapidly act on Linux systems
 
+# "vip",        # Visual Interactive Pick; `percol`/`fzf`-like filter
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "tw",         # terminal-width clip/cropper with m-row bounding capability
   "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'
@@ -144,6 +145,7 @@ else:
   "pid2",       # Wrap Linux process PID table to first past target
   "sr",         # System Request Key; Rapidly act on Linux systems
 
+  "vip",        # Visual Interactive Pick; `percol`/`fzf`-like filter
   "noc",        # stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs
   "tw",         # terminal-width clip/cropper with m-row bounding capability
   "tslice",     # UTF8-ANSI SGR aware text slicer with Python-like ':'

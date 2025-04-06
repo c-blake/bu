@@ -130,6 +130,8 @@ only tools, but some may be more cross-platform.
 
 # Terminal/Rich Text Handling
 
+[vip - Visual Interactive Pick; `percol`/`fzf`-like filter](doc/vip.md)
+
 [noc - stdin-out filter to strip ANSI CSI/OSC/SGR color escape seqs](doc/noc.md)
 
 [tw - terminal-width clip/cropper with m-row bounding capability](doc/tw.md)
