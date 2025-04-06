@@ -23,8 +23,8 @@ Enough seemed wrong/missing/not what I wanted that rather than patch the C, I
 re-wrote the whole thing in Nim (only 302 lines + 10 screen, 14 CLI help),
 calling out to [`cligen`](https://github.com/c-blake/cligen) for some rich text
 stuff and then added/amended all that stuff to make `vip`.  So, now I have a
-tool about 1% the scale of `fzf` with functionality more tuned to my wants (i.e.
->100% needs).  I am still thinking about best UI designs here (see Future Work),
+tool about 1% `fzf` scale with functionality more tuned to my wants (i.e. >100%
+of my needs).  I am still thinking about best UI designs here (see Future Work),
 but this seems a more useful platform for experiments.
 
 # Usage
