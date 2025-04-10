@@ -184,6 +184,11 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
 when isMainModule:
   import cligen, cligen/[argcvt, cfUt]  # ArgcvtParams&friends, cfToCL,envToCL
 
+  proc someNonDecimal(s: string): bool =
+    for i, c in s:
+      if i == 0 and c != '-': return true
+      if i > 0 and c notin {'0'..'9'}: return true
+
   proc mergeParams(cmdNames:seq[string],cmdLine=commandLineParams()):seq[string]=
     let cn = 0.paramStr.splitPath.tail  # Like `cligen/mergeCfgEnv` BUT adapt..
     let up = cn.toUpperAscii            #..$0 = head|tail -[nc] to "-ch|-ct".
@@ -194,18 +199,20 @@ when isMainModule:
     if cf.fileExists: result.add cf.cfToCL
     result.add envToCL(up)              # Does not handle combiners like "-fn5"
     result.add cmdLine                  #..but such are super rare usage; POSIX
-    if cn == "head":                    #..`head` literally only has -n option. 
+    if cn == "head":                    #..`head` literally only has -n option.
       result = "-h10" & result
       for clp in mitems result:
         if clp == "--": break           # Also translate -z -> -i\0 \e\0
         if   clp.startsWith("-n"): clp = "-h"  & clp[2..^1]
         elif clp.startsWith("-c"): clp = "-ch" & clp[2..^1]
+        elif not clp.someNonDecimal: clp = "-h" & clp[1..^1]
     elif cn == "tail":
       result = "-t10" & result
       for clp in mitems result:
-        if clp == "--": break           # Also translate -z -> -i\0 \e\0  
+        if clp == "--": break           # Also translate -z -> -i\0 \e\0
         if   clp.startsWith("-n"): clp = "-t"  & clp[2..^1]
         elif clp.startsWith("-c"): clp = "-ct" & clp[2..^1]
+        elif not clp.someNonDecimal: clp = "-t" & clp[1..^1]
 
   proc argParse*(dst: var NRow, dfl: NRow; a: var ArgcvtParams): bool =
     let s = a.val.strip                 # Accept tail -n/3, tail -n+2, head -n5
