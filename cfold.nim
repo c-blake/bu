@@ -1,4 +1,4 @@
-import std/re, cligen
+import std/re, cligen, cligen/sysUt
 when not declared(lines): import std/syncio
 
 iterator csplit(s: string, pat: Regex): tuple[body: string, sep: string] =
@@ -25,7 +25,7 @@ proc cfold(suppress=false, ignore=false, extended=false, file="-",
   if ignore: flags.incl reIgnoreCase
   if extended: flags.incl reExtended
   if pattern.len != 1:
-    raise newException(HelpError, "Need exactly one pattern; Full ${HELP}")
+    Help !! "Need exactly one pattern; Full $HELP"
   let pat = re(pattern[0], flags)
   for line in lines(if file != "-": open(file) else: stdin):
     for segment in csplit(line, pat):

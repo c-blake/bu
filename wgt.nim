@@ -1,7 +1,8 @@
 ## Small system to manage weighted sampling w/oft updated, score-driven weights
 ## w/1 native-endian binary file KWw.NC3CS6C (plus kData, weight sources&refs).
-import std/[os,strutils,math,random,strformat,heapqueue,algorithm,sugar,hashes],
-  std/tables, cligen,cligen/[mfile,mslice,osUt,strUt,textUt], adix/[oats,mvstat]
+import std/[os, strutils, math, random, strformat, heapqueue,
+            algorithm, sugar, hashes, tables], adix/[oats, mvstat],
+  cligen, cligen/[sysUt, osUt, mfile, mslice, strUt, textUt]
 when not declared(addFloat): import std/[syncio, formatfloat]
 template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 type
@@ -58,7 +59,7 @@ proc parseSource*(weights=""): (seq[MSlice], seq[uint16], seq[MSlice]) =
       result[0].add cols[0]             # Format is: PATH WEIGHT LABEL
       result[1].add cols[1].parseInt.uint16
       result[2].add cols[2]
-      if result[0].len == 49: raise newException(IOError, "too many sources")
+      if result[0].len == 49: IO !! "too many sources"
 
 proc globalStats*(wt: WTab): (MovingStat[float, uint16], Hash) =## stats&why.sig
   result[0].init 0.5, 65535.5, 1024, {OrderStats}
@@ -170,9 +171,9 @@ proc toTab(fmt: string, cs: seq[MacroCall], labs: seq[MSlice]):
   for (id, arg, call) in cs:
     if not id.idIsLiteral and (let id = fmt[id].toString; ',' in id):
       let cols = id.split(',')
-      if cols.len!=3: raise newException(IOError, "bad syntax: \"" & id & "\"")
+      if cols.len != 3: IO !! "bad syntax: \"" & id & "\""
       let bit = labs.find(cols[0].toMSlice)
-      if bit<0: raise newException(IOError, "unknown label \"" & cols[0] & "\"")
+      if bit < 0: IO !! "unknown label \"" & cols[0] & "\""
       result[id] = (bit, cols[1], cols[2])
 
 proc print*(table="wt.NC3CS6C", keys="keys", weights="weights",fmt="$w $k $why",

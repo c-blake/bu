@@ -1,4 +1,5 @@
-import std/[os, posix, tables, sets, strformat, strutils], cligen,cligen/humanUt
+import std/[os, posix, tables, sets, strformat, strutils],
+       cligen, cligen/[sysUt, humanUt]
 when not declared(stdout): import std/[syncio, formatfloat]
 proc er(a: varargs[string, `$`]) = stderr.write(a); stderr.write("\n") #alias
 
@@ -11,16 +12,14 @@ var attrHeader = "inverse"
 proc parseColor(color: seq[string], plain=false) =
   for spec in color:
     let cols = spec.strip.splitWhitespace(1)
-    if cols.len < 2:
-      raise newException(ValueError, "bad color line: \"" & spec & "\"")
+    if cols.len < 2: Value !! "bad color line: \"" & spec & "\""
     let key = cols[0].optionNormalize
     if key == "header": attrHeader = cols[1]
     elif key.startsWith("pct") and (let thr = parseInt(key[3..^1]); thr >= 0):
       if levels.len > 0 and thr < levels[^1][0]:
         levels.setLen 0
       levels.add (thr, cols[1])
-    else:
-      raise newException(ValueError, "expected header|pctINT; got \""&spec&"\"")
+    else: Value !! "expected header|pctINT; got \""&spec&"\""
   for kv in mitems(levels): kv[1] = textAttrOn(kv[1].split, plain)
   levels.add (int.high, "")
   attrHeader = textAttrOn(attrHeader.split, plain)

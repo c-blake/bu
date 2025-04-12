@@ -1,4 +1,4 @@
-import cligen/[mfile, mslice], cligen
+import cligen/[sysUt, mfile, mslice], cligen
 import std/parseutils; import std/strutils except parseFloat
 when not declared(stderr): import std/syncio
 
@@ -20,7 +20,7 @@ proc ndelta(paths: seq[string], kind=ratio, delims="white", n=3, sloppy=false) =
   ## Replace numbers in token-compatible spots of `paths[0]` & `paths[1]` with
   ## (absolute | ratio | relative | perCent) deltas.  To trap out-of-order data,
   ## differences in context are highlighted unless `sloppy` is true.
-  if paths.len != 2: raise newException(HelpError, "Need 2 paths; Full ${HELP}")
+  if paths.len != 2: Help !! "Need 2 paths; Full $HELP"
   let sep = initSep(delims)
   let tok0 = paths[0].load.frame(sep)   # Fully split both files into 2..
   let tok1 = paths[1].load.frame(sep)   #.. seq[TextFrame]s of tokens.

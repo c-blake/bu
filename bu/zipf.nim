@@ -8,7 +8,7 @@
 ## method is kept as edifying. (Also, CPU/libcs with >2X slower exp/ln exist.)
 
 when not declared writeFile: import std/syncio
-import std/[math, random], memfiles as mf
+import std/[math, random], memfiles as mf, cligen/sysUt
 
 proc calcCDF*(n: int, alpha=1.5): seq[float64] =
   ## Calculate Zipf CDF for for n items. Usable by random.sample(openArray,cdf).
@@ -32,8 +32,7 @@ iterator sample*[T](n=10, alpha=1.5, wr="", rd="", keys: openArray[T]): T =
   else:                     #NOTE algorithm.upperBound binSearch seeks can be
     sav = mf.open(rd)       #     slow on media, but OTOH /dev/shm is v.fast.
     if sav.size != 8*keys.len:
-      sav.close
-      raise newException(IOError, "`rd` file size does not match `n` request")
+      sav.close; IO !! "`rd` file size does not match `n` request"
     cdf = sav.mem
   if wr.len > 0:
     writeFile wr, toa[byte](cdf, 0, 8*keys.len - 1)
@@ -54,7 +53,7 @@ func hI(z: Zipf, h: float): float = exp(z.one_Qinv*ln(z.one_Q*h)) - z.v
 func initZipf*(s: float, v: range[1.0..float.high], imax: uint): Zipf =
   ## Make a Zipf deviate maker which gets values k on [0,imax] such that P(k) ~
   ## (v + k)**(-s).  Needs: s > 1.
-  if s <= 1.0: raise newException(ValueError, "Zipf needs s > 1.0")
+  if s <= 1.0: Value !! "Zipf needs s > 1.0"
   result.imax     = imax.float; result.v = v; result.q = s
   result.one_Q    = 1.0 - s
   result.one_Qinv = 1.0 / result.one_Q
@@ -64,7 +63,7 @@ func initZipf*(s: float, v: range[1.0..float.high], imax: uint): Zipf =
 
 func sample*(r: var Rand, z: Zipf): uint =
   ## Get a value drawn from distribution described by `z` using `r`.
-  if z.v == 0.0: raise newException(ValueError, "Uninitialized Zipf")
+  if z.v == 0.0: Value !! "Uninitialized Zipf"
   var k = 0.0
   while true:
     let r  = r.rand(1.0)                # U[0,1] sample

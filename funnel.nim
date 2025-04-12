@@ -1,19 +1,19 @@
 when not declared(stdout): import std/syncio
-import std/[strutils, strformat], cligen, cligen/osUt, std/posix as px
+import std/[strutils, strformat], cligen, cligen/[sysUt, osUt], std/posix as px
 
 type BInp* = tuple[fd: cint; st: Stat; name, buf: string; used: int]
 
 proc biOpen*(name: string, mode=O_RDONLY.cint, ibuf=4096, ep=""): BInp =
   if (result.fd = open(name.cstring, mode); result.fd != -1):
     if fstat(result.fd, result.st) != 0:
-      raise newException(OSError, &"{ep}: fstat({result.fd}): {errstr()}")
+      OS !! "{ep}: fstat({result.fd}): {errstr()}"
     result.buf.setLen ibuf
-  else: raise newException(OSError, &"{ep}: open({name}): {errstr()}")
+  else: OS !! &"{ep}: open({name}): {errstr()}"
 
 proc fill*(b: var BInp) =
   if (let r = b.fd.read(b.buf[b.used].addr, b.buf.len - b.used); r >= 0):
     b.used += r.int                     # Update Re: the data that was read
-  else: raise newException(OSError, errstr())
+  else: OS !! errstr()
 
 template maybeWriteShiftGrow*(b: var BInp; term; o: File, wrErr) =
   if (let nW = b.buf.rfind(term, last=b.used-1) + 1; nW != 0): # hasRecTerm

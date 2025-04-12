@@ -1,6 +1,6 @@
 when not declared(addfloat): import std/[syncio, formatfloat]
 import std/[os, times, strformat, math, tables, strutils, deques],
-       cligen, cligen/strUt, bu/emin
+       cligen, cligen/[sysUt, strUt], bu/emin
 proc timePrefix(s: string): string =   # A very "big tent" setup supporting..
   if   s.endsWith("seconds"): s[0..^8] #..short&long, singular&plural, sec, s.
   elif s.endsWith("secs"): s[0..^5]
@@ -36,9 +36,9 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
   ## time & error estimate.  `doc/tim.md` explains more.
   let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
-  if cmds.len == 0: raise newException(HelpError, "Need cmds; Full ${HELP}")
+  if cmds.len == 0: Help !! "Need cmds; Full $HELP"
   try: dtScale = timeScales[timeunit.timePrefix]
-  except KeyError: raise newException(HelpError, "Bad time unit; Full ${HELP}")
+  except KeyError: Help !! "Bad time unit; Full $HELP"
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
   if verbose:stderr.write &"tim: warmup  {warmup}\ntim: k       {k}\n",
@@ -51,7 +51,7 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   proc get1(cmd: string, i = -1): float =             # Either use read times..
     if cmd in r:                                      #..or sample new ones, but
       try   : r[cmd].popFirst                         #..don't cross mode perCmd
-      except: raise newException(IOError, "`"&cmd&"`: undersampled in `read`")
+      except: IO !! "`"&cmd&"`: undersampled in `read`"
     else: f.sample1 cmd, if i<0:"" else: prepare[i], if i<0:"" else: cleanup[i]
   var o: MinEst                                       # Auto-Init to 0.0 +- 0.0
   if ohead > 0:                                       # Measure overhead

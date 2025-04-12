@@ -1,4 +1,4 @@
-import std/terminal, cligen, cligen/mfile, nio
+import std/terminal, cligen, cligen/[sysUt, mfile], nio
 
 proc widths(outKind='\0', distro=false, paths: seq[string]) =
   ## Emit width/line lengths in bytes of all lines in files `paths`.
@@ -7,8 +7,7 @@ proc widths(outKind='\0', distro=false, paths: seq[string]) =
   ##
   ## Emits text if `outKind==NUL`, else binary in that NIO format.
 
-  if outKind != '\0' and stdout.isatty:
-    raise newException(HelpError, "stdout is a terminal; Full ${HELP}")
+  if outKind != '\0' and stdout.isatty: Help!!"stdout is a terminal; Full $HELP"
   let kout = try: kindOf(outKind) except CatchableError: 0.IOKind
   var obuf: array[16, char]
   var cnts: seq[int]

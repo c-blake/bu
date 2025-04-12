@@ -1,5 +1,5 @@
 when not declared(stderr): import std/syncio
-import std/strutils, cligen/[strUt, mslice, osUt]
+import std/strutils, cligen/[sysUt, strUt, mslice, osUt]
 
 type EsQuo* = enum eqNeed, eqAlways, eqEscape ## Quoting mode enum
 
@@ -9,7 +9,7 @@ proc esQuoParse*(q: string): EsQuo =
   of 'n': result = eqNeed
   of 'q': result = eqAlways
   of 'e': result = eqEscape
-  else: raise newException(ValueError, "Unknown quote mode: \"" & q & "\".")
+  else: Value !! "Unknown quote mode: \"" & q & "\"."
 
 const needQuo* = {'\t', '\n', ' ', '!', '"', '#', '$', '&' , '\'', '(', ')',
                   '*', ';', '<', '=', '>', '?', '?', '[', '`' , '{', '|', '~'}

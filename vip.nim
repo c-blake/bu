@@ -1,5 +1,5 @@
 import std/[syncio, posix, terminal, strutils, algorithm], posix/termios
-import cligen/[osUt, mfile, mslice, textUt, humanUt] # Erlandsson's pick re-done
+import cligen/[sysUt, osUt, mfile, mslice, textUt, humanUt] # ~Erlandsson pick
 {.passl: "-lncurses -ltinfo".}          # 0) C-LEVEL CURSES SET UP
 proc tigetstr(capCode: cstring): cstring                  {.header:"curses.h".}
 proc setupterm(t: cstring, fd: cint, err: ptr cint): cint {.header:"curses.h".}
@@ -43,12 +43,12 @@ proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
                 "m YELLOW on_red;-bg -fg", "l italic;-italic"]
   for s in def & color:
     let cols = s.strip.splitWhitespace(1)
-    if cols.len < 2: raise newException(ValueError, "bad color: \"" & s & "\"")
+    if cols.len < 2: Value !! "bad color: \"" & s & "\""
     let k = if cols[0].len > 0: cols[0].toLowerAscii[0] else: '\0'
     let val = cols[1].split(';')
-    if val.len != 2: raise newException(IOError, s & "not: \"key On ; Off\"")
+    if val.len != 2: IO !! s & "not: \"key On ; Off\""
     if k in {'q','c','m','l','h'}: ats[k] = (val[0].textAttr, val[1].textAttr)
-    else: raise newException(IOError, cols[0] & " not in: q* c* m* l* h*")
+    else: IO !! cols[0] & " not in: q* c* m* l* h*"
 
 var oBuf: array[1024,char]; var oUsed=0 # 3) BUFFERED TERMINAL OUTPUT
 proc oFlush() =

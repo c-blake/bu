@@ -1,4 +1,4 @@
-import std/os, cligen/humanUt, cligen
+import std/os, cligen/[sysUt, humanUt], cligen
 when not declared(stdout): import std/syncio
 
 proc tattr(attrs: seq[string]) =
@@ -28,8 +28,7 @@ proc tattr(attrs: seq[string]) =
   ##
   ## -fg, -bg turn off ForeGround, BackGround embellishment.  off, none, NONE
   ## turn off all special graphics renditions.
-  if attrs.len == 0:
-    raise newException(ValueError, "\n  Need >= 1 attrs.  See tattr --help")
+  if attrs.len == 0: Value !! "\n  Need >= 1 attrs.  See tattr --help"
   stdout.write textAttrOn(attrs, plain=existsEnv("NO_COLOR"))
 
-dispatch(tattr)
+dispatch tattr

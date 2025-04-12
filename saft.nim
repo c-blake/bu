@@ -1,6 +1,6 @@
 when not declared(stderr): import std/syncio
 include cligen/unsafeAddr
-import cligen, cligen/[osUt, posixUt, strUt], std/[posix, strformat]
+import cligen, cligen/[sysUt, osUt, posixUt, strUt], std/[posix, strformat]
 
 template eStr: untyped = $strerror(errno)       # Error string for last errno
 
@@ -34,10 +34,10 @@ proc saft(access=false, modify=true, cInode=false, link=false, verb=false,
   ## time-based remake. { `cInode` on many files causes "time storms" }.
   let cmdFiles = cmdFiles.split("--")
   if cmdFiles.len != 2:
-    raise newException(HelpError, "Need exactly cmd,files; Full ${HELP}")
+    Help !! "Need exactly cmd,files; Full $HELP"
   let cmd = cmdFiles[0]; let files = cmdFiles[1]
-  if cmd.len < 1: raise newException(HelpError, "Need Some Cmd; Full ${HELP}")
-  if files.len<1: raise newException(HelpError, "Need >= 1 file; Full ${HELP}")
+  if cmd.len  <  1: Help !! "Need Some Cmd; Full $HELP"
+  if files.len < 1: Help !! "Need >= 1 file; Full $HELP"
   let flags = if link: AT_SYMLINK_NOFOLLOW else: 0.cint
   let flagSt = if link: "SYMLINK_NOFOLLOW" else: "0"
 

@@ -1,4 +1,4 @@
-import std/[sets, os, strutils], cligen/osUt
+import std/[sets, os, strutils], cligen/[sysUt, osUt]
 when not declared(stdin): import std/syncio
 
 proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
@@ -10,7 +10,7 @@ proc doNotIn*(file="", delim='\0', term='\0', pattern="$1", invert=false,
   ## normalized to nix empty path components (e.g. 1st & 3rd in "./foo/./bar").
   ## `find -path A -o -path B ..` can do this, but is hard for many paths.
   if "$1" notin pattern:
-    raise newException(ValueError, "`pattern` must contain \"$1\" somewhere")
+    Value !! "`pattern` must contain \"$1\" somewhere"
   var pats = initHashSet[string]()      # Build up a big HashSet[string]
   let file = if file.len == 0: stdin else: open(file)
   for pat in getDelim(file, delim):

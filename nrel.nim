@@ -1,5 +1,6 @@
 when not declared(stderr): import std/syncio
-import std/[os, osproc, strutils, parseutils, tempfiles, json, tables, strscans]
+import std/[os,osproc, strutils, parseutils, tempfiles, json, tables, strscans],
+       cligen/sysUt
 
 proc nimblePath(): string =             # nicked from nimp.nim
   for k, path in ".".walkDir(true):
@@ -21,9 +22,8 @@ proc newVsn(curV: string, bump=patch): string =
         of patch: return "$1.$2.$3" % [v[0], v[1], $(s2num(v[2]) + 1)]
         of minor: return "$1.$2.$3" % [v[0], $(s2num(v[1]) + 1), "0" ]
         of Major: return "$1.$2.$3" % [$(s2num(v[0]) + 1), "0" , "0" ]
-      else:
-        raise newException(ValueError, "non-tripartite version: " & line.repr)
-  raise newException(ValueError, "No output line looking like a version")
+      else: Value !! "non-tripartite version: " & line.repr
+  Value !! "No output line looking like a version"
 
 proc latestVersion(repoURI: string): string =   # Get tags for some git repo
   let cmd = "git ls-remote --tags \"" & repoURI & "\""

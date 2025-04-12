@@ -1,6 +1,6 @@
 when not declared(stderr): import std/syncio
 import std/[os, times, sets, sugar, strutils],
-       cligen, cligen/[strUt, mslice, mfile, osUt], bu/esquo
+       cligen, cligen/[sysUt, osUt, strUt, mslice, mfile], bu/esquo
 when defined linux: import cligen/statx
 
 var TBAD: Time                          # The zero time is our sentinel
@@ -80,11 +80,11 @@ proc mk1(file="/dev/stdin", nl='\n', meta='%', explain=false, keep=false,
   ##   ``touch a.x b.x; printf 'a.x\\na.y\\nb.x\\nb.y\\n' | mk1 'touch %o'``
   ## Ideally, save `file` somewhere, updating only if needed based on e.g. dir
   ## mtimes.  Options are gmake-compatible where sensible in this limited role.
-  if cmd.len != 1: raise newException(HelpError, "Need `cmd`; Full ${HELP}")
+  if cmd.len != 1: Help !! "Need `cmd`; Full $HELP"
   let oldFile = collect(for path in oldFile: {path.toMSlice})
   let whatIf = collect(for path in whatIf: {path.toMSlice})
   let q = Quoting.toLowerAscii.split(',')
-  if q.len != 2: raise newException(HelpError, "invalid Quoting; Full ${HELP}")
+  if q.len != 2: Help !! "invalid Quoting; Full $HELP"
   let (iQ, oQ) = (q[0].esQuoParse, q[1].esQuoParse)
   let cmdP = cmd[0].tmplParsed(meta)    # Pre-parsed command template
   var buf: seq[char]                    # seq[] to advertise many embedded NUL

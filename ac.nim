@@ -81,7 +81,7 @@ proc parseRules(pf: (string, File), cmd: string, verbose: bool): seq[ApeRule] =
   if verbose: stderr.write &"{result.len} rules from {pf[0]}\n"
 
 when isMainModule:
-  import cligen; include cligen/mergeCfgEnv
+  import cligen, cligen/sysUt; include cligen/mergeCfgEnv
 
   proc ac(config=".ac.cfg", subs: seq[string] = @[], verbose=false,
           dryRun=false, wd="", cmdArgs: seq[string]): int =
@@ -102,9 +102,9 @@ when isMainModule:
     ##   pwd="@/d/vid@/d/.v/dig.NL"  # `ac X` yields 1 aped,2 total cmds
     ## which enables e.g.: `ac mkdir bar; ac mv foo\*.mp4 bar.mp4`.
     if cmdArgs.len < 1:
-      raise newException(HelpError, "No command given\n\nFull ${HELP}")
+      Help !! "No command given\n\nFull $HELP"
     if subs.len mod 4 != 0:
-      raise newException(HelpError, "`subs` must be 4-tuples\n\nFull ${HELP}")
+      Help !! "`subs` must be 4-tuples\n\nFull $HELP"
     if wd.len > 0:                      # Only override if *same* dir
       if wd.getFileInfo.id == pwd.getFileInfo.id: pwd = wd
       else: stderr.write &"warning: `{wd}` not same (dev,inode) as `{pwd}`\n"

@@ -1,6 +1,6 @@
 {.push hint[Performance]: off.}         # No warn about token copy in bu/execstr
 import std/[strutils, parseutils, os, posix, random, osproc],
-       cligen, cligen/posixUt, bu/execstr
+       cligen, cligen/[sysUt, posixUt], bu/execstr
 when not declared(stderr): import std/syncio
 when defined(release): randomize()
 
@@ -140,8 +140,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
   ## **$STRIPE_SLOT** (arg slot index) & optionally **$STRIPE_SEQ** (job seqNum)
   ## are also provided to jobs.  In `N`-mode `SIGUSR[12]` (in|de)creases `N`.
   ## If `before` uses `$tot`, job lines are read upfront to provide that count.
-  if len(posArgs) < 1:
-    raise newException(ValueError, "Too few posArgs; need { num | 2+ slots }")
+  if posArgs.len < 1: Value!!"Too few posArgs; need {num|2+ slots}; See --help"
   putSN = nums
   bef   = (if before in ["d", "D"]: BefDfl else: before) & "\n"
   aft   = (if after  in ["d", "D"]: AftDfl else: after ) & "\n"
@@ -150,7 +149,7 @@ proc CLI(run="/bin/sh", nums=false, secs=0.0, load = -1, before="", after="",
   numMo = posArgs.len == 1
   if numMo:                             # FIXED NUM JOBS MODE
     var n: int; if parseInt(posArgs[0], n) == 0 or n < 0:
-      raise newException(ValueError, "Only one slot but not int >= 0.")
+      Value !! "Only one slot but not int >= 0."
     if n == 0: n = countProcessors()
     rs.setLen n                         #   impossible zero PIDs
     for i in 0 ..< n: rs[i].nm = $i     #   slot names == nums

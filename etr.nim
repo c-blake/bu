@@ -1,4 +1,5 @@
-import std/[times,strformat,osproc,strutils,os,posix],cligen,cligen/[osUt,puSig]
+import std/[times, strformat, osproc, strutils, os, posix],
+       cligen, cligen/[sysUt, osUt, puSig]
 when not declared(readFile): import std/[syncio, formatfloat]
 
 type ETR* = tuple[done, rate, left: float; etc: DateTime]
@@ -51,8 +52,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
   ## is 2 if *output:input > RatMin* after `estMin` progress.
   let sigNo = kill.parseUnixSignal      # Early to fail on misspecification
   if did.len == 0:
-    stderr.write "Need at least `did` & likely `pid`; --help says more\n"
-    raise newException(ParseError, "")
+    stderr.write "Need @least `did` &likely `pid`; --help says more\n";Parse!!""
   let pfs  = "/proc/" & $pid & "/"
   let age  = if pid==0 or age.len>0: parseFloat(execProcess(age).strip)*scaleAge
              else: processAge(pfs)

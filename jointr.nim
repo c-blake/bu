@@ -1,4 +1,4 @@
-import std/[tables, strutils], cligen/[mfile, mslice, osUt], cligen
+import std/[tables, strutils], cligen/[sysUt, osUt, mfile, mslice], cligen
 
 proc jointr*(cont=" <unfinished ...>", boc="<... ", eoc=" resumed>", all=false,
              path: seq[string]) =
@@ -20,8 +20,7 @@ proc jointr*(cont=" <unfinished ...>", boc="<... ", eoc=" resumed>", all=false,
     let (pid, rest) = (cols[0], cols[1])
     if rest.startsWith boc:             # Skip to 1st eoc & output top,bottom
       let ix = line.find eoc
-      if ix == -1:
-        raise newException(IOError, "missing \"" & eoc & "\"")
+      if ix == -1: IO !! "missing \"" & eoc & "\""
       outu alignLeft($pid, 5), " ", top[pid], line[ix+eoc.len..^1], "\n"
       top.del pid
     elif rest.endsWith cont:            # Save for bottom half

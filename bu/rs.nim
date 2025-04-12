@@ -33,7 +33,7 @@ proc add*[T](r: var Reservoir[T], item: T, dup: Dup[T]=nil, del: Del[T]=nil) =
           nix j; set j, item
 
 when isMainModule:      # Instantiate above generics as a simple CLI utility
-  import cligen, cligen/[mfile, mslice, osUt], std/[os, syncio]
+  import cligen, cligen/[sysUt, mfile, mslice, osUt], std/[os, syncio]
   proc rs(input="", flush=false, randomize=false, prefixNs: seq[string]) =
     ## Reservoir Sampled ranSubsets|Samples of rows of `input` -> prefix.`ns`.
     ## If `n<0` sample w/replacement else do subsets. O(`Σns`) space. Examples:
@@ -50,8 +50,7 @@ when isMainModule:      # Instantiate above generics as a simple CLI utility
         let p = dir/name; os.add if name.len>0: open(p, fmWrite) else: stdout
       else:
         n = parseInt(name.toMSlice, e)
-        if e != name.len or name.len == 0 or dir.len != 0:
-          raise newException(HelpError,"Non-integral! Full ${HELP}")
+        if e!=name.len or name.len==0 or dir.len!=0: Help!!"Non-integral! $HELP"
         rs.add initReservoir[MSlice](n); os.add stdout
     for line in mSlices(input, mf=mf):
       proc dup(x: MSlice): MSlice =     # Program does not know until here..

@@ -1,4 +1,4 @@
-import std/[strutils, times], cligen/statx, cligen
+import std/[strutils, times], cligen/[sysUt, statx], cligen
 when not declared(stdout): import std/syncio
 
 proc fage(Ref="", refTm='v', fileTm='v', self=false, verb=0, paths:seq[string])=
@@ -10,8 +10,7 @@ proc fage(Ref="", refTm='v', fileTm='v', self=false, verb=0, paths:seq[string])=
   ##   `fage -srm -fb x y`  **mtime - btime** for both *x* & *y*
   ##   `fage -ra -R/ ''`    Like `stat -c%X /`, but high-res
   ## Last works since missing files are given time stamps of 0 (start of 1970).
-  if paths.len == 0:
-    raise newException(HelpError, "Need >= 1 path; ${HELP}")
+  if paths.len == 0: Help !! "Need >= 1 path; $HELP"
   let tR = if self: 0i64        # just to skip unneeded syscall(s)
            else: Ref.fileTime(refTm, int64(epochTime() * 1e9))
   for path in paths:

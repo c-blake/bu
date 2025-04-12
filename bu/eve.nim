@@ -1,5 +1,5 @@
 when not declared(addFloat): import std/formatFloat
-import std/[math, algorithm, random, stats], cligen/[osUt, strUt]
+import std/[math, algorithm, random, stats], cligen/[sysUt, osUt, strUt]
 const ln2 = ln 2.0
 proc lg(x: float): float = log(x, 2.0)
 
@@ -13,7 +13,7 @@ proc eRE*(x, a_ik: seq[float]): float = #, o=0.0
   ## The general Fraga Alves & Neves2017 Estimator for Extreme Right Endpoint.
   ## This needs `x` to be ascending & `x.len >= 2*k`.
   let k = a_ik.len
-  if x.len<2*k: raise newException(ValueError,"2*k(" & $k & ")>x.len=" & $x.len)
+  if x.len<2*k: Value !! "2*k(" & $k & ")>x.len=" & $x.len
   result = x[^1]# echo "result: ", result
   for i in 1..<k: result += a_ik[i]*(x[^k] - x[^(k+i)]) #echo "a_ik: ",a_ik[i],"dx: ",(x[^k] - x[^(k+i)])," H: ",o-x[^k]," L: ",o-x[^(k+i)]
 
@@ -21,7 +21,7 @@ proc eLE*(x, a_ik: seq[float]): float =
   ## The general Fraga Alves & Neves2017 Estimator for Extreme *Left* Endpoint.
   ## This needs `x` to be ascending & `x.len >= 2*k`.
   let k = a_ik.len
-  if x.len<2*k: raise newException(ValueError,"2*k(" & $k & ")>x.len=" & $x.len)
+  if x.len<2*k: Value !! "2*k(" & $k & ")>x.len=" & $x.len
   result = x[0]# echo "result: ", result # 0-origin index => -1
   for i in 1..<k: result -= a_ik[i]*(x[k+i-1] - x[k-1]) #echo "a_ik: ",a_ik[i]," dx: ",(x[k+i-1] - x[k-1])," H: ",x[k+i-1]," L: ",x[k-1]
 
@@ -73,7 +73,7 @@ proc eve*(low=false, boot=32, BLimit=5, emit={eBound}, aFinite=0.05,
   ## method with bootstrapped standard error.  E.g.: `eve -l $(repeat 99 tmIt)`.
   ## This only assumes IID samples (which can FAIL for sequential timings!) and
   ## checks that spacings are not consistent with an infinite tail.
-  if x.len < 4: raise newException(ValueError, $x.len & " is too few samples")
+  if x.len < 4: Value !! $x.len & " is too few samples"
   var x = x; x.sort
   let off = x[^1] + (x[^1] - x[0])  # Should keep all x[] >= 0 (but not needed)
   if low: (x.reverse; for e in x.mitems: e = off - e)

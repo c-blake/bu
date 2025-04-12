@@ -1,6 +1,6 @@
 when not declared(stdin): import std/syncio
 include cligen/unsafeAddr
-import cligen/osUt, std/re, cligen      # cligen is early for `HelpError`
+import cligen/[sysUt, osUt], std/re, cligen # cligen is early for `HelpError`
 
 proc unfold(sep="\t", n=0, before="", after="", ignore=false, extended=false) =
   ## Join blocks of stdin lines into one line sent to stdout.
@@ -43,8 +43,7 @@ proc unfold(sep="\t", n=0, before="", after="", ignore=false, extended=false) =
         if rx in str: wrEOL()           # Then terminate only if line matches
         else        : wrSep()           # otherwise just sep
         wrLine()                        # Then output the input
-  else:
-    raise newException(HelpError, "Set `n` | `before` | `after`; Full ${HELP}")
+  else: Help !! "Set `n` | `before` | `after`; Full $HELP"
   if need: wrEOL()      # May need final \n (non-delimiting sep gives user clue)
 
 include cligen/mergeCfgEnv; dispatch unfold, help={

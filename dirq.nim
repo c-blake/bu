@@ -36,9 +36,9 @@ else:
   var fds = newSeq[cint](dirs.len)
   for i, dir in dirs:
     fds[i] = cint(inotify_init())
-    if fds[i] == -1: raise newException(OSError, "inotify_init")
+    if fds[i] == -1: OS !! "inotify_init"
     if inotify_add_watch(fds[i], dir.cstring, events.mask or IN_ONLYDIR) == -1:
-      raise newException(OSError, "inotify_add_watch")
+      OS !! "inotify_add_watch"
     FD_SET fds[i], rd0
     fdMax = max(fdMax, fds[i])
     discard fcntl(fds[i], F_SETFL, O_NONBLOCK)  # Set to non-blocking
@@ -102,7 +102,6 @@ cmdPfx for A --dir=B cmdPfx for A* patterns; *events* & *wait* are global."""
   for i, arg in args: ns[i] = arg.len - 1; cmds[i] = arg.allocCStringArray
   for (i, nmLen, name) in dqueues(events, dirs):
     if nmLen > 0 or name != nil:
-      if chdir(dirs[i].cstring) == -1:
-        raise newException(OSError, "chdir \"" & dirs[i] & "\"")
+      if chdir(dirs[i].cstring) == -1: OS !! "chdir \"" & dirs[i] & "\""
       cmds[i][ns[i]] = name                     # Poke ptr char into slot and..
       discard cmds[i].system(wait)              #..run command, maybe in bkgd

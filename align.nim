@@ -1,5 +1,5 @@
 when not declared(stdout): import std/syncio
-import cligen/[osUt, textUt, mslice, mfile]; const f=false
+import cligen/[sysUt, osUt, textUt, mslice, mfile]; const f=false
 type
   Align = enum L, R, C
   Col = object                  ## Per-Column Metadata Encapsulation
@@ -41,16 +41,16 @@ proc init(cms: var seq[Col]; alignSpecs, aSet, empties: seq[string];
       if (let i=emKey.find('e'); i >= 0): emVal[i] = empty[1..^1]
       else: emKey.add empty[0]; emVal.add empty[1..^1]
   let emDef = if (let i=emKey.find('e'); i >= 0): emVal[i]
-              else: raise newException(IOError, "no empty default 'e'")
+              else: IO!!"no empty default 'e'"
   for asp in alignSpecs:
-    if asp.len < 1: raise newException(IOError, "empty string alignSpec")
+    if asp.len < 1: IO!!"empty string alignSpec"
     cms.setLen cms.len + 1              # New slot is zero initialized
     cms[^1].em = emDef
     cms[^1].al = case asp[0]            #<AL>[(emptyCode|aByte|setCode)*][<R>]
       of '-': L
       of '0': C
       of '+': R
-      else: raise newException(IOError, "unknown alignment: " & asp[0])
+      else: IO!!"unknown alignment: " & asp[0]
     for j, ch in asp[1 ..< min(5, asp.len)]: # Digit for <R> must occur by [4]
       if   (let i=emKey.find(ch); i>=0): cms[^1].em = emVal[i]
       elif (let i=acKey.find(ch); i>=0): cms[^1].cs  = acVal[i]
