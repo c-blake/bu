@@ -36,7 +36,7 @@ proc funnel*(fin="", rm=false, term='\n', unterm=add, sec=0.002,
   ## lines w/input from *stdin* pipes but NOT multi-input FIFOs.  If you are ok
   ## with PID wraparound races, this program may be unneeded -- someday.)
   let nF = fs.len
-  if nF < 1: raise newException(HelpError, "Too few FIFOs; Full ${HELP}")
+  if nF < 1: Help !! "Too few FIFOs; Full ${HELP}"
   var saRS = Sigaction(sa_flags: SA_RESTART) # Make EINTR checks unneeded
   for sig in [SIGTSTP, SIGSTOP, SIGCONT]: discard sigaction(sig, saRS)
   var bfs = newSeq[BInp](nF)            # Open files we are tracking
