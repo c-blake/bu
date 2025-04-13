@@ -34,7 +34,7 @@ Write ranSubsets|Samples of rows of input -> prefix.ns.  If n>0 do random
 subsets else sample with replacement.  O(Σns) space.  Examples:
 
   seq 1 100 | rs 10 .-5 or (after maybe mkfifo f1 f2)
-  wkOn f1 & wkOn f2 & seq 1 1000 | rs -f f1.10 f2.-20
+  workOn f1 & workOn f2 & seq 1 1000 | rs -f f1.10 f2.-20
 
 Options:
   -i=, --input=   string "" "" => stdin
