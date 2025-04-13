@@ -38,7 +38,7 @@ when isMainModule:      # Instantiate above generics as a simple CLI utility
     ## Reservoir Sampled ranSubsets|Samples of rows of `input` -> prefix.`ns`.
     ## If `n<0` sample w/replacement else do subsets. O(`Σns`) space. Examples:
     ##   ``seq 1 100 | rs 10 .-5`` or (after maybe ``mkfifo f1 f2``)
-    ##   ``wkOn<f1 & wkOn<f2 & seq 1 1000 | rs -f f1.10 f2.-20``
+    ##   ``workOn<f1 & workOn<f2 & seq 1 1000 | rs -f f1.10 f2.-20``
     if randomize: randomize()
     var rs: seq[Reservoir[MSlice]]; var os: seq[File]; var mf: MFile; var e: int
     for pn in prefixNs:
