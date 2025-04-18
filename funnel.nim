@@ -68,8 +68,8 @@ proc funnel*(fin="", rm=false, term='\n', unterm=add, sec=0.002,
     if b.used > 0:
       case unterm
       of add: discard b.flush(stdout); stdout.urite term
-      of log: (stderr.urite &"{ep}{b.name}: unterminated: ["; discard b.flush(stderr);
-               stderr.urite "]\n") #XXX Nim bug introduced 20250409..20250412 blocks line break before `discard`
+      of log: (stderr.urite &"{ep}{b.name}: unterminated: [";
+               discard b.flush(stderr); stderr.urite "]\n")
       of drop: discard                  # Just drop the data
   if rm:                                # Remove FIFOs
     for path in fs:
