@@ -4,7 +4,6 @@ import std/[os, strutils, math, random, strformat, heapqueue,
             algorithm, sugar, hashes, tables], adix/[oats, mvstat],
   cligen, cligen/[sysUt, osUt, mfile, mslice, strUt, textUt]
 when not declared(addFloat): import std/[syncio, formatfloat]
-template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 type
   Key = distinct uint32         # Offset & length
   Ww {.packed.} = object        # Weight & Why Size=8B
