@@ -8,6 +8,7 @@ proc tparm(s: cstring; a,b,d,e,f,g,h,i,j: clong): cstring {.header:"curses.h".}
 proc strlen(s: cstring): clong                            {.header:"string.h".}
 discard setlocale(LC_CTYPE, "")         # Tell libc to use LC_ environ variables
 var tFd = open("/dev/tty", O_RDWR)      # Open Controlling Terminal
+if tFd < 0: OS !! "check permissions on /dev/tty"
 discard setupterm(nil, tFd, nil)        # This MUST PRECEDE below impC's
 template impC(name) {.dirty.} =         # Define some constants from curses lib
   var `wr name` {.header: "term.h", importc: astToStr(name) .}: cstring
