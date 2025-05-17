@@ -126,18 +126,14 @@ While other things can (and maybe should) be done[^4], we use the min of the 2
 trials next.
 
 Interpreting in more detail, here `rg` is 310498/299533 =~ 1.037X faster.  Since
-I found no way to disable `rg` dir scans/.., it is more fair to subtract an `rg
+I didn't disable `rg` dir scans/.. w/`-d0`, it is more fair to subtract an `rg
 --files` time of 89230 (this "BS adjusts" downward since *some* work is needed)
 and use 210390 as a time for `rg` & get an `rg` =~ 1.48x faster.  OTOH, if one
 tries to use `xargs` as suggested in a closed `rg` files-from issue), time grows
-to the final pair 412000 usec instead of shrinking, now GNU grep \*1.33.  Many
-`rg` users surely do many queries over static source trees, varying patterns
-until one yields an answer of interest.  So, having no way to skip repeating all
-that ~30% total time work may be regrettable in more than benchmarking { though,
-yes, only some users might use such a feature }.  Finally, if one uses a naive
-`xargs rg` (with no implicit `xargs -P$(nproc)`) things get even slower -- ~3X
-worse than base.  That is probably from every 800 files spawning of `nproc`
-threads as the time drops to 667ms for `xargs -n1600`.
+to the final pair 412000 usec instead of shrinking, now GNU grep \*1.33.
+Finally, if one uses a naive `xargs rg` (with no implicit `xargs -P$(nproc)`)
+things get even slower -- ~3X worse than base.  That is probably from every 800
+files spawning of `nproc` threads as the time drops to 667ms for `xargs -n1600`.
 
 TLDR: Low-overhead parallel dispatch like `xa/funnel`[^5] can make GNU `grep`
 "about as fast" as `rg`, depending.  `rg` has many other nice features builtin,
