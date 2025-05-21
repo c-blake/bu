@@ -26,7 +26,7 @@ For even greater speed, you can do this in parallel with each pid2 pinned
 to different CPUs, such as a wrapper script (called, say, `2pid`):
 
 ```sh
-: "${j:=nproc}"
+: "${j:=$(nproc)}"
 for k in `seq 0 "$((j-1))"`
 do pid2 "$@" "$k" & done
 wait
