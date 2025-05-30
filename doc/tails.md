@@ -17,15 +17,16 @@ dot/dash/..  On many terminals even blinking text is an option.  This eases
 seeing file names from each other & from surrounding text.
 
 It eases so much that you can usually avoid blank line-preceding headers, common
-in other head/tail impls[^1] (more so for background-dominant "inverse modes").
-Such distinguishing is always helpful, but is especially so for output from
-multiple inputs in unpredictable order as `tails -f A B..` might produce.  Since
-when that leading blank is elided, headers (embellished to be "loud" or not) for
-non-line-terminated text can appear on the same terminal row (whereas in a less
-custom mode there would simply be a dropped blank line).  Since what to do here
-can vary with taste & situation, `tails` also provides `--delimit` to decide.
-This defaults to off, but it's easy to add a `delimit = "..."` in a config file
-& even make it (& optionally the next header!) blink with some raw \e[5m.
+in other head/tail impls[^1] (more so for BG color-dominant "inverse modes" with
+their many pixels).  Such distinguishing is always helpful, but is especially so
+for output from multiple inputs in unpredictable order as `tails -f A B..` might
+produce.  Since when that leading blank is elided, headers (embellished to be
+"loud" or not) for non-line-terminated text can appear on the same terminal row
+(whereas in a less custom mode there would simply be a dropped blank line).
+Since what to do here can vary with taste & situation, `tails` also provides
+`--delimit` to decide.  This defaults to off, but it's easy to add a `delimit =
+"..."` in a config file & even make it (& optionally the next header!) blink
+with some raw \e[5m.
 
 For compatibility, when invoked with an argv[0]/$0 of `head` | `tail`, arguments
 are massaged to match GNU coreutils `head` / `tail` (including `-c` & negative
