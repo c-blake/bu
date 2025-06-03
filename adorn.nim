@@ -12,7 +12,7 @@ proc adorn(cols: seq[int], origin=1, O0=false, prefix=ess, suffix=ess, input="",
   ## COLumn PrefixSuffix: `input`-`output` filter adding `prefix` &| `suffix` to
   ## specified `delim`-delimited `cols`, preserving all delimiting.  Columns,
   ## prefix, suffix *share indexing* (so you may need to pad with `""`).  E.g.:
-  ##   **paste <(seq 1 3) <(seq 4 6)  <(seq 7 9) | colps -pA -sB 1 -pC 3**
+  ##   **paste <(seq 1 3) <(seq 4 6)  <(seq 7 9) | adorn -pA -sB 1 -pC 3**
   if cols.len < 1: Help !! "Need >= 1 column; Full $HELP"
   if cols.outOfOrder: Help !! "Need firstCol < secondCol ...; Full $HELP"
   let origin = if O0: 0 else: origin
