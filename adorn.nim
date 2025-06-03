@@ -7,7 +7,7 @@ proc outOfOrder(xs: seq[int]): bool =
 proc urite(f: File, ms: MSlice) = discard f.uriteBuffer(ms.mem, ms.len)
 
 const ess: seq[string] = @[]
-proc colps(cols: seq[int], origin=1, O0=false, prefix=ess, suffix=ess, input="",
+proc adorn(cols: seq[int], origin=1, O0=false, prefix=ess, suffix=ess, input="",
            rowDlm='\n', delim="w", output="") =
   ## COLumn PrefixSuffix: `input`-`output` filter adding `prefix` &| `suffix` to
   ## specified `delim`-delimited `cols`, preserving all delimiting.  Columns,
@@ -42,7 +42,7 @@ proc colps(cols: seq[int], origin=1, O0=false, prefix=ess, suffix=ess, input="",
         else: outp.urite fs[j].ms
     outp.urite "\n"
 
-when isMainModule: dispatch colps, help={
+when isMainModule: dispatch adorn, help={
   "cols"  : "`origin`-origin column numbers",
   "origin": "origin for `cols`; 0=>signed indexing",
   "O0"    : "shorthand for `--origin=0`",
