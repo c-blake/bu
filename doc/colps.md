@@ -39,7 +39,7 @@ Add an explicit field label somewhere (possibly for additional post-processing):
 seq 1 9 | colps -p 'label: ' 1
 ```
 
-Make `$argv[0]` inverse in a cb0 `--style=basic`
+Make `$argv[0]` inverse { using [`tattr`](tattr.md) } in a cb0 `--style=basic`
 [`procs display`](https://github.com/c-blake/procs) listing:
 ```sh
 pd -sb | colps -p$(tattr inverse) -s$(tattr -- -inverse) 8
