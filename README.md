@@ -82,6 +82,8 @@ only tools, but some may be more cross-platform.
 
 [cols - extract just some columns from a text file/stream](doc/cols.md)
 
+[colps - Add prefix &| suffix to various text file/stream columns](doc/colps.md)
+
 [rp - A row processor program-generator maybe replacement for AWK](doc/rp.md)
 
 [crp - C row processor program-generator port of `rp`](doc/crp.md)
