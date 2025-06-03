@@ -9,7 +9,7 @@ proc urite(f: File, ms: MSlice) = discard f.uriteBuffer(ms.mem, ms.len)
 const ess: seq[string] = @[]
 proc adorn(cols: seq[int], origin=1, O0=false, prefix=ess, suffix=ess, input="",
            rowDlm='\n', delim="w", output="") =
-  ## COLumn PrefixSuffix: `input`-`output` filter adding `prefix` &| `suffix` to
+  ## `input`-`output` filter to adorn columns by adding `prefix` &| `suffix` to
   ## specified `delim`-delimited `cols`, preserving all delimiting.  Columns,
   ## prefix, suffix *share indexing* (so you may need to pad with `""`).  E.g.:
   ##   **paste <(seq 1 3) <(seq 4 6)  <(seq 7 9) | adorn -pA -sB 1 -pC 3**

@@ -15,7 +15,7 @@ only 28 lines and it runs much faster (>7X in informal timings).
 ```
   adorn [optional-params] origin-origin column numbers
 
-COLumn PrefixSuffix: input-output filter adding prefix &| suffix to specified
+input-output filter to adorn columns by adding prefix &| suffix to specified
 delim-delimited cols, preserving all delimiting.  Columns, prefix, suffix share
 indexing (so you may need to pad with "").  E.g.:
 
