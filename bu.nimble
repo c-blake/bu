@@ -41,7 +41,7 @@ when defined(Windows):
   "flow",       # Flow text lines into as many columns as fit with aligned output
   "tails",      # Terminal-friendly & generalized head & tail
   "cols",       # Extract just some columns from a text file/stream
-  "colps",      # Add prefix &| suffix to various text file/stream columns
+  "adorn",      # Add prefix &| suffix to various text file/stream columns
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
   "bu/colSort", # Sort *within* the columns of rows
@@ -122,7 +122,7 @@ else:
   "flow",       # Flow text lines into as many columns as fit with aligned output
   "tails",      # Terminal-friendly & generalized head & tail
   "cols",       # Extract just some columns from a text file/stream
-  "colps",      # Add prefix &| suffix to various text file/stream columns
+  "adorn",      # Add prefix &| suffix to various text file/stream columns
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
   "bu/colSort", # Sort *within* the columns of rows
