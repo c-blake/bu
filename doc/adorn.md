@@ -13,16 +13,16 @@ only 28 lines and it runs much faster (>7X in informal timings).
 
 # Usage
 ```
-  adorn [optional-params] origin-origin column numbers
+  adorn [optional-params] colNums (origin-origin column numbers)
 
-input-output filter to adorn columns by adding prefix &| suffix to specified
-delim-delimited cols, preserving all delimiting.  Columns, prefix, suffix share
-indexing (so you may need to pad with "").  E.g.:
+input-output filter to adorn fields by adding prefix &| suffix to delim-ited
+colNums, preserving ambient text.  colNums, prefix, suffix SHARE INDEXING (so
+you may need to pad with "").  E.g.:
 
   paste <(seq 1 3) <(seq 4 6)  <(seq 7 9) | adorn -pA -sB 1 -pC 3
 
 Options:
-  --origin=      int     1     origin for cols; 0=>signed indexing
+  --origin=      int     1     origin for colNums; 0 => signed indexing
   -O, --O0       bool    false shorthand for --origin=0
   -p=, --prefix= strings {}    strings to prepend to listed columns
   -s=, --suffix= strings {}    strings to append to listed columns
