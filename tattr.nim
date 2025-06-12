@@ -5,9 +5,9 @@ proc tattr(attrs: seq[string]) =
   ## Emit to stdout an escape string activating text colors/styles, honoring
   ## $NO_COLOR & also reading ~/.config/cligen for $LC_THEME-based aliases.
   ##
-  ## Non-color styles (prefix with '-' to turn off):
-  ##   bold, faint, italic, inverse, struck, blink (slow), BLINK (fast),
-  ##   under{line double dot dash curl}, overline.
+  ## Non-color styles; Prefix with '-' to turn off; *NOTE* Need "--" before:
+  ##   bold, faint, italic, inverse, hid, struck, blink (slow), BLINK (fast),
+  ##   under{line double dot dash curl}, over.
   ##
   ## Regular color keywords are in lower case; Bright bank in UPPER CASE:
   ##   black, red, green, yellow, blue, purple, cyan, white
@@ -22,9 +22,9 @@ proc tattr(attrs: seq[string]) =
   ## An element of color scale NAME {viridis hue wLen gray pm3d} can be chosen
   ## via:
   ##   {fbu}sNAME<0.-1>[,..]
-  ## where only `hue` and `wLen` take [,sat,val] optionally.
-  ## "wLen" is for "waveLength" - (yes, I know RGB light is a mixture; terms are
-  ## just to contrast with "frequency order" or hot..cold / cold..hot).
+  ## where only `hue` and `wLen` take [,sat,val] optionally.  "wLen" is for
+  ## "waveLength" - (yes, I know RGB light is a mixture; terms are just to imply
+  ## *rough* "spectral order" or hot..cold / cold..hot / "heat" map).
   ##
   ## -fg, -bg turn off ForeGround, BackGround embellishment.  off, none, NONE
   ## turn off all special graphics renditions.
