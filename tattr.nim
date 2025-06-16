@@ -5,7 +5,7 @@ proc tattr(attrs: seq[string]) =
   ## Emit to stdout an escape string activating text colors/styles, honoring
   ## $NO_COLOR & also reading ~/.config/cligen for $LC_THEME-based aliases.
   ##
-  ## Non-color styles; Prefix with '-' to turn off; *NOTE* Need "--" before:
+  ## Non-color styles; Prefix with '-' to turn off.
   ##   bold, faint, italic, inverse, hid, struck, blink (slow), BLINK (fast),
   ##   under{line double dot dash curl}, over.
   ##
@@ -26,8 +26,10 @@ proc tattr(attrs: seq[string]) =
   ## "waveLength" - (yes, I know RGB light is a mixture; terms are just to imply
   ## *rough* "spectral order" or hot..cold / cold..hot / "heat" map).
   ##
-  ## -fg, -bg turn off ForeGround, BackGround embellishment.  off, none, NONE
-  ## turn off all special graphics renditions.
+  ## off, none, NONE turn off all special graphics renditions while -fg, -bg
+  ## turn off just ForeGround, BackGround embellishment.
+  ##
+  ## *NOTE* May Need "--" for -bg, -bold, etc.
   if attrs.len == 0: Value !! "\n  Need >= 1 attrs.  See tattr --help"
   stdout.write textAttrOn(attrs, plain=existsEnv("NO_COLOR"))
 
