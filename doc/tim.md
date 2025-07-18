@@ -195,6 +195,9 @@ BIOS with fixed freq CPU(s) (or your OS's equiv. of these Linux interventions),
 extensions to reserve L3, and on & on. (`tim` hopes simpler ideas can prevent
 much of that effort most of the time without corrupting benchmark design.)
 
+Here seems an ok place to link to a critique of a [superficially similar, but
+popular tool](hyperfine.md).
+
 [^1]: There are, of course, Linux kernel `isolcpus` boot parameters-like modes
 and specialized OS kernels for measurement like this interesting one with a lot
 of diagrams: https://gamozolabs.github.io/metrology/2019/08/19/sushi_roll.html
@@ -252,6 +255,7 @@ leptokurtosis makes sigma alone inadequate.
 
 [^9]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
 https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
-this more formally, but perhaps trimmed or strongly min-tail-weighted.  Tests
-like these do require independent samples which may also be tested, though the
-results of such tests are likely to be "Nope, not independent - by design".
+this a la [fitl/gof](https://github.com/c-blake/fitl/blob/main/fitl/gof.nim),
+but perhaps trimmed or strongly min-tail-weighted.  Tests like these do require
+independent samples which may also be tested, though the results of such tests
+are likely to be "Nope, not independent - by design".
