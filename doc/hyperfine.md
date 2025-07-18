@@ -10,15 +10,17 @@ since then, but at the time it had (at least!) these eight problems:[^1]
 1. It simply measures the wrong thing.  You want the min, not the mean *unless*
    you are truly trying to assess things like "99% latencies/high quantiles" or
    the whole shape of the distribution in which case you generally need many
-   more samples.
+   more samples. This is not the goal toward which I have seen the tool applied.
 
-2. It abuses +- / ± notation to NOT be mean ± Δmean; Trimming outliers does NOT
-   fix this.  Usual invocation of Central Limit Theorem is that means are
-   Gaussian (only 2 param distro shape) even when data is not.  This is just to
-   motivate the ± notation / its T-test origins. { Real "dt" data tend to be
-   heavy enough- tailed to need Levy Stable not Gaussian (or not even IID, but
-   needing moving block bootstrap combined w/distributional homogeneity tests!)
-   and the classical framework collapses. }
+2. It abuses +- / ± notation to NOT be mean ± Δmean, but mean & estimated sample
+   standard deviation; Trimming outliers does NOT fix this.  Usual invocation of
+   Central Limit Theorem is that means are Gaussian (only 2 param distro shape)
+   even when data is not.  This is just to motivate the ± notation / its T-test
+   origins.  If you don't like standard error or standard deviation of the mean
+   estimate, the T-test equivalent is another argument.  { Real "dt" data tend
+   to be heavy enough-tailed to need Levy Stable not Gaussian (or not even IID,
+   but needing moving block bootstrap combined w/distributional homogeneity
+   tests!) and the classical framework collapses. }
 
 3. Terminal output actually adds noise to measurement.  Flashing isn't free.
    This is a bad default.
@@ -26,7 +28,7 @@ since then, but at the time it had (at least!) these eight problems:[^1]
 4. Outputs are terminal-friendly BUT hard-to-parse, inducing need for
    `--export-FOO`.  Just emitting easy to parse would be better.
 
-5. Poorly advertised heuristic timeLim leading to 3sec of many 1000 trials.
+5. Poorly advertised heuristic timeLim leading to 3sec of many 1000s of runs.
 
 6. More generally, baked-in time-scale assumptions in both heuristics and
    number of decimals when for real users these things vary from at least
