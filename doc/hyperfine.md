@@ -4,8 +4,8 @@ I only really include this because of the popularity of this tool and many
 references I have seen to its results as "statistically significant
 benchmarking".  I think its failings are many and its promoters may be literally
 befuddled by the use of the utf8 ± sign which is really quite superficial.  I
-wrote this up a couple of years ago, and it's possible the CL tool has evolved
-since then, but at the time it had (at least!) these eight problems:[^1]
+wrote this up a couple of years ago (hyperfine-1.11), and it's possible the tool
+has evolved since then, but at the time it had (at least!) these problems:[^1]
 
 1. It simply measures the wrong thing.  You want the min, not the mean *unless*
    you are truly trying to assess things like "99% latencies/high quantiles" or
