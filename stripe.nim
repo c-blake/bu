@@ -95,7 +95,8 @@ proc wait(): int =
       let dt     = t1 - rs[i].t0; w = dt.nsToTimeval
       let tSched = ru.ru_utime.tv_sec.int*1_000_000 + ru.ru_utime.tv_usec +
                    ru.ru_stime.tv_sec.int*1_000_000 + ru.ru_stime.tv_usec
-      ct.tv_sec = Time(tSched div 1_000_000); ct.tv_usec = tSched mod 1_000_000
+      ct.tv_sec  = Time(tSched div 1_000_000)
+      ct.tv_usec = Suseconds(tSched mod 1_000_000)
       pc = formatFloat(tSched.float * 1e5 / dt.float, ffDecimal, 1) #%cpu
       mr = formatFloat(ru.ru_maxrss.float/1024.0, ffDecimal, 1)#MiB RSS
     ERR aft%["tm",$t1, "i",$i, "nm",rs[i].nm, "sub",rs[i].sub, "cmd",rs[i].cmd,
