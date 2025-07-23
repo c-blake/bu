@@ -12,29 +12,19 @@ has evolved since then, but at the time it had (at least!) these problems:[^1]
    the whole shape of the distribution in which case you generally need many
    more samples. This is not the goal toward which I have seen the tool applied.
 
-2. It abuses +- / ± notation to NOT be mean ± Δmean, but mean & estimated sample
-   standard deviation; Trimming outliers does NOT fix this.  Usual invocation of
-   Central Limit Theorem is that means are Gaussian (only 2 param distro shape)
-   even when data is not.  This is just to motivate the ± notation / its T-test
-   origins.  If you don't like standard error or standard deviation of the mean
-   estimate, the T-test equivalent is another argument.  { Real "dt" data tend
-   to be heavy enough-tailed to need Levy Stable not Gaussian (or not even IID,
-   but needing moving block bootstrap combined w/distributional homogeneity
-   tests!) and the classical framework collapses. }
-
-3. Terminal output actually adds noise to measurement.  Flashing isn't free.
+2. Terminal output actually adds noise to measurement.  Flashing isn't free.
    This is a bad default.
 
-4. Outputs are terminal-friendly BUT hard-to-parse, inducing need for
+3. Outputs are terminal-friendly BUT hard-to-parse, inducing need for
    `--export-FOO`.  Just emitting easy to parse would be better.
 
-5. Poorly advertised heuristic timeLim leading to 3sec of many 1000s of runs.
+4. Poorly advertised heuristic timeLim leading to 3sec of many 1000s of runs.
 
-6. More generally, baked-in time-scale assumptions in both heuristics and
+5. More generally, baked-in time-scale assumptions in both heuristics and
    number of decimals when for real users these things vary from at least
    10s of microseconds to 10s of seconds.
 
-7. Suggests "5 ms" as a lower bound to measurement resolution is mostly an
+6. Suggests "5 ms" as a lower bound to measurement resolution is mostly an
    artifact of how few decimals he formats floats as (see 5).  I often get
    roughly single digit microsecond errors with `tim` (roughly 100..1000X
    better, in variance terms 10,000 to a million times better) on Linux.
@@ -43,7 +33,7 @@ has evolved since then, but at the time it had (at least!) these problems:[^1]
    for the same accuracy (mostly because it measures something easier to
    get at, but that is largely The Point).
 
-8. Warns about outliers (making his statistical post-processing seem off point
+7. Warns about outliers (making his statistical post-processing seem off point
    since "trimming" should remove them.  I've not looked, as Rust makes my eye
    balls bleed, but it's probably a symmetric trimmed mean, not just upper tail
    trimming).  Further, it gives advice to change environmental prep to remove
