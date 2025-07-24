@@ -1,6 +1,7 @@
 import std/[syncio, posix, terminal, strutils, algorithm], posix/termios
 import cligen/[sysUt, osUt, mfile, mslice, textUt, humanUt] # ~Erlandsson pick
-{.passl: "-lncurses -ltinfo".}          # 0) C-LEVEL CURSES SET UP
+{.passl: "-lncurses".}                  # 0) C-LEVEL CURSES SET UP
+when defined linux: {.passl: "-ltinfo".}
 proc tigetstr(capCode: cstring): cstring                  {.header:"curses.h".}
 proc setupterm(t: cstring, fd: cint, err: ptr cint): cint {.header:"curses.h".}
 proc tputs(s: cstring; cnt: cint; put: pointer): cint     {.header:"curses.h".}
