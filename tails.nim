@@ -48,7 +48,6 @@ template rest(r) =    # Input buffer to drop on write error
     if n < buf.len: break
 
 proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
-  proc memrchr(s: pointer, c: char, n: csize_t): cstring {.header: "string.h".}
   if sk and head == 0 and tail > 0 and eor == ird:
     let mf = mopen(f.getFileHandle)             # Zero size seekable =>
     if mf == nil: return -int(mf.fi.size > 0)   #..no-ops without err.
@@ -56,7 +55,7 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
     var n = mf.mslc.len.csize_t
     var e = mf.mslc.mem; var E: pointer # Current & NEXT End of record ptrs
     for i in 0..tail:                   # File termination => start @0 not 1
-      E = memrchr(mf.mslc.mem, ird, n)
+      E = cmemrchr(mf.mslc.mem, ird, n)
       if E.isNil: e = mf.mslc.mem; break
       else: e = E; n = csize_t(e -! mf.mslc.mem)
     if not E.isNil: e = e +! 1          # Ordinary 0..tail loop exit; jump ird
