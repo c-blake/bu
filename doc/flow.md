@@ -14,6 +14,11 @@ $ seq 1 84|flow     # Run on an 80-column terminal
 
 3 rows instead of 84.  84/3 = 28.0.
 
+Another example might be with ls[^1] on a wide terminal:
+```
+ls -lt /var/log|flow
+```
+
 ## Usage
 ```
   flow [optional-params] 
@@ -34,3 +39,5 @@ Options:
 
 GNU/BSD `column` does something similar but does not support a concept of
 printed/rendered length (i.e. utf8/ANSI SGR color escape sequences).
+
+[^1]: Though [lc](https://github.com/c-blake/lc) is nicer in many ways.
