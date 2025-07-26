@@ -1,7 +1,7 @@
 ## Small system to manage weighted sampling w/oft updated, score-driven weights
 ## w/1 native-endian binary file KWw.NC3CS6C (plus kData, weight sources&refs).
 import std/[os, strutils, math, random, strformat, heapqueue,
-            algorithm, sugar, hashes, tables], adix/[oats, mvstat],
+            algorithm, sugar, hashes, sets, tables], adix/[oats, mvstat],
   cligen, cligen/[sysUt, osUt, mfile, mslice, strUt, textUt]
 when not declared(addFloat): import std/[syncio, formatfloat]
 type
@@ -216,13 +216,15 @@ iterator cappedSample*[T](x: openArray[T], cdf: openArray[float], n=1, m=3): T =
       if count[k] <= m: break
     yield k
 
-proc sample*(table="wt.NC3CS6C", keys="keys", n=4000, m=3) =
+proc sample*(table="wt.NC3CS6C", keys="keys", n=4000, m=3, excl="") =
   ## Emit `m`-capped `n`-sample of nl-delim `keys` weighted by `table`
   if dir != ".": setCurrentDir dir
   let wt = wopen(table, keys)               # Hash-not-file order to be 1-pass
+  let x = mopen(excl); let xcl = collect: (for k in x.mSlices: {k})
   var kys: seq[MSlice]; var cdf: seq[float] # COULD make `cdf` persistent
   for k, ww in pairs[Key,MSlice,Ww](wt):
-    kys.add wt.keyQ k; cdf.add (if cdf.len==0: 0.0 else: cdf[^1]) + ww.w.float
+    if (let k = wt.keyQ k; k notin xcl):
+      kys.add k; cdf.add (if cdf.len==0: 0.0 else: cdf[^1]) + ww.w.float
   if m>0: (for k in kys.cappedSample(cdf, n, m): outu k, "\n")
   else  : (for i in 1..n: outu kys.sample(cdf), "\n")
 
@@ -250,6 +252,6 @@ Run "$command help" to get *comprehensive* help"""],
                                "w:weight k:key why:labels; label,Y,N"}],
                 [assay , help={"tables": hT & "s" }],
             [wgt.sample, help={"table":hT, "keys":hK, "n":"sample size",
-                  "m": "max dups for any given key"}],
+                  "m": "max dups for any given key", "excl":"an exclude file"}],
                 [diff  , help={"oldNew": "<OldLenOffWgtWhy> <NewLenOffWgtWhy>",
                   "keys":hK, "weights":hW, "only":hO}]
