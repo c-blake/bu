@@ -63,7 +63,7 @@ proc funnel*(fin="", rm=false, term='\n', unterm=add, sec=0.002,
       if b.fd < 0 or b.fd.FD_ISSET(fR) == 0: continue # Not Ready
       try: b.fill
       except OSError as e: stderr.urite &"{ep}read(b.name): {e.msg}\n"; continue
-      b.maybeWriteShiftGrow term, stdout, quit(&"{ep}short write: {errstr()}\n",7)
+      b.maybeWriteShiftGrow term,stdout,quit(&"{ep}short write: {errstr()}\n",7)
   for b in mitems bfs:                  # Handle residual unterminated data
     if b.used > 0:
       case unterm

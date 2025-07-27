@@ -30,7 +30,7 @@ when isMainModule:
       echo "off: ", off
       for e in mitems x: e = off - e
       echo off - x.ere(k.a_ik)          # , off  # for debugging
-    dispatch minE, help={"k": "2k=num of order stats", "x": "1-D / univar data.."}
+    dispatch minE, help={"k":"2k=num of order stats", "x":"1-D / univar data.."}
   else:
     import cligen/strUt; include cligen/mergeCfgEnv
     proc minE(warmup=1, k=2, n=7, m=3, ohead=0, x: seq[float]) =
