@@ -2,21 +2,27 @@ import cligen, cligen/[mfile, mslice, osUt], adix/topk
 from std/strutils as su import nil
 when not declared(stderr): import std/syncio
 
-proc pyIx[T](vs: openArray[T], i: int): T = vs[if i < 0: i + vs.len else: i]
+proc pyIx(x: openArray[MSlice], i: int): MSlice = x[if i < 0: i + x.len else: i]
+proc pyIx(x: openArray[MSlice], s: Slice[int]): MSlice =
+  let a = if s.a < 0: s.a + x.len else: s.a
+  let b = if s.b < 0: s.b + x.len else: s.b
+  result.mem = x[a].mem         #TODO Out of bounds/b<a, .. -> the empty slice.
+  result.len = x[b].mem +! x[b].len -! x[a].mem
 
 proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, order=Cheap,
            partn=Partn.last, specs: seq[string]) =
   ## Write spec'd cols of topN-rows-by-various-other-cols to outFile's.  A spec
-  ## is `<n>[,<sort-key-col>(0)[,outCol(same)[,outFile(stdout)]]]`.  ColNos are
-  ## Py-like 0-origin,signed.  Algo is fast one-pass over (mmap|stream) input.
-  ## Simple Eg: ``find . -type f -printf '%C@ %p\\n' | topn -m1 5``.  Fancy Eg:
-  ## ``topn 9,1,-1,x`` writes last col of top 9-by-col-1 rows to file x.  If
-  ## `n!=0` then `<n>` can end in % to instead mean *100\*pct/n* rows.
+  ## is `<N>[,<key-col>(0)[,outCol(same)[,outFile(stdout)]]]`.  Key ColNos are
+  ## Py-like 0-origin,signed.  *outCol* can be an A:B exclusive or A..B slice.
+  ## Algo is fast one-pass over (mmap|stream) input.  Simple & Fancy E.g.s:
+  ##  ``find . -type f -printf '%C@ %p\\n' | topn -m1 5``  # newest 5 by ctime
+  ##  ``topn 9,1,-1,x`` # writes last col of top 9-by-col-1 rows to file x.
+  ## If `n!=0` then `<N>` can end in '%' to instead mean *100\*pct/n* rows.
   let m = specs.len                     # Handle all `m` sort orders in one pass
   if m < 1: stderr.write "No specs requested.  -h for help.\n"; return
   var keyC = newSeq[int](m)
   var nTop = newSeq[int](m)
-  var oCol = newSeq[int](m)
+  var oCol = newSeq[Slice[int]](m)
   var oFil = newSeq[File](m)
   for i, spec in specs:                 # Parse key-output specifiers
     let params = su.split(spec, ',')
@@ -27,7 +33,7 @@ proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, order=Cheap,
               else: su.parseInt(p0)
     nTop[i] = max(1, nTop[i])
     keyC[i] = if params.len > 1: su.parseInt(params[1]) else: 0
-    oCol[i] = if params.len > 2: su.parseInt(params[2]) else: keyC[i]
+    oCol[i]=if params.len>2:parseHSlice[int,int](params[2])else:keyC[i]..keyC[i]
     oFil[i] = if params.len > 3: open(params[3], fmWrite) else: stdout
   let sep = initSep(delim)              # Init into-seq[MSlice] splitter
   var row: seq[MSlice] = @[]
