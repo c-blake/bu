@@ -13,17 +13,19 @@ Usage
 
 Write spec'd cols of topN-rows-by-various-other-cols to outFile's.
 
-A spec is <n>[,<sort-key-col>(0)[,outCol(same)[,outFile(stdout)]]].
+A spec is <N>[,<keyCol>(0)[,outCol(same)[,outFile(stdout)]]].
 
 ColNos are Py-like 0-origin,signed.
 
+outCol can be an A:B exclusive or A..B slice.
+
 Algo is fast one-pass over (mmap|stream) input.
 
-Simple Eg: find . -type f -printf '%C@ %p\n' | topn -m1 5.
+Simple & Fancy E.g.s:
+  find . -type f -printf '%C@ %p\n' | topn -m1 5  # newest 5 by ctime
+  topn 9,1,-1,x # writes last col of top 9-by-col-1 rows to file x.
 
-Fancy Eg: topn 9,1,-1,x writes last col of top 9-by-col-1 rows to file x.
-
-If n!=0 then <n> can end in % to instead mean 100*pct/n rows.
+If n!=0 then <N> can end in '%' to instead mean 100*pct/n rows.
 
 Options:
   -i=, --input= string    "/dev/stdin" input data path
@@ -48,20 +50,20 @@ $ paste <(seq 1 100) <(seq 1 10 1000) | topn 5
 Fancier Example
 ---------------
 This will recurse in `.` emitting c-time, m-time, and path names to a pipeline.
-`topn` then collects the top-3 of the first column (0-origin column 0) and the
-top-4 of the 2nd column (0-origin column 1) in bounded-size heaps (for the
-curious) and emits the pathnames (0-origin column 2) of each to stdout.
 ```sh
-find . -printf '%Cs %Ts %P\n' | topn  3,0,2  4,1,2
+find . -printf '%Cs %Ts %P\n' |
+  topn 3,0,2 4,1,:,/dev/stderr
 ```
-(Yes, this *exact* example is handled by [`newest`](newest.md); It's just an
-example).
+The `topn` part collects the top-3 paths (2) by 0-origin column 0 (ctime) and
+*whole rows* of the top-4 by 0-origin column 1 (mtime), emitting the first to
+stdout and the second to stderr. (Yes, [`newest`](newest.md) handles this
+*exact* example and mismatched 3/4 are weird, but it's just an *example*).
 
-If you want output to separate files (or FIFOs), you can just add `",top3c"` and
-`",top4m"` to the ends of the two parameters, for example.
+Any Python-like `[a]:[b]` exclusive slice or Nim `[a]..[b]` inclusive slice is
+ok, but non-numeric|missing a/b become 0 and out of bounds refs map to `""`.
 
 If you want a top fraction like 10% (instead of an absolute number like "3")
-then you can also get that if you provide upfront the scale via `-n` and also
+then you can also get that ***IF*** you provide the scale via `-n` and also
 tell `topn` to use it via, e.g., `topn -n4321 10%,0,2`.  (Yes, this is mostly
 just a convenience to multiply 0.1 by 4321 - if you do not know `n` ahead of
 time, a one-pass, tiny memory algo is not possible.)
