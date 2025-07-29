@@ -5,16 +5,16 @@ when not declared(stderr): import std/syncio
 proc pyIx(x: openArray[MSlice], i: int): MSlice = x[if i < 0: i + x.len else: i]
 proc pyIx(x: openArray[MSlice], s: Slice[int]): MSlice =
   let a = if s.a < 0: s.a + x.len else: s.a
-  let b = if s.b < 0: s.b + x.len else: s.b
-  result.mem = x[a].mem         #TODO Out of bounds/b<a, .. -> the empty slice.
-  result.len = x[b].mem +! x[b].len -! x[a].mem
+  let b = if s.b < 0: s.b + x.len else: s.b   # b < a | Out of bounds -> ""
+  if b < a or a + 1 > x.len or b + 1 > x.len: result.mem = nil; result.len = 0
+  else: result.mem = x[a].mem; result.len = x[b].mem +! x[b].len -! x[a].mem
 
 proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, order=Cheap,
            partn=Partn.last, specs: seq[string]) =
   ## Write spec'd cols of topN-rows-by-various-other-cols to outFile's.  A spec
-  ## is `<N>[,<key-col>(0)[,outCol(same)[,outFile(stdout)]]]`.  Key ColNos are
-  ## Py-like 0-origin,signed.  *outCol* can be an A:B exclusive or A..B slice.
-  ## Algo is fast one-pass over (mmap|stream) input.  Simple & Fancy E.g.s:
+  ## is `<N>[,<keyCol>(0)[,outCol(same)[,outFile(stdout)]]]`. ColNos are Py-like
+  ## 0-origin,signed.  *outCol* can be an A:B exclusive or A..B slice.  Algo is
+  ## fast one-pass over (mmap|stream) input.  Simple & Fancy E.g.s:
   ##  ``find . -type f -printf '%C@ %p\\n' | topn -m1 5``  # newest 5 by ctime
   ##  ``topn 9,1,-1,x`` # writes last col of top 9-by-col-1 rows to file x.
   ## If `n!=0` then `<N>` can end in '%' to instead mean *100\*pct/n* rows.
@@ -54,6 +54,7 @@ proc topn*(input="/dev/stdin", delim=" ", mxCol=0, n=0, order=Cheap,
       for e in tops[i].maybeOrdered(order): oFil[i].urite e.outs, "\n"
       if not oFil[i].isNil and oFil[i] != stdout: oFil[i].close
 
+  # rec.outs become either GC'd `string` or no-need-to-GC `MSlice`
   if mf.mem.isNil: sweep(input, string, i, $pyIx(row, oCol[i]))
   else           : sweep(mf   , MSlice, i,  pyIx(row, oCol[i]))
 
