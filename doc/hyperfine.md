@@ -12,13 +12,14 @@ has evolved since then, but at the time it had (at least!) these problems:[^1]
    the whole shape of the distribution in which case you generally need many
    more samples. This is not the goal toward which I have seen the tool applied.
 
-2. Terminal output actually adds noise to measurement.  Flashing isn't free.
-   This is a bad default.
+2. Terminal output actually adds noise to measurement.  Flashy progress bars
+   aren't free.  This is a bad / noisy default.
 
 3. Outputs are terminal-friendly BUT hard-to-parse, inducing need for
    `--export-FOO`.  Just emitting easy to parse would be better.
 
-4. Poorly advertised heuristic timeLim leading to 3sec of many 1000s of runs.
+4. Poorly advertised heuristic timeLim leading to 3sec of many 1000s of runs
+   which is often wildly wasteful.
 
 5. More generally, baked-in time-scale assumptions in both heuristics and
    number of decimals when for real users these things vary from at least
@@ -41,6 +42,10 @@ has evolved since then, but at the time it had (at least!) these problems:[^1]
    at least at the time scale of "several ms" is scheduler fiddling (chrt,
    taskset), taking down network interfaces or even better unplugging cables
    and going to single user mode or close to it in terms of background procs.
+
+8. Poor notation; "mean ± σ" label should be "mean ± σ\_mean".  Next line "min"
+   & "max" refer to aspects of the whole distribution of dt samples.  Unless you
+   dig into ghub Issue threads, you may fairly think it means sqrt(sampleVar).
 
 For those who might thing "blah, blah..So, what?" here is a vignette showing
 how at least hyperfine-1.11 (which has a time stamp of like 2023 for me) is
@@ -72,9 +77,10 @@ L2:/dev/shm# echo $tim
 
 [^1]: By now it may have either grown more or added some non-default options for
 ways to have less.  I make no pretense for up-to-date-ness of this critique.
-Who knows?  Maybe the author will fix it all and has enough integrity to even
-credit `tim`, but I *suspect* it'll always at least default to glitzy animated
-terminal junk adding noise to its own measurement as tool marketing propaganda.
+Who knows?  Maybe the author will fix it all or copy tim's ideas and has enough
+integrity to credit `tim`.  I *suspect* it'll always at least default to glitzy
+animated terminal junk adding noise to its own measurement as tool marketing
+propaganda which is just poor science.
 
 [^2]: For those who did not track this estimate, basically it does 15x more runs
 for an accuracy 20x worse and accuracy scales with the square of the number of
