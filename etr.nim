@@ -1,15 +1,14 @@
 import std/[times, strformat, osproc, strutils, os, posix],
-       cligen, cligen/[sysUt, osUt, puSig]
+       cligen, cligen/[sysUt, osUt]
 when not declared(readFile): import std/[syncio, formatfloat]
 
 type ETR* = tuple[done, rate, left: float; etc: DateTime]
 
-proc etc*(t0: DateTime; age, total, did1, did2, measure: float): ETR =
-  result.done = did2 / total
-  result.rate = if did2 > did1 and measure > 0.0: (did2 - did1)/measure
-                else: did1 / age
-  result.left = (total - did2) / result.rate
-  result.etc  = t0 + initDuration(milliseconds = int(result.left * 1000))
+proc etc*(t0: DateTime; age, total, did2, rate: float): ETR =
+  result.done = did2/total
+  result.rate = rate
+  result.left = (total - did2)/result.rate
+  result.etc  = t0 + initDuration(milliseconds = int(result.left*1000))
 
 func `$`*(r: ETR): string =
   &"{100.0*r.done:.2f} %done {r.rate:.2f} /sec {r.left:.1f} secLeft {r.etc}"
@@ -31,6 +30,18 @@ proc processAge(pfs: string): float =
   let start = parseInt((pfs & "/stat").readFile.split[21])
   0.01 * float(uptime - start)
 
+proc wrStatus(r: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
+  if outp.len > 0:
+    let osz = if outp.notInt: outp.execProcess.strip.parseFloat
+              else: (try: (pfs & "fd/" & outp).getFileSize.float except Ce: 0.0)
+    let rTo = try: relTo.strip.parseFloat except Ce: (try:
+                relTo.execProcess.strip.parseFloat except Ce:
+                  erru relTo, " output did not parse as a float\n"; 1.0)
+    echo r," ",r.expSize(osz, if rTo > 0.0: rTo else: tot)," "
+    result = if r.done>=estMin and osz>RatMin*r.done*(if rTo>0:rTo else:tot): 2
+             else: 0
+  else: echo r
+
 proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
           relTo="", RatMin=1e17, estMin=0.0, kill="NIL"): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
@@ -41,45 +52,43 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
   ##   `pid`   given         => default `age` to age of PID
   ##   `did`   parses as int => /proc/PID/fdinfo/FD (default `total` to FD.size)
   ##   `total` parses as int => /proc/PID/fd/FD.size
-  ## Some examples (each assumes only 1 matching pid found by ``pf``):
+  ## Some examples (assumes 1 matching pid found by ``pf``, but see procs f -1):
   ##   ``etr -p "$(pf x)" -d3 -a'fage SOME-LOG'``
-  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m2 -r0 -R.9 -e.01 -kint`` # Test ratio
+  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill`` # Test ratio
   ##   ``etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
   ## Estimation assumes a constant work rate, equal to average rate so far.  If
-  ## `measure>0.0` seconds `etr` instead sleeps that long & uses the rate across
-  ## the interval (unless `did` doesn't change across the sleep).  If `outp` is
+  ## `measure>0.0` seconds `etr` instead loops, sleeping that long between polls
+  ## monitoring progress, maybe killing & exiting on bad ratios.  If `outp` is
   ## given, report includes expected total output byte/byte ratio.  Exit status
   ## is 2 if *output:input > RatMin* after `estMin` progress.
-  let sigNo = kill.parseUnixSignal      # Early to fail on misspecification
   if did.len == 0:
-    stderr.write "Need @least `did` &likely `pid`; --help says more\n";Parse!!""
+    erru "Need @least `did` &likely `pid`; --help says more\n";Parse!!""
   let pfs  = "/proc/" & $pid & "/"
   let age  = if pid==0 or age.len>0: parseFloat(execProcess(age).strip)*scaleAge
              else: processAge(pfs)
   let tot  = if total.len == 0: float(getFileInfo(pfs & "fd/" & did).size)
              elif total.notInt: parseFloat(execProcess(total).strip)
              else: float(getFileInfo(pfs & "fd/" & total).size)
-  let did1 = if did.notInt: parseFloat(execProcess(did).strip)
-             else: parseFloat(readFile(pfs & "fdinfo/" & did).split()[1])
-  var did2 = did1
-  if measure > 0.0:
-    sleep(int(measure / 0.001))         # Nim sleep takes millisec
-    did2 = if did.notInt: parseFloat(execProcess(did).strip)
-           else: parseFloat(readFile(pfs & "fdinfo/" & did).split()[1])
-  let r = etc(now(), age, tot, did1, did2, measure)
-  if outp.len > 0:
-    let osz = if outp.notInt: outp.execProcess.strip.parseFloat
-              else: (try: (pfs & "fd/" & outp).getFileSize.float except Ce: 0.0)
-    let rTo = try: relTo.strip.parseFloat except Ce: (try:
-                relTo.execProcess.strip.parseFloat except Ce:
-                  stderr.write relTo, " output did not parse as a float\n"; 1.0)
-    echo r," ",r.expSize(osz, if rTo > 0.0: rTo else: tot)," "
-    result = if r.done>=estMin and osz>RatMin*r.done*(if rTo>0:rTo else:tot): 2
-             else: 0
-    if result != 0: discard posix.kill(pid.Pid, sigNo)
-  else: echo r
+  template q: untyped = (if did.notInt: parseFloat(execProcess(did).strip)
+                         else: parseFloat(readFile(pfs&"fdinfo/"&did).split[1]))
+  var did1 = q                  # 1 data point affords only a trivial estimate..
+  let etr = etc(now(), age, tot, did1, did1/age)  #.. for rate == did1/age.
+  template writeStatusMaybeKill(etr) =
+    result = wrStatus(etr, outp, pfs, relTo, tot, estMin, RatMin)
+    if result != 0:                      # outp given & yet getting a too big
+      discard execCmd(&"{kill} {pid}");quit 2 #..out/in size ratio => Kill & Quit.
+  writeStatusMaybeKill etr
+  if measure > 0:
+    var did2 = did1; let dt = int(measure/0.001)  # Nim sleep takes millisec
+    while pfs.dirExists:
+      sleep dt
+      did2 = q                                    #TODO Make this much fancier..
+      let rate = (did2 - did1)/measure            #..EWMA/LWMA w/moving stddevs
+      did1 = did2                                 #..|quantiles for "rate pair".
+      let etr = etc(now(), age, tot, did2, rate)  #Add 2nd rate here for 95%/+-
+      writeStatusMaybeKill etr
 
-when isMainModule: dispatch etr,
+when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
   help={"pid"     : "pid of process in question",
         "did"     : "int fd->fd of `pid`; string-> cmd for did",
         "total"   : "int fd->size(fd); string-> cmd for all work",
@@ -91,4 +100,4 @@ when isMainModule: dispatch etr,
       | str cmd giving such a float""",
         "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this",
         "estMin"  : "require > this much progress for RatMin",
-        "kill"    : "send this sigNum/Name to `pid` if >ratio"}
+        "kill"    : "run this cmd w/arg `pid` if ratio test fails"}
