@@ -75,8 +75,8 @@ Configuration is much like [dfr.md](dfr.md).  The format of `~/.config/etr` (or
 wherever `ETR_CONFIG` points) is from `std/parsecfg` which is TOML/.ini-like.
 A background polarity agnostic config might look like this:
 ```
-color = "done0   italic"
-color = "done1  -italic"
+color = "done0   italic"    # 0 = prefix/first  = On
+color = "done1  -italic"    # 1 = suffix/second = Off
 color = "rate0   bold"
 color = "rate1  -bold"
 color = "left0   inverse"
