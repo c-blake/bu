@@ -1,8 +1,27 @@
 import std/[times, strformat, osproc, strutils, os, posix],
-       cligen, cligen/[sysUt, osUt]
+       cligen, cligen/[sysUt, osUt, humanUt]
 when not declared(readFile): import std/[syncio, formatfloat]
 
 type ETR* = tuple[done, rate, left: float; etc: DateTime]
+
+var done0, done1, rate0, rate1, left0, left1, etc0, etc1, ratio0, ratio1 = ""
+proc parseColor(color: seq[string]) =
+  for spec in color:
+    let cols = spec.strip.splitWhitespace(1)
+    if cols.len < 2: Value !! "bad color line: \"" & spec & "\""
+    let k = cols[0].optionNormalize; let v = cols[1].textAttr
+    case k
+    of "done0": done0 = v
+    of "done1": done1 = v
+    of "rate0": rate0 = v
+    of "rate1": rate1 = v
+    of "left0": left0 = v
+    of "left1": left1 = v
+    of "etc0" : etc0  = v
+    of "etc1" : etc1  = v
+    of "ratio0": ratio0  = v
+    of "ratio1": ratio1  = v
+    else: Value !! "bad color line: \"" & spec & "\""
 
 proc etc*(t0: DateTime; age, total, did2, rate: float): ETR =
   result.done = did2/total
@@ -10,8 +29,9 @@ proc etc*(t0: DateTime; age, total, did2, rate: float): ETR =
   result.left = (total - did2)/result.rate
   result.etc  = t0 + initDuration(milliseconds = int(result.left*1000))
 
-func `$`*(r: ETR): string =
-  &"{100.0*r.done:.2f} %done {r.rate:.2f} /sec {r.left:.1f} secLeft {r.etc}"
+proc `$`*(r: ETR): string =
+  &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rate:.2f} /sec{rate1} " &
+  &"{left0}{r.left:.1f} secLeft{left1} {etc0}{r.etc}{etc1}"
 
 proc expSize(r: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/r.done) & " B"
@@ -37,13 +57,14 @@ proc wrStatus(r: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
     let rTo = try: relTo.strip.parseFloat except Ce: (try:
                 relTo.execProcess.strip.parseFloat except Ce:
                   erru relTo, " output did not parse as a float\n"; 1.0)
-    echo r," ",r.expSize(osz, if rTo > 0.0: rTo else: tot)," "
+    echo r,&" {ratio0}",r.expSize(osz, if rTo > 0.0: rTo else: tot),&"{ratio1}"
     result = if r.done>=estMin and osz>RatMin*r.done*(if rTo>0:rTo else:tot): 2
              else: 0
   else: echo r
 
 proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
-          relTo="", RatMin=1e17, estMin=0.0, kill="NIL"): int =
+          relTo="", RatMin=1e17, estMin=0.0, kill="NIL",
+          colors: seq[string] = @[], color: seq[string] = @[]): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
   ## processing (age of `pid` or that produced by the `age` command).  Commands
@@ -71,6 +92,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
              else: float(getFileInfo(pfs & "fd/" & total).size)
   template q: untyped = (if did.notInt: parseFloat(execProcess(did).strip)
                          else: parseFloat(readFile(pfs&"fdinfo/"&did).split[1]))
+  color.parseColor
   var did1 = q                  # 1 data point affords only a trivial estimate..
   let etr = etc(now(), age, tot, did1, did1/age)  #.. for rate == did1/age.
   template writeStatusMaybeKill(etr) =
@@ -100,4 +122,6 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
       | str cmd giving such a float""",
         "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this",
         "estMin"  : "require > this much progress for RatMin",
-        "kill"    : "run this cmd w/arg `pid` if ratio test fails"}
+        "kill"    : "run this cmd w/arg `pid` if ratio test fails",
+        "colors"  : "color aliases; Syntax: name = ATTR1 ATTR2..",
+        "color"   : "text attrs for syntax elts; Like lc/etc."}

@@ -44,6 +44,8 @@ Options:
   -R=, --RatMin=   float  1e+17 exit 1 (i.e. "fail") for ratios > this
   -e=, --estMin=   float  0.0   require > this much progress for RatMin
   -k=, --kill=     string "NIL" run this cmd w/arg pid if ratio test fails
+  -c=, --colors=   strings {}   color aliases; Syntax: name = ATTR1 ATTR2..
+  --color=         strings {}   text attrs for syntax elts; Like lc/etc.
 ```
 
 # Examples Notes
@@ -66,6 +68,24 @@ Some near identical example for `xz` or `zstd` recompression of `gzip` files is
 an exercise for the user. ;) Ratio testing can also avoid output:input explosion
 if you need to keep it under 1000 or 10000 or some such.  Any "don't output too
 much per input" situation should be easy to adapt.
+
+# Configuration
+
+Configuration is much like [dfr.md](dfr.md).  The format of `~/.config/etr` (or
+wherever `ETR_CONFIG` points) is from `std/parsecfg` which is TOML/.ini-like.
+A background polarity agnostic config might look like this:
+```
+color = "done0   italic"
+color = "done1  -italic"
+color = "rate0   bold"
+color = "rate1  -bold"
+color = "left0   inverse"
+color = "left1  -inverse"
+color = "etc0    bold italic"
+color = "etc1   -bold -italic"
+color = "ratio0  underline"
+color = "ratio1 -underline"
+```
 
 # Naming Note
 "Estimated time of arrival" (ETA) and "Estimated time of completion" (ETC) are a
