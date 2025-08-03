@@ -137,7 +137,7 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
         let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
         let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
         writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
-  except IOError: quit 2        # Probably some racy `readFile` failure
+  except IOError: quit 3        # Probably some racy `readFile` failure
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
   help={"pid"    : "pid of process in question",
