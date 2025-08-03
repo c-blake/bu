@@ -132,11 +132,8 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
   # If N sec left,want data from past N sec to estim.scale.  Start anew each tm.
         var scl = initMovingStat[float, float](options={OrderStats})
         let i0 = lowerBound(tms, tms[^1] - leftMid)
-        echo "i0: ", i0
         for i in i0..<tms.len - 1:                  
-          let r = (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
-          echo "r[",i,"]: ", r
-          scl.push r
+          scl.push (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
         let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
         let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
         writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
