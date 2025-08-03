@@ -102,43 +102,45 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
   template q: untyped = (if did.notInt: did.execProcess.strip.parseFloat
                          else: readFile(pfs&"fdinfo/"&did).split[1].parseFloat)
   color.parseColor
-  var did1 = q; var t = now()   # 1 data point affords only a trivial estimate..
-  let r = did1/age              #.. for rate, namely `did1/age`.
-  template writeStatusMaybeKill(et) =
-    result = wrStatus(et, outp, pfs, relTo, tot, estMin, RatMin)
-    if result != 0:                     # outp given, yet getting too big out/in
-      discard execCmd(&"{kill} {pid}");quit 2 #..size ratio => Kill & Quit.
-  writeStatusMaybeKill etc(t, tot, did1, r, r, r)
-  if measure > 0:                       # -m also could stand for "monitor"
-    let dt  = int(measure/0.001)        # Nim sleep takes millisec
-    var tms = @[t.toTime.toUnixFloat - age, t.toTime.toUnixFloat]
-    var dids = @[0.0, did1]  #TODO `tot` may also be dyn,but re-query wasteful if not
-    #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location & scale estimates.
-    let (winL, winS) = (locus.parseInt, scale.parseInt)
-    var loc = initMovingStat[float, float](options={OrderStats})
-    loc.push did1/age
-    while pfs.dirExists:                # Re-query time to trust sleep dt less..
-      sleep dt; dids.add q              #..in case we get SIGSTOP'd or etc.
-      let t = now()
-      tms.add t.toTime.toUnixFloat
-      let rate = (dids[^1] - dids[^2])/(tms[^1] - tms[^2])
-      if dids.len > winL:               # Location gets simple moving window
-        let winLp1 = winL + 1
-        loc.pop (dids[^winL] - dids[^winLp1])/(tms[^winL] - tms[^winLp1])
-      loc.push rate
-      let rateMid = loc.mean
-      let leftMid = (tot - dids[^1])/rateMid
-# If N sec left, use data from past N sec to estim. scale. Start anew each tm.
-      var scl = initMovingStat[float, float](options={OrderStats})
-      let i0 = lowerBound(tms, tms[^1] - leftMid)
-      echo "i0: ", i0
-      for i in i0..<tms.len - 1:                  
-        let r = (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
-        echo "r[",i,"]: ", r
-        scl.push r
-      let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
-      let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
-      writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
+  try:
+    var did1 = q; var t = now()   # 1 data point affords only a trivial estimate
+    let r = did1/age              #.. for rate, namely `did1/age`.
+    template writeStatusMaybeKill(et) =
+      result = wrStatus(et, outp, pfs, relTo, tot, estMin, RatMin)
+      if result != 0:                   # outp given,yet Osz/Isz getting too big
+        discard execCmd(&"{kill} {pid}");quit 2 # => Kill & Quit.
+    writeStatusMaybeKill etc(t, tot, did1, r, r, r)
+    if measure > 0:                     # -m also could stand for "monitor"
+      let dt  = int(measure/0.001)      # Nim sleep takes millisec
+      var tms = @[t.toTime.toUnixFloat - age, t.toTime.toUnixFloat]
+      var dids = @[0.0, did1] #TODO `tot` MAY be dyn,but reQry wasteful if not
+      #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location & scale estimate
+      let (winL, winS) = (locus.parseInt, scale.parseInt)
+      var loc = initMovingStat[float, float](options={OrderStats})
+      loc.push did1/age
+      while pfs.dirExists:              # Re-query time to trust sleep dt less..
+        sleep dt; dids.add q            #..in case we get SIGSTOP'd or etc.
+        let t = now()
+        tms.add t.toTime.toUnixFloat
+        let rate = (dids[^1] - dids[^2])/(tms[^1] - tms[^2])
+        if dids.len > winL:             # Location gets a simple moving window
+          let winLp1 = winL + 1
+          loc.pop (dids[^winL] - dids[^winLp1])/(tms[^winL] - tms[^winLp1])
+        loc.push rate
+        let rateMid = loc.mean
+        let leftMid = (tot - dids[^1])/rateMid
+  # If N sec left,want data from past N sec to estim.scale.  Start anew each tm.
+        var scl = initMovingStat[float, float](options={OrderStats})
+        let i0 = lowerBound(tms, tms[^1] - leftMid)
+        echo "i0: ", i0
+        for i in i0..<tms.len - 1:                  
+          let r = (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
+          echo "r[",i,"]: ", r
+          scl.push r
+        let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
+        let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
+        writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
+  except IOError: quit 2        # Probably some racy `readFile` failure
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
   help={"pid"    : "pid of process in question",
