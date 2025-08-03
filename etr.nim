@@ -1,8 +1,8 @@
-import std/[times, strformat, osproc, strutils, os, posix],
-       cligen, cligen/[sysUt, osUt, humanUt]
+import std/[times, strformat, osproc, strutils, os, posix, algorithm],
+       cligen, cligen/[sysUt, osUt, humanUt], adix/mvstat
 when not declared(readFile): import std/[syncio, formatfloat]
 
-type ETR* = tuple[done, rate, left: float; etc: DateTime]
+type ETR* = tuple[done, rateLo,rateMid,rateHi, leftLo,leftHi:float;etc:DateTime]
 
 var done0, done1, rate0, rate1, left0, left1, etc0, etc1, ratio0, ratio1 = ""
 proc parseColor(color: seq[string]) =
@@ -23,15 +23,24 @@ proc parseColor(color: seq[string]) =
     of "ratio1": ratio1  = v
     else: Value !! "bad color line: \"" & spec & "\""
 
-proc etc*(t0: DateTime; age, total, did2, rate: float): ETR =
-  result.done = did2/total
-  result.rate = rate
-  result.left = (total - did2)/result.rate
-  result.etc  = t0 + initDuration(milliseconds = int(result.left*1000))
+proc etc*(t0: DateTime; total,did2, rateLo,rateMid,rateHi: float): ETR =
+  result.done    = did2/total
+  let amtLeft = total - did2
+  result.rateLo  = rateLo
+  result.rateMid = rateMid
+  result.rateHi  = rateHi
+  result.leftLo  = amtLeft/result.rateHi
+  result.leftHi  = amtLeft/result.rateLo
+  let leftMid = amtLeft/result.rateMid
+  result.etc     = t0 + initDuration(milliseconds = int(leftMid*1000))
 
 proc `$`*(r: ETR): string =
-  &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rate:.2f} /sec{rate1} " &
-  &"{left0}{r.left:.1f} secLeft{left1} {etc0}{r.etc}{etc1}"
+  if r.leftLo == r.leftHi:
+    &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
+    &"{left0}{r.leftLo:.1f} secLeft{left1} {etc0}{r.etc}{etc1}"
+  else:
+    &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
+    &"{left0}{r.leftLo:.1f} .. {r.leftHi:.1f} sLeft{left1} {etc0}{r.etc}{etc1}"
 
 proc expSize(r: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/r.done) & " B"
@@ -47,23 +56,23 @@ proc processAge(pfs: string): float =
   buf[decimal..decimal+1] = buf[decimal+1..decimal+2]
   buf[decimal+2] = ' '
   let uptime = parseInt(buf.split[0])
-  let start = parseInt((pfs & "/stat").readFile.split[21])
-  0.01 * float(uptime - start)
+  let start = (pfs & "/stat").readFile.split[21].parseInt
+  float(uptime - start)*0.01    # Jiffies -> seconds
 
 proc wrStatus(r: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
   if outp.len > 0:
     let osz = if outp.notInt: outp.execProcess.strip.parseFloat
-              else: (try: (pfs & "fd/" & outp).getFileSize.float except Ce: 0.0)
-    let rTo = try: relTo.strip.parseFloat except Ce: (try:
-                relTo.execProcess.strip.parseFloat except Ce:
-                  erru relTo, " output did not parse as a float\n"; 1.0)
+              else: (try: (pfs & "fd/" & outp).getFileSize.float except: 0.0)
+    let rTo = if relTo.len<1:1.0 else: (try: relTo.strip.parseFloat except:(try:
+                relTo.execProcess.strip.parseFloat except:
+                  erru relTo, " output did not parse as a float\n"; 1.0))
     echo r,&" {ratio0}",r.expSize(osz, if rTo > 0.0: rTo else: tot),&"{ratio1}"
     result = if r.done>=estMin and osz>RatMin*r.done*(if rTo>0:rTo else:tot): 2
              else: 0
   else: echo r
 
-proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
-          relTo="", RatMin=1e17, estMin=0.0, kill="NIL",
+proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
+          relTo="", RatMin=1e17, estMin=0.0, kill="NIL", locus="6", scale="0",
           colors: seq[string] = @[], color: seq[string] = @[]): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
@@ -75,7 +84,7 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
   ##   `total` parses as int => /proc/PID/fd/FD.size
   ## Some examples (assumes 1 matching pid found by ``pf``, but see procs f -1):
   ##   ``etr -p "$(pf x)" -d3 -a'fage SOME-LOG'``
-  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill`` # Test ratio
+  ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -R.9 -e.01 -k=kill`` # Ratio v.Tot
   ##   ``etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
   ## Estimation assumes a constant work rate, equal to average rate so far.  If
   ## `measure>0.0` seconds `etr` instead loops, sleeping that long between polls
@@ -85,43 +94,67 @@ proc etr*(pid=0, did="", total="", age="", scaleAge=1.0, measure=0.0, outp="",
   if did.len == 0:
     erru "Need @least `did` &likely `pid`; --help says more\n";Parse!!""
   let pfs  = "/proc/" & $pid & "/"
-  let age  = if pid==0 or age.len>0: parseFloat(execProcess(age).strip)*scaleAge
-             else: processAge(pfs)
-  let tot  = if total.len == 0: float(getFileInfo(pfs & "fd/" & did).size)
-             elif total.notInt: parseFloat(execProcess(total).strip)
-             else: float(getFileInfo(pfs & "fd/" & total).size)
-  template q: untyped = (if did.notInt: parseFloat(execProcess(did).strip)
-                         else: parseFloat(readFile(pfs&"fdinfo/"&did).split[1]))
+  let age  = if pid==0 or age.len>0: age.execProcess.strip.parseFloat*ageScl
+             else: pfs.processAge
+  let tot  = if total.len == 0: getFileInfo(pfs & "fd/" & did).size.float
+             elif total.notInt: total.execProcess.strip.parseFloat
+             else: getFileInfo(pfs & "fd/" & total).size.float
+  template q: untyped = (if did.notInt: did.execProcess.strip.parseFloat
+                         else: readFile(pfs&"fdinfo/"&did).split[1].parseFloat)
   color.parseColor
-  var did1 = q                  # 1 data point affords only a trivial estimate..
-  let etr = etc(now(), age, tot, did1, did1/age)  #.. for rate == did1/age.
-  template writeStatusMaybeKill(etr) =
-    result = wrStatus(etr, outp, pfs, relTo, tot, estMin, RatMin)
-    if result != 0:                      # outp given & yet getting a too big
-      discard execCmd(&"{kill} {pid}");quit 2 #..out/in size ratio => Kill & Quit.
-  writeStatusMaybeKill etr
-  if measure > 0:
-    var did2 = did1; let dt = int(measure/0.001)  # Nim sleep takes millisec
-    while pfs.dirExists:
-      sleep dt
-      did2 = q                                    #TODO Make this much fancier..
-      let rate = (did2 - did1)/measure            #..EWMA/LWMA w/moving stddevs
-      did1 = did2                                 #..|quantiles for "rate pair".
-      let etr = etc(now(), age, tot, did2, rate)  #Add 2nd rate here for 95%/+-
-      writeStatusMaybeKill etr
+  var did1 = q; var t = now()   # 1 data point affords only a trivial estimate..
+  let r = did1/age              #.. for rate, namely `did1/age`.
+  template writeStatusMaybeKill(et) =
+    result = wrStatus(et, outp, pfs, relTo, tot, estMin, RatMin)
+    if result != 0:                     # outp given, yet getting too big out/in
+      discard execCmd(&"{kill} {pid}");quit 2 #..size ratio => Kill & Quit.
+  writeStatusMaybeKill etc(t, tot, did1, r, r, r)
+  if measure > 0:                       # -m also could stand for "monitor"
+    let dt  = int(measure/0.001)        # Nim sleep takes millisec
+    var tms = @[t.toTime.toUnixFloat - age, t.toTime.toUnixFloat]
+    var dids = @[0.0, did1]  #TODO `tot` may also be dyn,but re-query wasteful if not
+    #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location & scale estimates.
+    let (winL, winS) = (locus.parseInt, scale.parseInt)
+    var loc = initMovingStat[float, float](options={OrderStats})
+    loc.push did1/age
+    while pfs.dirExists:                # Re-query time to trust sleep dt less..
+      sleep dt; dids.add q              #..in case we get SIGSTOP'd or etc.
+      let t = now()
+      tms.add t.toTime.toUnixFloat
+      let rate = (dids[^1] - dids[^2])/(tms[^1] - tms[^2])
+      if dids.len > winL:               # Location gets simple moving window
+        let winLp1 = winL + 1
+        loc.pop (dids[^winL] - dids[^winLp1])/(tms[^winL] - tms[^winLp1])
+      loc.push rate
+      let rateMid = loc.mean
+      let leftMid = (tot - dids[^1])/rateMid
+# If N sec left, use data from past N sec to estim. scale. Start anew each tm.
+      var scl = initMovingStat[float, float](options={OrderStats})
+      let i0 = lowerBound(tms, tms[^1] - leftMid)
+      echo "i0: ", i0
+      for i in i0..<tms.len - 1:                  
+        let r = (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
+        echo "r[",i,"]: ", r
+        scl.push r
+      let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
+      let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
+      writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
-  help={"pid"     : "pid of process in question",
-        "did"     : "int fd->fd of `pid`; string-> cmd for did",
-        "total"   : "int fd->size(fd); string-> cmd for all work",
-        "age"     : "cmd for `age` (age of pid if not given)",
-        "scaleAge": "re-scale output of `age` cmd as needed",
-        "measure" : "measure rate NOW across this given delay",
-        "outp"    : "int->size(fd(pid)); str->cmd giving out used",
-        "relTo" :"""emit exp.size : {this float | <=0 to-total}
-      | str cmd giving such a float""",
-        "RatMin"  : "exit 1 (i.e. \"fail\") for ratios > this",
-        "estMin"  : "require > this much progress for RatMin",
-        "kill"    : "run this cmd w/arg `pid` if ratio test fails",
-        "colors"  : "color aliases; Syntax: name = ATTR1 ATTR2..",
-        "color"   : "text attrs for syntax elts; Like lc/etc."}
+  help={"pid"    : "pid of process in question",
+        "did"    : "int fd->fd of `pid`; string-> cmd for did",
+        "total"  : "int fd->size(fd); string-> cmd for all work",
+        "age"    : "cmd for `age` (age of pid if not given)",
+        "ageScl" : "re-scale output of `age` cmd as needed",
+        "measure": "measure rate NOW across this given delay",
+        "outp"   : "int->size(fd(pid)); str->cmd giving out used",
+        "relTo" :"""expctdSz rel.To: { float / ""|<=0 => total }
+               | str cmd giving such a float""",
+        "RatMin" : "exit 1 (i.e. \"fail\") for ratios > this",
+        "estMin" : "require > this much progress for RatMin",
+        "kill"   : "run this cmd w/arg `pid` if ratio test fails",
+        "locus"  : "maker for moving rate location (for ETC)",
+        "scale"  : "maker for moving rate scale (for range)",
+        "colors" : "color aliases; Syntax: name = ATTR1 ATTR2..",
+        "color"  : "text attrs for syntax elts; Like lc/etc."},
+  short={"ageScl": 'A'}
