@@ -35,12 +35,13 @@ proc etc*(t0: DateTime; total,did2, rateLo,rateMid,rateHi: float): ETR =
   result.etc     = t0 + initDuration(milliseconds = int(leftMid*1000))
 
 proc `$`*(r: ETR): string =
+  let et = ($r.etc)[0..^7]      # Strip off time zone; CL option?
   if r.leftLo == r.leftHi:
     &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
-    &"{left0}{r.leftLo:.1f} secLeft{left1} {etc0}{r.etc}{etc1}"
+    &"{left0}{r.leftLo:.1f} secLeft{left1} {etc0}{et}{etc1}"
   else:
     &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
-    &"{left0}{r.leftLo:.1f} .. {r.leftHi:.1f} sLeft{left1} {etc0}{r.etc}{etc1}"
+    &"{left0}{r.leftLo:.1f} .. {r.leftHi:.1f} sLeft{left1} {etc0}{et}{etc1}"
 
 proc expSize(r: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/r.done) & " B"
