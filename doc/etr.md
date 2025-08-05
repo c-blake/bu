@@ -26,7 +26,6 @@ Some examples (assumes 1 matching pid found by pf, but see procs f -1):
   etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill # RatioV.Tot
   etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
 
-Estimation assumes a constant work rate, equal to average rate so far.
 If measure>0.0 seconds etr instead loops, sleeping that long between polls
 monitoring progress, maybe killing & exiting on bad ratios.  If outp is given,
 report includes expected total output byte/byte ratio.  Exit status is 2 if

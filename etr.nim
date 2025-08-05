@@ -88,11 +88,10 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
   ##   ``etr -p "$(pf x)" -d3 -a'fage SOME-LOG'``
   ##   ``etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill`` # RatioV.Tot
   ##   ``etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'``
-  ## Estimation assumes a constant work rate, equal to average rate so far.  If
-  ## `measure>0.0` seconds `etr` instead loops, sleeping that long between polls
-  ## monitoring progress, maybe killing & exiting on bad ratios.  If `outp` is
-  ## given, report includes expected total output byte/byte ratio.  Exit status
-  ## is 2 if *output:input > RatMin* after `estMin` progress.
+  ## If `measure>0.0` seconds `etr` instead loops, sleeping that long between
+  ## polls monitoring progress, maybe killing & exiting on bad ratios.  If
+  ## `outp` is given, report includes expected total output byte/byte ratio.
+  ## Exit status is 2 if *output:input > RatMin* after `estMin` progress.
   if did.len == 0:
     erru "Need @least `did` &likely `pid`; --help says more\n";Parse!!""
   let pfs  = "/proc/" & $pid & "/"
