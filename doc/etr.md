@@ -70,10 +70,9 @@ here is *after* a warm up `--estMin`.)  Besides running `kill`, `etr` also exits
 with status 2.  So, you can test that to do whatever else.  Exit 1 can still
 happen for other failures like failed commands, /proc files going missing, etc.
 
-Some near identical example for `xz` or `zstd` recompression of `gzip` files is
-an exercise for the user. ;) Ratio testing can also avoid output:input explosion
-if you need to keep it under 1000 or 10000 or some such.  Any "don't output too
-much per input" situation should be easy to adapt.
+Ratio testing can be for more than data compressors.  It can also avoid
+output:input explosion if you need to keep it under 1000 or 10000 or some such.
+Any "don't output too much per input" situation should be easy to adapt.
 
 # Configuration
 
