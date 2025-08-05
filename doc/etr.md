@@ -23,7 +23,7 @@ Some examples (assumes 1 matching pid found by pf, but see procs f -1):
 
   gzip -9 < in > o.gz & sleep 2; etr -p $! -d0 -o1 -m2 -r0
   etr -p "$(pf x)" -d3 -a'fage SOME-LOG'
-  etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -R.9 -e.01 -k=kill # Ratio v.Tot
+  etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill # RatioV.Tot
   etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
 
 Estimation assumes a constant work rate, equal to average rate so far.
