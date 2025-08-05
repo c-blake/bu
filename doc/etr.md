@@ -21,8 +21,9 @@ common use cases:
 
 Some examples (assumes 1 matching pid found by pf, but see procs f -1):
 
+  gzip -9 < in > o.gz & sleep 2; etr -p $! -d0 -o1 -m2 -r0
   etr -p "$(pf x)" -d3 -a'fage SOME-LOG'
-  etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -r0 -R.9 -e.01 -k=kill # Test ratio
+  etr -p "$(pf ffmpeg)" -d3 -o4 -m1 -R.9 -e.01 -k=kill # Ratio v.Tot
   etr -p "$(pf stripe)" -t'ls -1 /DIR|wc -l' -d'grep 7mslot: LOG|wc -l'
 
 Estimation assumes a constant work rate, equal to average rate so far.
@@ -32,26 +33,31 @@ report includes expected total output byte/byte ratio.  Exit status is 2 if
 output:input > RatMin after estMin progress.
 
 Options:
-  -p=, --pid=      int    0     pid of process in question
-  -d=, --did=      string ""    int fd->fd of pid; string-> cmd for did
-  -t=, --total=    string ""    int fd->size(fd); string-> cmd for all work
-  -a=, --age=      string ""    cmd for age (age of pid if not given)
-  -s=, --scaleAge= float  1.0   re-scale output of age cmd as needed
-  -m=, --measure=  float  0.0   measure rate NOW across this given delay
-  -o=, --outp=     string ""    int->size(fd(pid)); str->cmd giving out used
-  -r=, --relTo=    string ""    emit exp.size : {this float | <=0 to-total}
-                                      | str cmd giving such a float
-  -R=, --RatMin=   float  1e+17 exit 1 (i.e. "fail") for ratios > this
-  -e=, --estMin=   float  0.0   require > this much progress for RatMin
-  -k=, --kill=     string "NIL" run this cmd w/arg pid if ratio test fails
-  -c=, --colors=   strings {}   color aliases; Syntax: name = ATTR1 ATTR2..
-  --color=         strings {}   text attrs for syntax elts; Like lc/etc.
+  -p=, --pid=     int     0     pid of process in question
+  -d=, --did=     string  ""    int fd->fd of pid; string-> cmd for did
+  -t=, --total=   string  ""    int fd->size(fd); string-> cmd for all work
+  -a=, --age=     string  ""    cmd for age (age of pid if not given)
+  -A=, --ageScl=  float   1.0   re-scale output of age cmd as needed
+  -m=, --measure= float   0.0   measure rate NOW across this given delay
+  -o=, --outp=    string  ""    int->size(fd(pid)); str->cmd giving out used
+  -r=, --relTo=   string  ""    expctdSz rel.To: { float / ""|<=0 => total }
+                                               | str cmd giving such a float
+  -R=, --RatMin=  float   1e+17 exit 1 (i.e. "fail") for ratios > this
+  -e=, --estMin=  float   0.0   require > this much progress for RatMin
+  -k=, --kill=    string  "NIL" run this cmd w/arg pid if ratio test fails
+  -l=, --locus=   string  "6"   maker for moving rate location (for ETC)
+  -s=, --scale=   string  "0"   maker for moving rate scale (for range)
+  -c=, --colors=  strings {}    color aliases; Syntax: name = ATTR1 ATTR2..
+  --color=        strings {}    text attrs for syntax elts; Like lc/etc.
 ```
 
 # Examples Notes
 The examples use `pf` (a symlink to [`procs`](https://github.com/c-blake/procs))
 that does `procs find` to get a process ID.  There are both many ways in `pf` to
 filter on users, ttys, etc. and also many other tools like `pgrep` for similar.
+In a pinch, you may be able to use the shell built-in variable `$!` for the PID
+of the last *background* process started as shown in the gzip example.
+
 Also, as a more informal solution for many similar situations, `procs display`
 aka `pd` 'basic' formats with "%< %>" show "IO progress" in terms of pure
 aggregate data motion (not percentage done or actual time of completion terms).
@@ -88,7 +94,7 @@ color = "ratio1 -underline"
 ```
 
 # Naming Note
-"Estimated time of arrival" (ETA) and "Estimated time of completion" (ETC) are a
+"Estimated time of arrival" (ETA) and "Estimated time of completion" (ETC) are
 more common names for this, but "arrival" is kind of misleading since arbitrary
 work is being measured and "etc" kinda collides with `"/etc"` & variants (e.g.
 in a Zsh "autocd" kind of context, yes resolvable with trailing '/', but even
