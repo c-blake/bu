@@ -14,7 +14,7 @@ template eMin*(k=2, n=7, m=3, get1): untyped =
     var samp: seq[float]
     for inner in 1..n: samp.add (block: get1)
     samp.sort
-    sest.push samp.eLE(a) 
+    sest.push samp.eLE(a)
     xall.add samp
   (est: xall.eLE(a_ik(2*k)), err: sest.standardDeviation) #/sqrt(m.float)4big m?
 

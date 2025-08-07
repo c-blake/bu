@@ -1,7 +1,7 @@
 import std/[os,osproc,posix, strformat,strutils,re, times, sets], cligen/osUt
 when not declared(File): import std/[syncio, formatfloat]
 
-proc `$`(x: HashSet[Pid]): string = 
+proc `$`(x: HashSet[Pid]): string =
   for pid in x: (if result.len > 0: result.add ' '); result.add $pid
 
 proc log(o: File, t0: var DateTime, msg: string) =

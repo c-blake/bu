@@ -1,6 +1,6 @@
 when isMainModule:
   import std/[os, syncio, strutils], cligen/[osUt, textUt]
-  let ac = paramCount() 
+  let ac = paramCount()
   let av1   = if ac >= 1: paramStr(1)   else: ""
   var colon = if ac >= 1: av1.find(':') else: -1
   if ac < 1 or colon == -1:

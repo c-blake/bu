@@ -262,7 +262,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
         put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
         put1 "", "ANY OTHER KEY EXITS THIS HELP."
       else: put1 "", "No Room For Help"
-      discard iK.getKey 
+      discard iK.getKey
     elif doPicks:
       if pick - yO >= h: yO = pick - h + 1
       nIt = putN(yO, pick)
