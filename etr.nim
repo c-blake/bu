@@ -1,8 +1,14 @@
-import std/[times, strformat, osproc, strutils, os, posix, algorithm],
-       cligen, cligen/[sysUt, osUt, humanUt], adix/mvstat
+import std/[times, strformat, osproc, strutils, os, posix, algorithm, math],
+       cligen, cligen/[sysUt, osUt, humanUt], adix/[xhist1, lna, embist]
 when not declared(readFile): import std/[syncio, formatfloat]
 
-type ETR* = tuple[done, rateLo,rateMid,rateHi, leftLo,leftHi:float;etc:DateTime]
+var wOL, wOS = 0.9375 #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location
+xhist1.def LDist, lna, exp, EMBist[float], true, wOL # & scale estimate chosen
+xhist1.def SDist, lna, exp, EMBist[float], true, wOS # at run-time by CLI.
+proc initLDist(hl: string): LDist = wOL = 2.0^(-1/parseFloat(hl)); result.init
+proc initSDist(hl: string): SDist = wOS = 2.0^(-1/parseFloat(hl)); result.init
+
+type ETR* = tuple[done,total, rateLo,rateMid,rateHi: float; etc: DateTime]
 
 var done0, done1, rate0, rate1, left0, left1, etc0, etc1, ratio0, ratio1 = ""
 proc parseColor(color: seq[string]) =
@@ -24,24 +30,22 @@ proc parseColor(color: seq[string]) =
     else: Value !! "bad color line: \"" & spec & "\""
 
 proc etc*(t0: DateTime; total,did2, rateLo,rateMid,rateHi: float): ETR =
-  result.done    = did2/total
-  let amtLeft = total - did2
-  result.rateLo  = rateLo
-  result.rateMid = rateMid
-  result.rateHi  = rateHi
-  result.leftLo  = amtLeft/result.rateHi
-  result.leftHi  = amtLeft/result.rateLo
-  let leftMid = amtLeft/result.rateMid
-  result.etc     = t0 + initDuration(milliseconds = int(leftMid*1000))
+  let invTot     = if total != 0: 1/total else: 1
+  result.total   = total
+  result.done    = did2*invTot
+  result.rateLo  = rateLo*invTot
+  result.rateMid = rateMid*invTot
+  result.rateHi  = rateHi*invTot
+  let leftMid    = (total - did2)/rateMid
+  result.etc     = t0 + initDuration(milliseconds=int(leftMid*1000))
 
 proc `$`*(r: ETR): string =
-  let et = ($r.etc)[0..^7]      # Strip off time zone; CL option?
-  if r.leftLo == r.leftHi:
-    &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
-    &"{left0}{r.leftLo:.1f} secLeft{left1} {etc0}{et}{etc1}"
-  else:
-    &"{done0}{100.0*r.done:.2f} %done{done1} {rate0}{r.rateMid:.2f} /s{rate1} "&
-    &"{left0}{r.leftLo:.1f} .. {r.leftHi:.1f} sLeft{left1} {etc0}{et}{etc1}"
+  let et = ($r.etc)[4..^7].replace("-", "")     # Strip year, zone & date '-'s
+  let (leftLo, leftHi) = ((1 - r.done)/r.rateHi, (1 - r.done)/r.rateLo)
+  let absRate = r.rateMid*r.total
+  &"{done0}{1e2*r.done:.3f} %{done1} {rate0}{1e4*r.rateMid:.2f} bp/s{rate1} " &
+  &"{left0}{leftLo:.1f} - {leftHi:.1f} sLeft{left1} " &
+  &"{rate0}{absRate:.4g} /s{rate1} {etc0}{et}{etc1}"
 
 proc expSize(r: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/r.done) & " B"
@@ -73,7 +77,7 @@ proc wrStatus(r: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
   else: echo r
 
 proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
-          relTo="", RatMin=1e17, estMin=0.0, kill="NIL", locus="6", scale="0",
+          relTo="", RatMin=1e17, estMin=0.0, kill="NIL", locus="10", scale="30",
           colors: seq[string] = @[], color: seq[string] = @[]): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
@@ -104,39 +108,31 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
                          else: readFile(pfs&"fdinfo/"&did).split[1].parseFloat)
   color.parseColor
   try:
-    var did1 = q; var t = now()   # 1 data point affords only a trivial estimate
-    let r = did1/age              #.. for rate, namely `did1/age`.
+    var did1 = q; var t = now() # 1 data point affords only a trivial estimate
+    let r = did1/age            #.. for rate, namely `did1/age`.
     template writeStatusMaybeKill(et) =
       result = wrStatus(et, outp, pfs, relTo, tot, estMin, RatMin)
-      if result != 0:                   # outp given,yet Osz/Isz getting too big
+      if result != 0:           # outp given,yet Osz/Isz getting too big
         discard execCmd(&"{kill} {pid}");quit 2 # => Kill & Quit.
     writeStatusMaybeKill etc(t, tot, did1, r, r, r)
-    if measure > 0:                     # -m also could stand for "monitor"
-      let dt  = int(measure/0.001)      # Nim sleep takes millisec
+    if measure > 0:             # -m also could stand for "monitor"
+      let dt = int(measure*1e3) # Nim sleep takes millisec
       var tms = @[t.toTime.toUnixFloat - age, t.toTime.toUnixFloat]
       var dids = @[0.0, did1] #TODO `tot` MAY be dyn,but reQry wasteful if not
-      #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location & scale estimate
-      let (winL, winS) = (locus.parseInt, scale.parseInt)
-      var loc = initMovingStat[float, float](options={OrderStats})
-      loc.push did1/age
-      while pfs.dirExists:              # Re-query time to trust sleep dt less..
-        sleep dt; dids.add q            #..in case we get SIGSTOP'd or etc.
+      var loc = initLDist(locus)
+      loc.add did1/age
+      while pfs.dirExists:      # Re-query time to trust sleep dt less..
+        sleep dt; dids.add q    #..in case we get SIGSTOP'd or etc.
         let t = now()
         tms.add t.toTime.toUnixFloat
         let rate = (dids[^1] - dids[^2])/(tms[^1] - tms[^2])
-        if dids.len > winL:             # Location gets a simple moving window
-          let winLp1 = winL + 1
-          loc.pop (dids[^winL] - dids[^winLp1])/(tms[^winL] - tms[^winLp1])
-        loc.push rate
-        let rateMid = loc.mean
+        loc.add rate
+        let rateMid = loc.quantile 0.5
         let leftMid = (tot - dids[^1])/rateMid
-  # If N sec left,want data from past N sec to estim.scale.  Start anew each tm.
-        var scl = initMovingStat[float, float](options={OrderStats})
-        let i0 = lowerBound(tms, tms[^1] - leftMid)
-        for i in i0..<tms.len - 1:
-          scl.push (dids[i+1] - dids[i])/(tms[i+1] - tms[i])
-        let rateLo = if dids.len < 7: scl.min else: scl.quantile 0.25
-        let rateHi = if dids.len < 7: scl.max else: scl.quantile 0.75
+        var scl = initSDist(scale)      # N sec left=>want data from past N sec.
+        let i0 = lowerBound(tms, tms[^1] - leftMid) # May wax|wane=>Start anew.
+        for i in i0..<tms.len-1: scl.add (dids[i+1]-dids[i])/(tms[i+1]-tms[i])
+        let (rateLo, rateHi) = (scl.quantile 0.15, scl.quantile 1-0.15)
         writeStatusMaybeKill etc(t, tot, dids[^1], rateLo, rateMid, rateHi)
   except IOError: quit 3        # Probably some racy `readFile` failure
 
