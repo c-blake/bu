@@ -68,6 +68,8 @@ only tools, but some may be more cross-platform.
 
 [tim - Uncertain time comparison via repeated sampling & `eve`](doc/tim.md)
 
+[bu/emin - tim-compat Min Value Estimator for programs writing own dt's](doc/emin.md)
+
 [edplot - Generate EDF & its confidence bands files & plot scripts](doc/edplot.md)
 
 [keydowns - Assess string complexity in terms of a human cost](doc/keydowns.md)
