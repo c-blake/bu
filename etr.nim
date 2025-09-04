@@ -15,18 +15,18 @@ proc parseColor(color: seq[string]) =
   for spec in color:
     let cols = spec.strip.splitWhitespace(1)
     if cols.len < 2: Value !! "bad color line: \"" & spec & "\""
-    let k = cols[0].optionNormalize; let v = cols[1].textAttr
-    case k
-    of "done0": done0 = v
-    of "done1": done1 = v
-    of "rate0": rate0 = v
-    of "rate1": rate1 = v
-    of "left0": left0 = v
-    of "left1": left1 = v
-    of "etc0" : etc0  = v
-    of "etc1" : etc1  = v
-    of "ratio0": ratio0  = v
-    of "ratio1": ratio1  = v
+    let v = cols[1].textAttr
+    case cols[0].optionNormalize # key
+    of "done0" : done0  = v
+    of "done1" : done1  = v
+    of "rate0" : rate0  = v
+    of "rate1" : rate1  = v
+    of "left0" : left0  = v
+    of "left1" : left1  = v
+    of "etc0"  : etc0   = v
+    of "etc1"  : etc1   = v
+    of "ratio0": ratio0 = v
+    of "ratio1": ratio1 = v
     else: Value !! "bad color line: \"" & spec & "\""
 
 proc etc*(t0: DateTime; total,did2, rateLo,rateMid,rateHi: float): ETR =
