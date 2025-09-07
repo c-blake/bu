@@ -194,8 +194,8 @@ proc assay*(tables: seq[string]) =
     let wt = wopen table
     if wt.wgts.mem.isNil: continue
     let (st, _) = wt.globalStats
-    let sf = st.fmt; let nTot = st.n.float; let wTot = st.sum
-    outu &"SCORE:\n"; for e in sf: outu "  ", e, "\n"
+    let nTot = st.n.float; let wTot = st.sum
+    (for j,e in st.fmt: outu if j!=0: " " else: "", e); outu '\n'
     var wd = collect(for ww in values[Key,MSlice,Ww](wt): ww.w.int)
     wd.sort; wd.cumsum
     outu "FrWt\tFrEntry\tNinBin\tPinBin\n"
