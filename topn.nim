@@ -5,7 +5,7 @@ when not declared(stderr): import std/syncio
 proc pyIx(x: openArray[MSlice], i: int): MSlice = x[if i < 0: i + x.len else: i]
 proc pyIx(x: openArray[MSlice], s: Slice[int]): MSlice =
   let a = if s.a < 0: s.a + x.len else: s.a
-  let b = if s.b < 0: s.b + x.len else: s.b   # b < a | Out of bounds -> ""
+  let b = min(x.len - 1, if s.b < 0: s.b + x.len else: s.b) # b < a | OutOfB: ""
   if b < a or a + 1 > x.len or b + 1 > x.len: result.mem = nil; result.len = 0
   else: result.mem = x[a].mem; result.len = x[b].mem +! x[b].len -! x[a].mem
 
