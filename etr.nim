@@ -3,8 +3,8 @@ import std/[times, strformat, osproc, strutils, os, posix, math],
 when not declared(readFile): import std/[syncio, formatfloat]
 
 var wOL, wOS = 0.9375 #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location
-xhist1.def LDist, lna, exp, EMBist[float], true, wOL
-proc initRDist(hl: string): LDist = wOL = 2.0^(-1/parseFloat(hl)); result.init
+xhist1.def RDist, lna, exp, EMBist[float], true, wOL
+proc initRDist(hl: string): RDist = wOL = 2.0^(-1/parseFloat(hl)); result.init
 
 type ETR* = tuple[done,total, leftLo,rateMid,leftHi: float; etc: DateTime]
 
