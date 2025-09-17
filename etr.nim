@@ -1,10 +1,9 @@
 import std/[times, strformat, osproc, strutils, os, posix, math],
-       cligen, cligen/[sysUt, osUt, humanUt], adix/[xhist1, lna, embist]
+       cligen, cligen/[sysUt, osUt, humanUt], adix/[xhist1, lna, lmbist]
 when not declared(readFile): import std/[syncio, formatfloat]
-
-var wOL, wOS = 0.9375 #TODO Generalize to (EW|LW|x)M[AD]|Qtls for rate location
-xhist1.def RDist, lna, exp, EMBist[float], true, wOL
-proc initRDist(hl: string): RDist = wOL = 2.0^(-1/parseFloat(hl)); result.init
+xhist1.def LBist, lna, exp, LMBist[uint16]
+xhist1.defMove RDist, LBist, it.t + 1, it.t + 1 - it.win
+proc initRDist(w: int): RDist = initRDist(win=w)
 
 type ETR* = tuple[done,total, leftLo,rateMid,leftHi: float; etc: DateTime]
 
@@ -73,7 +72,7 @@ proc wrStatus(e: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
   else: echo e
 
 proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
-    relTo="", RatMin=1e17, estMin=0.0, kill="NIL", locus="9", scale=0.1..0.9,
+    relTo="", RatMin=1e17, estMin=0.0, kill="NIL", locus=15, scale=0.2..0.8,
     update=false, colors: seq[string] = @[], color: seq[string] = @[]): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
@@ -139,7 +138,7 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
         "RatMin" : "exit 1 (i.e. \"fail\") for ratios > this",
         "estMin" : "require > this much progress for RatMin",
         "kill"   : "run this cmd w/arg `pid` if ratio test fails",
-        "locus"  : "maker for moving rate location (for ETC)",
+        "locus"  : "window for moving rate location (for ETC)",
         "scale"  : "lo,hi probabilities for rate/etc range",
         "update" : "re-query total each sample in measure mode",
         "colors" : "color aliases; Syntax: name = ATTR1 ATTR2..",
