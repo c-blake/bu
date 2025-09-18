@@ -104,8 +104,8 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
   color.parseColor
   try:
     var tot  = qT
-    var did0 = qD; var t0=now()  # 1 data point affords only a trivial estimate
-    let r0   = did0/age          #.. for rate, namely `did0/age`.
+    var did0 = qD; var t0=now() # 1 data point affords only a trivial estimate
+    let r0   = did0/age         #.. for rate, namely `did0/age`.
     template writeStatusMaybeKill(e) =
       result = wrStatus(e, outp, pfs, relTo, tot, estMin, RatMin)
       if result != 0:           # outp given,yet Osz/Isz getting too big
@@ -113,7 +113,7 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
     writeStatusMaybeKill etc(t0, tot, did0, r0, r0, r0)
     if measure > 0:             # -m also could stand for "monitor"
       let ms = int(measure*1e3) # Nim sleep takes millisec
-      var rate = initRDist(locus)
+      var rate = initRDist(abs(locus))
       rate.add r0
       while pfs.dirExists:      # Re-query time to trust sleep dt less..
         sleep ms                #..in case we get SIGSTOP'd or etc.
@@ -121,8 +121,9 @@ proc etr*(pid=0, did="", total="", age="", ageScl=1.0, measure=0.0, outp="",
         rate.add (did1 - did0)/(t - t0).inNanoseconds.float*1e9
         did0 = did1; t0 = t
         if update: tot = qT
-        writeStatusMaybeKill etc(t, tot, did1, rate.quantile scale.a,
-                                 rate.quantile 0.5, rate.quantile scale.b)
+        let (a, b) = (rate.quantile scale.a, rate.quantile scale.b)
+        let m = if locus < 0: 0.5*(a + b) else: rate.quantile 0.5
+        writeStatusMaybeKill etc(t, tot, did1, a, m, b)
   except IOError: quit 3        # Probably some racy `readFile` failure
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
