@@ -152,6 +152,32 @@ sk<$t   # Time: 1:08.51 (u) + 9.522 (s)=25.092 (310%) mxRSS 9693 MiB
 ```
 So, as usual, YMMV a lot (though `sk` seems generically resource inefficient).
 
+## Combining with `adix/util/lfreq` for frecent dir navigation
+
+You can easily roll your own system like https://github.com/agkozak/zsh-z or
+zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
+```sh
+chpwd() { pwd >>/tmp/$LOGNAME/d } # Must be local file & pwd<atomicWriteS
+d-vip() {
+  local p=$(lfreq -o.9 -f@k -n99999 < /tmp/$LOGNAME/d | vip "$BUFFER")
+  [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
+  zle redisplay; }      # I `setopt autocd` & want to confirm w/a double ENTER
+zle -N d-vip; bindkey '^[h' d-vip               # Create & bind widget to Alt-h
+```
+With something like that, Alt-h brings up a picker based on PWD history and you
+can start typing to get a selection, hit ENTER, and then ENTER again to confirm
+or if you already typed parts of things, that will be the starting query.
+
+This relies upon a `/tmp/$LOGNAME` directory which I ensure administratively.
+My home setup actually does something a bit fancier with `dpopulate` & `dmerge`
+shell functions.  Basically `[ -s FILE ]||dpop` to get long, cross-shell shared
+sessions via atomic append while by adding to the file in `/tmp/$LOGNAME`.  In
+either `.zlogout` or manually, I then do a safe `dmerge` back into `$HOME` for
+saving long-term.  How much you need that (or its file locking, etc.) depends on
+if your `/tmp` is a volatile `/dev/shm`, how often you reboot/crash/etc/etc.
+The complexity of that full implementation, though, distracts from the simple
+example nature of the above.
+
 # Related Work
 
 I am unsure there is any work prior to the Emacs `anything.el` now named
