@@ -161,8 +161,8 @@ chpwd() { pwd >>/tmp/$LOGNAME/d } # Must be local file & pwd<atomicWriteS
 d-vip() {
   local p=$(lfreq -o.9 -f@k -n99999 < /tmp/$LOGNAME/d | vip "$BUFFER")
   [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
-  zle redisplay; }      # I `setopt autocd` & want to confirm w/a double ENTER
-zle -N d-vip; bindkey '^[h' d-vip               # Create & bind widget to Alt-h
+  zle redisplay; } # I `setopt autocd` & want to confirm w/a double ENTER
+zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
 ```
 With something like that, Alt-h brings up a picker based on PWD history and you
 can start typing to get a selection, hit ENTER, and then ENTER again to confirm
