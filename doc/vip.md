@@ -123,9 +123,9 @@ zle -N h-vip; bindkey '^R' h-vip                # Create & bind widget
 The main optimizations here are the basic flow of `pick`, using `cligen/[mfile,
 mslice]`, not sorting at startup with no query, and not bulk-lower-casing until
 requested.  Speed was never The Point in my writing `vip` since my personal use
-cases are literally 100X smaller than the above and my list gen is already over
-4X slower than `vip`.  I just thought I should check that it wasn't "too slow
-for big sets" & was pleasantly surprised.
+cases are literally 100X smaller than the below 22e6 test and my list gen is
+already over 4X slower than `vip`.  I just thought I should check that it wasn't
+"too slow for big sets" & was pleasantly surprised.
 
 Timing TUIs is *not* easy. So, I just did something very approximate.  For all 4
 of these, I just waited until visual presentation happened & hit ENTER.  I think
@@ -141,7 +141,8 @@ fzf<$t  # Time: 2.110 (u) + 0.873 (s)=2.326 (128%) mxRSS 1503 MiB
 sk<$t   # Time: 35.078 (u) + 8.085 (s)=13.325 (323%) mxRSS 7755 MiB
 ```
 The same basic set up but this time pressing "123456" while waiting for the
-output each time gives an edge to `fzf` with 8.8 sec vs `vip` 13.7:
+output each time gives an edge to `fzf` with 8.8 sec vs `vip` 13.7 (seemingly
+from `fzf` multi-core use):
 ```sh
 t=/dev/shm/j
 seq 1 22000000 >$t      # This is 187 MB; All progs memory use kinda sux
