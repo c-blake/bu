@@ -32,22 +32,24 @@ report includes expected total output byte/byte ratio.  Exit status is 2 if
 output:input > RatMin after estMin progress.
 
 Options:
-  -p=, --pid=     int     0     pid of process in question
-  -d=, --did=     string  ""    int fd->fd of pid; string-> cmd for did
-  -t=, --total=   string  ""    int fd->size(fd); string-> cmd for all work
-  -a=, --age=     string  ""    cmd for age (age of pid if not given)
-  -A=, --ageScl=  float   1.0   re-scale output of age cmd as needed
-  -m=, --measure= float   0.0   measure rate NOW across this given delay
-  -o=, --outp=    string  ""    int->size(fd(pid)); str->cmd giving out used
-  -r=, --relTo=   string  ""    expctdSz rel.To: { float / ""|<=0 => total }
-                                               | str cmd giving such a float
-  -R=, --RatMin=  float   1e+17 exit 1 (i.e. "fail") for ratios > this
-  -e=, --estMin=  float   0.0   require > this much progress for RatMin
-  -k=, --kill=    string  "NIL" run this cmd w/arg pid if ratio test fails
-  -l=, --locus=   string  "6"   maker for moving rate location (for ETC)
-  -s=, --scale=   string  "0"   maker for moving rate scale (for range)
-  -c=, --colors=  strings {}    color aliases; Syntax: name = ATTR1 ATTR2..
-  --color=        strings {}    text attrs for syntax elts; Like lc/etc.
+  -p=, --pid=     int     0        pid of process in question
+  -d=, --did=     string  ""       int fd->fd of pid; string-> cmd for did
+  -t=, --total=   string  ""       int fd->size(fd); string-> cmd for all work
+  -a=, --age=     string  ""       cmd for age (age of pid if not given)
+  -A=, --ageScl=  float   1.0      re-scale output of age cmd as needed
+  -m=, --measure= float   0.0      measure rate NOW across this given delay
+  -o=, --outp=    string  ""       int->size(fd(pid)); str->cmd giving out used
+  -r=, --relTo=   string  ""       expctdSz rel.To: { float / ""|<=0 => total }
+                                                  | str cmd giving such a float
+  -R=, --RatMin=  float   1e+17    exit 1 (i.e. "fail") for ratios > this
+  -e=, --estMin=  float   0.0      require > this much progress for RatMin
+  -k=, --kill=    string  "NIL"    run this cmd w/arg pid if ratio test fails
+  -l=, --locus=   int     15       window for moving rate location (for ETC)
+  -s=, --scale=   Slice   0.2..0.8 lo,hi probabilities for rate/etc range
+  -u, --update    bool    false    re-query total each sample in measure mode
+  -w=, --write=   string  ""       log "raw" data samples to this file
+  -c=, --colors=  strings {}       color aliases; Syntax: name = ATTR1 ATTR2..
+  --color=        strings {}       text attrs for syntax elts; Like lc/etc.
 ```
 
 # Examples Notes
