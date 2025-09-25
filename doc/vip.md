@@ -52,7 +52,7 @@ set all those things in a config file|config directory like `~/.config/vip`.
 Textual User Interface:
 ```
 Ctrl-O    Toggle Order By Match Size Fraction Mode (/|% in match count )
-Ctrl-I    Toggle Insensitive Case Mode             ( |- in query prompt)
+Ctrl-I    (Aka TAB) Toggle Insensitive Case Mode   ( |- in query prompt)
 Ctrl-L    Refresh
 ENTER     Pick Selected Item
 Alt-ENTER Pick Label For Item
@@ -159,7 +159,7 @@ zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
 ```sh
 chpwd() { pwd >>/tmp/$LOGNAME/d } # Must be local file & pwd<atomicWriteS
 d-vip() {
-  local p=$(lfreq -o.9 -f@k -n99999 < /tmp/$LOGNAME/d | vip "$BUFFER")
+  local p=$(lfreq -o.9 -f@k -n-99999 < /tmp/$LOGNAME/d | vip "$BUFFER")
   [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
   zle redisplay; } # I `setopt autocd` & want to confirm w/a double ENTER
 zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h

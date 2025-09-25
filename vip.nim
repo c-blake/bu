@@ -260,7 +260,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
         put1 "", "ENTER Pick Alt-ENT PickLabel ^C/^Z usual"
         put1 "", "ListNavigate ArrowUp/Dn,PgUp/Dn,Home,End"
         put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
-        put1 "", "ANY OTHER KEY EXITS THIS HELP."
+        put1 "", "OTHER KEYS EXIT THIS HELP; ASCII TAB=^I"
       else: put1 "", "No Room For Help"
       discard iK.getKey
     elif doPicks:
