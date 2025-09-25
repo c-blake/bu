@@ -172,6 +172,8 @@ proc match(s: MSlice, qs: seq[MSlice]): Slice[int] = # 7) FILTERING, SORTING
       result.a = min(result.a, j)
       result.b = j + q.len - 1
     else: return badSlc
+  #TODO Here we could require additional conditions for `s` to be a match, such
+  #     as being an existing directory w/access(2)-based cd-perm.  Loadable.so?
 
 proc bySizeInpOrder(a, b: Item): int =
   let c = cmp(a.size, b.size); return if c == 0: cmp(a.ix, b.ix) else: c
