@@ -266,7 +266,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
       else: put1 "", "No Room For Help"
       discard iK.getKey
     elif doPicks:
-      if pick - yO >= h: yO = pick - h + 1
+      if yO < pick - h + 1: yO = pick - h + 1
       nIt = putN(yO, pick)
     putp carriage_return
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
@@ -282,7 +282,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
     of LineUp: (if pick > 0: (dec pick; if yO > pick: dec yO))
-    of LineDn: (if pick < nIt - 1: (inc pick; if pick - yO == h: inc yO))
+    of LineDn: (if pick < nIt - 1: (inc pick; if yO <= pick - h: inc yO))
     of PgUp:   (if pick > h: (pick -= h; yO = pick) else: yO = 0; pick = 0)
     of PgDn:   (if pick + h < nIt: (pick += h; yO = pick) else: pick = nIt - 1)
     of Home:   yO = 0; pick = 0
