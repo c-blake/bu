@@ -42,6 +42,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -d=, --delim=  char    '\x00' Before THIS =Context Label;After=AnItem
   -l=, --label=  int     0      emit parsed label to this file descriptor
   -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
+  -q=, --quit=   string  ""     value written upon quit (e.g. Ctrl-C)
   -r, --rev      bool    false  reverse default "log file" input order
   --colors=      strings {}     colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}     ;-separated on/off attrs for UI elements:
@@ -175,8 +176,7 @@ zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
 With something like that, Alt-h brings up a picker based on PWD history and you
 can start typing to get a selection, hit ENTER, and then ENTER again to confirm
 or if you already typed parts of things, that will be the starting query.  There
-is nothing stopping you from just saying `cd $(lfreq...|vip...)` if you trust
-that you'll always find a match worthy of executing.
+is nothing stopping you from just saying `cd $(lfreq...|vip -rq.)`.
 
 This relies upon atomicity of small writes to local files, but for me that limit
 is essentially generously bigger than any directory full path in my life.  That

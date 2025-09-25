@@ -306,14 +306,15 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of NoBind: doHelp = true
 
 proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
- rev=false, colors:seq[string]= @[],color:seq[string]= @[], qs:seq[string]):int=
+         quit="", rev=false, colors: seq[string] = @[],
+         color:seq[string] = @[], qs: seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i = -1; uH = n - 1; q = qs.join(" "); doSort=sort; dlm=delim; doIs=inSen
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   parseIn rev; den = "/"&alignLeft($its.len,digits)&" " # Read input data
   try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
-  if i < 0: return 1                                    # Exit|Emit
+  if i < 0: echo quit; return 1                         # Exit|Emit
   echo $its[i].it
   if label != 0: write label.cint, $its[i].lab
 
@@ -327,6 +328,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "label" : "emit parsed label to this file descriptor",
   "digits": "num.digits for nMatch/nItem on query Line",
   "rev"   : "reverse default \"log file\" input order",
+  "quit"  : "value written upon quit (e.g. Ctrl-C)",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
   qtext choice match label"""}, short={"color": 'c', "digits": 'D'}
