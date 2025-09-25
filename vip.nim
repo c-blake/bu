@@ -148,7 +148,7 @@ const badSlc = Slice[int](a: -1, b: -1) # 6) PARSE INPUT DATA
 const emptyS = MSlice(mem: nil, len: 0)
 var clean = false
 var buf: string                         # Must have program lifetime
-proc parseIn() =
+proc parseIn(rev: bool) =
   if (let mf = mopen(0); mf.mem != nil): data = mf.mslc
   else: buf = stdin.readAll; data = MSlice(mem: buf.cstring, len: buf.len)
   var labIt: seq[MSlice]
@@ -161,7 +161,8 @@ proc parseIn() =
       else:
           its.add (1.0, i, line    , emptyS  , badSlc)
       inc i
-  its.reverse; clean = true
+  if not rev: its.reverse
+  clean = true
 
 var low: string
 proc match(s: MSlice, qs: seq[MSlice]): Slice[int] = # 7) FILTERING, SORTING
@@ -305,16 +306,16 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of NoBind: doHelp = true
 
 proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
-       colors:seq[string] = @[], color:seq[string] = @[], qs:seq[string]): int =
+ rev=false, colors:seq[string]= @[],color:seq[string]= @[], qs:seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i = -1; uH = n - 1; q = qs.join(" "); doSort=sort; dlm=delim; doIs=inSen
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
-  parseIn(); den = "/"&alignLeft($its.len,digits)&" "   # Read input data
+  parseIn rev; den = "/"&alignLeft($its.len,digits)&" " # Read input data
   try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
   if i < 0: return 1                                    # Exit|Emit
   echo $its[i].it
-  if label != 0: write(label.cint, $its[i].lab)
+  if label != 0: write label.cint, $its[i].lab
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "initial query strings to interactively edit",
@@ -325,6 +326,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "delim" : "Before *THIS* =Context Label;After=AnItem",
   "label" : "emit parsed label to this file descriptor",
   "digits": "num.digits for nMatch/nItem on query Line",
+  "rev"   : "reverse default \"log file\" input order",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
   qtext choice match label"""}, short={"color": 'c', "digits": 'D'}

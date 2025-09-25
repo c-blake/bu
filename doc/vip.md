@@ -42,6 +42,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -d=, --delim=  char    '\x00' Before THIS =Context Label;After=AnItem
   -l=, --label=  int     0      emit parsed label to this file descriptor
   -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
+  -r, --rev      bool    false  reverse default "log file" input order
   --colors=      strings {}     colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}     ;-separated on/off attrs for UI elements:
                                   qtext choice match label
@@ -164,9 +165,9 @@ So, as usual, YMMV a lot (though `sk` seems generically resource inefficient).
 You can easily roll your own system like https://github.com/agkozak/zsh-z or
 zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
 ```sh
-chpwd() { pwd >>/tmp/$LOGNAME/d } # Must be local file & pwd<atomicWriteS
+chpwd() { pwd>>$ZDOTDIR/dirs } # Must be LOCAL file & $#PWD < atomicWriteSz
 d-vip() {
-  local p=$(lfreq -o.9 -f@k -n-999999 </tmp/$LOGNAME/d|tac|vip "$BUFFER")
+  local p=$(lfreq -o.9 -f@k -n-999999 < $ZDOTDIR/dirs | vip -r "$BUFFER")
   [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
   zle redisplay; } # I `setopt autocd` & want to confirm w/a double ENTER
 zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
@@ -175,21 +176,17 @@ With something like that, Alt-h brings up a picker based on PWD history and you
 can start typing to get a selection, hit ENTER, and then ENTER again to confirm
 or if you already typed parts of things, that will be the starting query.
 
-This relies upon a `/tmp/$LOGNAME` directory which I ensure administratively.
-My home setup actually does something a bit fancier with `dpopulate` & `dmerge`
-shell functions.  Basically `[ -s FILE ]||dpop` to get long, cross-shell shared
-sessions via atomic append while by adding to the file in `/tmp/$LOGNAME`.  In
-either `.zlogout` or manually, I then do a safe `dmerge` back into `$HOME` for
-saving long-term.  How much you need that (or its file locking, etc.) depends on
-if your `/tmp` is a volatile `/dev/shm`, how often you reboot/crash/etc/etc.
-The complexity of that full implementation, though, distracts from the simple
-example nature of the above.
+This relies upon atomicity of small writes to local files, but for me that limit
+is essentially generously bigger than any directory full path in my life.  That
+matters since races for shared shells are easily imagined, eg. `for d in $many;
+(cd $d; short-running)` in one terminal with interactive `cd` in another.  If
+your pwd log is on NFS or something, you will have to do something fancier.
 
 Also, yes - for such application, it may make sense to add some kind of optional
 "dynamic validity check" to the filter (in this case dir existence or possibly
 execute aka cd-perm on displayed dirs).  That can already be done externally
-(eg. `lfreq|ft -edx`), but displayed lists are *MUCH* smaller (enough so that
-launching an external program might cost less than batch filtering all).
+(eg. `ft -edX|lfreq`), but displayed lists are *MUCH* smaller { enough so that
+even launching an external program might cost less than a zillion stat()s }.
 
 # Related Work
 
