@@ -160,7 +160,7 @@ zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
 ```sh
 chpwd() { pwd >>/tmp/$LOGNAME/d } # Must be local file & pwd<atomicWriteS
 d-vip() {
-  local p=$(lfreq -o.9 -f@k -n-99999 < /tmp/$LOGNAME/d | vip "$BUFFER")
+  local p=$(lfreq -o.9 -f@k -n-999999 </tmp/$LOGNAME/d|tac|vip "$BUFFER")
   [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
   zle redisplay; } # I `setopt autocd` & want to confirm w/a double ENTER
 zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
@@ -178,6 +178,12 @@ saving long-term.  How much you need that (or its file locking, etc.) depends on
 if your `/tmp` is a volatile `/dev/shm`, how often you reboot/crash/etc/etc.
 The complexity of that full implementation, though, distracts from the simple
 example nature of the above.
+
+Also, yes - for such application, it may make sense to add some kind of optional
+"dynamic validity check" to the filter (in this case dir existence or possibly
+execute aka cd-perm on displayed dirs).  That can already be done externally
+(eg. `lfreq|ft -edx`), but displayed lists are *MUCH* smaller (enough so that
+launching an external program might cost less than batch filtering all).
 
 # Related Work
 
