@@ -73,6 +73,12 @@ Query Editing
 
 A very simple one: `seq 1 9999|vip`
 
+Slightly more complex (and good for testing all the features) is (in Zsh,
+though adapting to your own shell should not be hard):
+```zsh
+(for a in {a..c};{for n in {1..3};{for b in {A..C};echo $a$n$b} })
+```
+
 ## Command Finding
 
 ```zsh
