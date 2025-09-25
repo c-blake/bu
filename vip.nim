@@ -231,7 +231,7 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   if i - yO < its.len and i - yO < h:   # Space left & maybe more to put
     putc '\n'    # clr_eos clrs from curr col->end. If last vis.pick chosen, hL
     putp clr_eos #..in last&curr col will be also be cleared=>mvDn 1 pre-clear.
-    putp tparm1(parm_up_cursor, cint((i - yO) + 1))
+    putp tparm1(parm_up_cursor, cint((i - yO) + 1 + int(i == its.len - 1)))
   elif i > 0:   # parm_up_cursor interprets 0 as 1 => only mv up if put an item
     putp tparm1(parm_up_cursor, cint(if i < h: i else: h))
   return min(its.len, i + 1)
