@@ -176,7 +176,7 @@ zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
 With something like that, Alt-h brings up a picker based on PWD history and you
 can start typing to get a selection, hit ENTER, and then ENTER again to confirm
 or if you already typed parts of things, that will be the starting query.  There
-is nothing stopping you from just saying `cd $(lfreq...|vip -rq.)`.
+is nothing stopping you from just saying `d=$(lfreq...|vip...) && cd "$d"`.
 
 This relies upon atomicity of small writes to local files, but for me that limit
 is essentially generously bigger than any directory full path in my life.  That
