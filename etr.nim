@@ -5,7 +5,7 @@ xhist1.def LBist, lna, exp, LMBist[uint16]
 xhist1.defMove RDist, LBist, it.t + 1, it.t + 1 - it.win
 proc initRDist(w: int): RDist = initRDist(win=w)
 
-type ETR* = tuple[done,total, leftLo,rateMid,leftHi: float; etc: DateTime]
+type ETR* = tuple[done,total, rateMid,leftLo,leftMid,leftHi: float;etc:DateTime]
 
 var done0, done1, rate0, rate1, left0, left1, etc0, etc1, ratio0, ratio1 = ""
 proc parseColor(color: seq[string]) =
@@ -32,15 +32,15 @@ proc etc*(t0: DateTime; total, did, rateLo, rateMid, rateHi: float): ETR =
   result.done    = did*invTot
   result.rateMid = rateMid*invTot
   result.leftLo  = (total - did)/rateHi
-  let leftMid    = (total - did)/rateMid
+  result.leftMid = (total - did)/rateMid
   result.leftHi  = (total - did)/rateLo
-  result.etc     = t0 + initDuration(milliseconds=int(leftMid*1000))
+  result.etc     = t0 + initDuration(milliseconds=int(result.leftMid*1000))
 
 proc `$`*(e: ETR): string =
-  let et = e.etc.format("MMdd'T'HH:mm:ss'.'fff")[0..^3]
+  let et = e.etc.format("MMdd'T'HH:mm:ss'.'fff")
   &"{done0}{1e2*e.done:06.3f} %{done1} " &
   &"{rate0}{1e4*e.rateMid:.2f} bp/s {e.rateMid*e.total:.4g} /s{rate1} " &
-  &"{etc0}{et}{etc1} {left0}{e.leftLo:.1f} - {e.leftHi:.1f} sLeft{left1}"
+  &"{etc0}{et}{etc1} {left0}{e.leftMid:.1f} +- {e.leftHi - e.leftLo:.1f} s{left1}"
 
 proc expSize(e: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/e.done)
