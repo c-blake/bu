@@ -38,9 +38,9 @@ proc etc*(t0: DateTime; total, did, rateLo, rateMid, rateHi: float): ETR =
 
 proc `$`*(e: ETR): string =
   let et = e.etc.format("MMdd'T'HH:mm:ss'.'fff")
-  &"{done0}{1e2*e.done:06.3f} %{done1} " &
-  &"{rate0}{1e4*e.rateMid:.2f} bp/s {e.rateMid*e.total:.4g} /s{rate1} " &
-  &"{etc0}{et}{etc1} {left0}{e.leftMid:.1f} +- {e.leftHi-e.leftLo:.2f} s{left1}"
+  &"{done0}{1e2*e.done:06.3f} %{done1} {rate0}{1e4*e.rateMid:.2f} bp/s " &
+  &"{e.rateMid*e.total:.4g} /s{rate1} {etc0}{et}{etc1} " &
+  &"{left0}{e.leftMid:.1f} +- {0.5*(e.leftHi - e.leftLo):.2f} s{left1}"
 
 proc expSize(e: ETR; osz, relTo: float): string =
   if relTo == 1.0: $int(osz.float/e.done)
