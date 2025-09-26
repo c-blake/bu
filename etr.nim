@@ -37,13 +37,13 @@ proc etc*(t0: DateTime; total, did, rateLo, rateMid, rateHi: float): ETR =
   result.etc     = t0 + initDuration(milliseconds=int(leftMid*1000))
 
 proc `$`*(e: ETR): string =
-  let et = ($e.etc)[4..^7].replace("-", "")     # Strip year, zone & date '-'s
+  let et = e.etc.format("MMdd'T'HH:mm:ss'.'fff")[0..^3]
   &"{done0}{1e2*e.done:06.3f} %{done1} " &
   &"{rate0}{1e4*e.rateMid:.2f} bp/s {e.rateMid*e.total:.4g} /s{rate1} " &
   &"{etc0}{et}{etc1} {left0}{e.leftLo:.1f} - {e.leftHi:.1f} sLeft{left1}"
 
 proc expSize(e: ETR; osz, relTo: float): string =
-  if relTo == 1.0: $int(osz.float/e.done) & " B"
+  if relTo == 1.0: $int(osz.float/e.done)
   else: &"{osz.float/e.done/relTo.float:.3f}"
 
 func notInt(str: string): bool =
@@ -116,7 +116,7 @@ proc etr*(pid=0,did="",total="",age="",ageScl=1.0,measure=0.0, outp="",relTo="",
       let ms = int(measure*1e3) # Nim sleep takes millisec
       var rate = initRDist(abs(locus))
       rate.add r0
-      let w = if write.len>0: (try: open(write, fmAppend) except: nil) else: nil
+      let w = if write.len>0: (try: open(write, fmAppend, 0) except:nil)else:nil
       if w != nil: w.write &"age dt did0 did1 tot\n"
       while pfs.dirExists:      # Re-query time to trust sleep dt less..
         sleep ms                #..in case we get SIGSTOP'd or etc.
