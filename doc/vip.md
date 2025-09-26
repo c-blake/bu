@@ -43,6 +43,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -l=, --label=  int     0      emit parsed label to this file descriptor
   -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
   -q=, --quit=   string  ""     value written upon quit (e.g. Ctrl-C)
+  -k=, --keep=   string  ""     display only if foo.so:Ok==1{cstring->cint}
   -r, --rev      bool    false  reverse default "log file" input order
   --colors=      strings {}     colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}     ;-separated on/off attrs for UI elements:
@@ -184,11 +185,31 @@ matters since races for shared shells are easily imagined, eg. `for d in $many;
 (cd $d; short-running)` in one terminal with interactive `cd` in another.  If
 your pwd log is on NFS or something, you will have to do something fancier.
 
-Also, yes - for such application, it may make sense to add some kind of optional
-"dynamic validity check" to the filter (in this case dir existence or possibly
-execute aka cd-perm on displayed dirs).  That can already be done externally
-(eg. `ft -edX|lfreq`), but displayed lists are *MUCH* smaller { enough so that
-even launching an external program might cost less than a zillion stat()s }.
+For this specific application, because displayed lists are expected to be much
+much smaller than input lists, it made sense to add an optional "validity check"
+*lazily, just prior to rendering* (to avoid a zillion stat()s -- some maybe even
+automount net FSes -- to up-front filter out no longer cd-able directories as
+with an `lfreq|ft -edX` approach).  The `--keep` string is a `sharedLib.so:ok`
+hook to test if items are ok when it is lazily called.  Caching is probably fine
+if interactive pick sessions are short-lived relative to filesystem dynamics.
+Here is an example `libtestf.so:cdable` set-up:
+
+```Nim
+## Dynamically loadable lib (`nim c --app:lib testf.nim`) like `test(1)`
+import std/[posix, tables]
+var cdableCache: Table[cstring, bool] # Works if caller never relocates cstrings
+                                      # which happens to be true in `vip`
+proc cdable(path: cstring): cint {.noconv, exportc, dynlib.} =
+  var st: Stat
+  try:
+    result = cint(cdableCache[path])
+  except:
+    let res = access(path, X_OK)==0 and stat(path, st)==0 and st.st_mode.S_ISDIR
+    cdableCache[path] = res
+    result = cint(res)
+```
+With this, `lfreq|vip -klibtestf.so:cdable` will only display directories that
+the current user is likely able to `cd` into (exists & has perms).
 
 # Related Work
 

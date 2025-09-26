@@ -1,4 +1,4 @@
-import std/[syncio, posix, terminal, strutils, algorithm], posix/termios
+import std/[syncio, posix, terminal, strutils, algorithm, sets], posix/termios
 import cligen/[sysUt, osUt, mfile, mslice, textUt, humanUt] # ~Erlandsson pick
 {.passl: "-lncurses".}                  # 0) C-LEVEL CURSES SET UP
 when defined linux: {.passl: "-ltinfo".}
@@ -29,8 +29,9 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key = enum CtrlO,CtrlI,CtrlL, Enter,AltEnt, CtrlC,CtrlZ, LineUp,LineDn, PgUp,
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
   Item = tuple[size: float; ix: int; it,lab: MSlice; mch: Slice[int]] # 64B
+  ExtTest = proc(item: cstring): int {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
-  tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)ser
+  tW,tH,pH,uH, dig: int # T)erminalW)idth,H)eight,P)ick=avail-QryLine,U)ser;Dig
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
@@ -39,6 +40,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   dlm: char             # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
+  okx: ExtTest          # An external test function return 1 to for ok/keep
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
   const def = @["q WHITE on_blue;-bg -fg", "c inverse;-inverse", "h bold;-bold",
@@ -173,8 +175,22 @@ proc match(s: MSlice, qs: seq[MSlice]): Slice[int] = # 7) FILTERING, SORTING
       result.a = min(result.a, j)
       result.b = j + q.len - 1
     else: return badSlc
-  #TODO Here we could require additional conditions for `s` to be a match, such
-  #     as being an existing directory w/access(2)-based cd-perm.  Loadable.so?
+
+proc xmatch(nMch: int): int =   # As a lazy eval optimization for costly `okx`,
+  result = nMch                 #..we stop work after `h` items test ok.  This
+  let h = min(uH,pH); var c = 0 #..ALMOST mandates a .so (but coproc not awful).
+  var lastMch = nMch            # last non-zero should be at [result] (or +- 1)
+  var toMove: HashSet[int]
+  for i in 0 ..< nMch:
+    let s = $its[i].it
+    if s.cstring.okx != 1.cint: # item fails external test
+      toMove.incl i; dec result
+    else: (inc c; (if c > h: break))
+  if result > 0 and toMove.len > 0:
+    var tmp = newSeqOfCap[Item](its.len)
+    for i in 0 ..< its.len: (if i notin toMove: tmp.add its[i])
+    its = tmp # Could elide copy by making `its` indirect & swapping ptr
+    den = "/"&alignLeft($its.len,dig)&" "
 
 proc bySizeInpOrder(a, b: Item): int =
   let c = cmp(a.size, b.size); return if c == 0: cmp(a.ix, b.ix) else: c
@@ -199,6 +215,7 @@ proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
       else: quit "poll", 1
   its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
   clean = false
+  if okx != nil: result = xmatch(result)
 
 proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
@@ -224,7 +241,7 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   let h = min(uH, pH)
   var i = yO                    # Put as many items as fit starting from `yO`.
   for j in yO ..< its.len:      # Return nItems w/size>0.  (q="" => size > 0).
-    i = j
+    i = j   #TODO this should also test `okx` & filter out non-passing items
     if its[i].size == 0 and q.len > 0: break
     if i - yO < h:
       let l = if dlm != '\0': ats['l'][0] & $its[i].lab & ats['l'][1] else: ""
@@ -306,13 +323,14 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of NoBind: doHelp = true
 
 proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
-         quit="", rev=false, colors: seq[string] = @[],
+         quit="", keep="", rev=false, colors: seq[string] = @[],
          color:seq[string] = @[], qs: seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  var i = -1; uH = n - 1; q = qs.join(" "); doSort=sort; dlm=delim; doIs=inSen
+  var i = -1;uH=n - 1;q=qs.join(" ");doSort=sort;dlm=delim;doIs=inSen;dig=digits
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
-  parseIn rev; den = "/"&alignLeft($its.len,digits)&" " # Read input data
-  try    : tInit alt; i = tui(alt, digits)              # Run the TUI
+  parseIn rev; den = "/"&alignLeft($its.len,dig)&" "    # Read input data
+  okx = cast[ExtTest](keep.loadSym)
+  try    : tInit alt; i = tui(alt, dig)                 # Run the TUI
   finally: tRestore alt
   if i < 0: echo quit; return 1                         # Exit|Emit
   echo $its[i].it
@@ -329,6 +347,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "digits": "num.digits for nMatch/nItem on query Line",
   "rev"   : "reverse default \"log file\" input order",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
+  "keep"  : "eg. `-kfoo.so:Ok==1` keeps if cstr->cint==1",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
   qtext choice match label"""}, short={"color": 'c', "digits": 'D'}
