@@ -172,8 +172,8 @@ d-vip() { local dd=$(lfreq -o.9 -n-99999 -f@k<$z/dirs | vip -rq. "$BUFFER")
   [ "$dd" != "." ] && cd "$dd"; unset dd; zle reset-prompt }
 zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
 ```
-With something like that, Alt-h brings up a picker based on PWD history and you
-can start typing to get a selection, hit ENTER to `cd`.
+With something like that, `Alt-h` brings up a picker based on PWD history and
+you can start typing to get a selection, hit ENTER to `cd`.
 
 This `chpwd` relies upon atomicity of small writes to local files, but for me
 that limit is generously bigger than any directory full path in my life.  This
