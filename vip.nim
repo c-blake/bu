@@ -31,7 +31,7 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Item = tuple[size: float; ix: int; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(item: cstring): int {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
-  tW,tH,pH,uH, dig: int # T)erminalW)idth,H)eight,P)ick=avail-QryLine,U)ser;Dig
+  tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)ser
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
@@ -189,8 +189,8 @@ proc xmatch(nMch: int): int =   # As a lazy eval optimization for costly `okx`,
   if result > 0 and toMove.len > 0:
     var tmp = newSeqOfCap[Item](its.len)
     for i in 0 ..< its.len: (if i notin toMove: tmp.add its[i])
+    for i in toMove: its[i].size = 0; tmp.add its[i]
     its = tmp # Could elide copy by making `its` indirect & swapping ptr
-    den = "/"&alignLeft($its.len,dig)&" "
 
 proc bySizeInpOrder(a, b: Item): int =
   let c = cmp(a.size, b.size); return if c == 0: cmp(a.ix, b.ix) else: c
@@ -241,7 +241,7 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   let h = min(uH, pH)
   var i = yO                    # Put as many items as fit starting from `yO`.
   for j in yO ..< its.len:      # Return nItems w/size>0.  (q="" => size > 0).
-    i = j   #TODO this should also test `okx` & filter out non-passing items
+    i = j   #TODO instead of y0..i slice, build an `ok` seq via `okx` if !nil
     if its[i].size == 0 and q.len > 0: break
     if i - yO < h:
       let l = if dlm != '\0': ats['l'][0] & $its[i].lab & ats['l'][1] else: ""
@@ -326,11 +326,11 @@ proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
          quit="", keep="", rev=false, colors: seq[string] = @[],
          color:seq[string] = @[], qs: seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  var i = -1;uH=n - 1;q=qs.join(" ");doSort=sort;dlm=delim;doIs=inSen;dig=digits
+  var i = -1; uH = n - 1; q = qs.join(" "); doSort=sort; dlm=delim; doIs=inSen
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
-  parseIn rev; den = "/"&alignLeft($its.len,dig)&" "    # Read input data
-  okx = cast[ExtTest](keep.loadSym)
-  try    : tInit alt; i = tui(alt, dig)                 # Run the TUI
+  parseIn rev; den = "/"&alignLeft($its.len,digits)&" " # Read input data
+  if keep.len > 0: okx = cast[ExtTest](keep.loadSym)    # Maybe Load Plug-In
+  try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
   if i < 0: echo quit; return 1                         # Exit|Emit
   echo $its[i].it
