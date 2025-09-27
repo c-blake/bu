@@ -36,7 +36,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
   q, den: string        # The running query, denom
-  doSort, doIs: bool    # Sort matches by match size fraction, InSensitive Mch
+  doSort,doIs,Rev: bool # Sort matches by match size fraction, InSensitive Mch
   dlm: char             # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
@@ -150,7 +150,7 @@ const badSlc = Slice[int](a: -1, b: -1) # 6) PARSE INPUT DATA
 const emptyS = MSlice(mem: nil, len: 0)
 var clean = false
 var buf: string                         # Must have program lifetime
-proc parseIn(rev: bool) =
+proc parseIn() =
   if (let mf = mopen(0); mf.mem != nil): data = mf.mslc
   else: buf = stdin.readAll; data = MSlice(mem: buf.cstring, len: buf.len)
   var labIt: seq[MSlice]
@@ -163,7 +163,7 @@ proc parseIn(rev: bool) =
       else:
           its.add (1.0, i, line    , emptyS  , badSlc)
       inc i
-  if not rev: its.reverse
+  if not Rev: its.reverse
   clean = true
 
 var low: string
@@ -192,7 +192,8 @@ proc xmatch(nMch: int): int =   # As a lazy eval optimization for costly `okx`,
     its = tmp # Could elide copy by making `its` indirect & swapping ptr
 
 proc bySizeInpOrder(a, b: Item): int =
-  let c = cmp(a.size, b.size); return if c == 0: cmp(a.ix, b.ix) else: c
+  let c = cmp(a.size, b.size)
+  return if c == 0: (if Rev: cmp(b.ix, a.ix) else: cmp(a.ix, b.ix)) else: c
 
 proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
   var pfd = TPollfd(fd: tFd)
@@ -325,9 +326,9 @@ proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
          quit="", keep="", rev=false, colors: seq[string] = @[],
          color:seq[string] = @[], qs: seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  var i = -1; uH = n - 1; q = qs.join(" "); doSort=sort; dlm=delim; doIs=inSen
+  var i = -1;uH = n-1;q = qs.join(" ");doSort=sort;dlm=delim;doIs=inSen;Rev=rev
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
-  parseIn rev; den = "/"&alignLeft($its.len,digits)&" " # Read input data
+  parseIn(); den = "/"&alignLeft($its.len,digits)&" "   # Read input data
   if keep.len > 0: okx = cast[ExtTest](keep.loadSym)    # Maybe Load Plug-In
   try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
