@@ -1,16 +1,20 @@
-import std/[posix, tables]      # Lets you say `dirs|vip -k libtestf.so:cdable`
+import std/[posix, tables], cligen/mslice # For `dirs|vip -k libtestf.so:cdable`
 
 # Using temporally maybe stale caching is probably wanted if interactive pick
 # sessions are short-lived relative to filesystem dynamics.
-var cdableCache: Table[cstring, bool]   # CALLER MUST NEVER RELOCATE CSTRINGS
-
-proc cdable(path: cstring): cint {.noconv, exportc, dynlib.} =
-  try: cdableCache[path].cint           # Try cache & then `stat` first since ..
+var cdableCache: Table[MSlice, bool]    # CALLER MUST NEVER RELOCATE BACKING MEM
+                                        # (`vip` does not after `parseIn`.)
+var buf = ""                            # Reused path buffer to be NUL/\0-term
+proc cdable(path: pointer, nPath: clong): cint {.noconv, exportc, dynlib.} =
+  let ms = MSlice(mem: path, len: nPath)
+  try: cdableCache[ms].cint             # Try cache & then `stat` first since ..
   except:                               #..most likely failure is vanishing & ..
     var st: Stat                        #..system more likely optimizes `stat`.
-    let res = stat(path, st) == 0 and st.st_mode.S_ISDIR and
-              access(path, X_OK)==0     # Net FS/ACLs/etc.=> `access` to confirm
-    cdableCache[path] = res
+    buf.setLen nPath; copyMem buf[0].addr, path, nPath
+    let cpath = cast[cstring](buf[0].addr)
+    let res = stat(cpath, st) == 0 and st.st_mode.S_ISDIR and
+              access(cpath, X_OK) == 0  # Net FS/ACLs/etc.=> `access` to confirm
+    cdableCache[ms] = res
     res.cint
 # This module could grow a large family of `bu/ft`-like tests.  PRs welcome if
 # this would help your specific application setting.

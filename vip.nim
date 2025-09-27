@@ -29,7 +29,7 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key = enum CtrlO,CtrlI,CtrlL, Enter,AltEnt, CtrlC,CtrlZ, LineUp,LineDn, PgUp,
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
   Item = tuple[size: float; ix: int; it,lab: MSlice; mch: Slice[int]] # 64B
-  ExtTest = proc(item: cstring): int {.noconv.}
+  ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)ser
   tio: Termios          # Terminal IO State
@@ -182,8 +182,7 @@ proc xmatch(nMch: int): int =   # As a lazy eval optimization for costly `okx`,
   var lastMch = nMch            # last non-zero should be at [result] (or +- 1)
   var toMove: HashSet[int]
   for i in 0 ..< nMch:
-    let s = $its[i].it
-    if s.cstring.okx != 1.cint: # item fails external test
+    if okx(its[i].it.mem, its[i].it.len) != 1: # item fails external test
       toMove.incl i; dec result
     else: (inc c; (if c > h: break))
   if result > 0 and toMove.len > 0:
