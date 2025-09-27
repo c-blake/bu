@@ -43,9 +43,9 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   okx: ExtTest          # An external test function return 1 to for ok/keep
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
-  const def = @["q WHITE on_blue;-bg -fg", "c inverse;-inverse", "h bold;-bold",
+  const def = @["h bold;-bold", "q WHITE on_blue;-bg -fg", "c inverse;-inverse",
                 "m YELLOW on_red;-bg -fg", "l italic;-italic"]
-  for s in def & color:
+  for s in def & color: # h)eader q)uery c)urrent pick m)atch l)abel
     let cols = s.strip.splitWhitespace(1)
     if cols.len < 2: Value !! "bad color: \"" & s & "\""
     let k = if cols[0].len > 0: cols[0].toLowerAscii[0] else: '\0'
