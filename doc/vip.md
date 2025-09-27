@@ -167,49 +167,37 @@ So, as usual, YMMV a lot (though `sk` seems generically resource inefficient).
 You can easily roll your own system like https://github.com/agkozak/zsh-z or
 zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
 ```sh
-chpwd() { pwd>>$ZDOTDIR/dirs } # Must be LOCAL file & $#PWD < atomicWriteSz
-d-vip() {
-  local p=$(lfreq -o.9 -f@k -n-999999 < $ZDOTDIR/dirs | vip -r "$BUFFER")
-  [[ -n "$p" ]] && { BUFFER="$p"; CURSOR=$#BUFFER; }
-  zle redisplay; } # I `setopt autocd` & want to confirm w/a double ENTER
+chpwd() { pwd>>$ZDOTDIR/dirs }  # Must be LOCAL file & $#PWD < atomicWriteSz
+d-vip() { local dd=$(lfreq -o.9 -n-99999 -f@k<$z/dirs | vip -rq. "$BUFFER")
+  [ "$dd" != "." ] && cd "$dd"; unset dd; zle reset-prompt }
 zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
 ```
 With something like that, Alt-h brings up a picker based on PWD history and you
-can start typing to get a selection, hit ENTER, and then ENTER again to confirm
-or if you already typed parts of things, that will be the starting query.  There
-is nothing stopping you from just saying `cd $(lfreq...|vip -rq.)`.
+can start typing to get a selection, hit ENTER to `cd`.
 
-This relies upon atomicity of small writes to local files, but for me that limit
-is essentially generously bigger than any directory full path in my life.  That
+This `chpwd` relies upon atomicity of small writes to local files, but for me
+that limit is generously bigger than any directory full path in my life.  This
 matters since races for shared shells are easily imagined, eg. `for d in $many;
 (cd $d; short-running)` in one terminal with interactive `cd` in another.  If
-your pwd log is on NFS or something, you will have to do something fancier.
+your pwd log is on NFS or something, you will want something fancier.
 
-For this specific application, because displayed lists are expected to be much
-much smaller than input lists, it made sense to add an optional "validity check"
-*lazily, just prior to rendering* (to avoid a zillion stat()s -- some maybe even
-automount net FSes -- to up-front filter out no longer cd-able directories as
-with an `lfreq|ft -edX` approach).  The `--keep` string is a `sharedLib.so:ok`
-hook to test if items are ok when it is lazily called.  Caching is probably fine
-if interactive pick sessions are short-lived relative to filesystem dynamics.
-Here is an example `libtestf.so:cdable` set-up:
-
-```Nim
-## Dynamically loadable lib (`nim c --app:lib testf.nim`) like `test(1)`
-import std/[posix, tables]
-var cdableCache: Table[cstring, bool] # Works if caller never relocates cstrings
-                                      # which happens to be true in `vip`
-proc cdable(path: cstring): cint {.noconv, exportc, dynlib.} =
-  var st: Stat
-  try:
-    result = cint(cdableCache[path])
-  except:
-    let res = access(path, X_OK)==0 and stat(path, st)==0 and st.st_mode.S_ISDIR
-    cdableCache[path] = res
-    result = cint(res)
+For this application, since directory existence/permissions are so dynamic, it
+makes sense to not-present missing/blocked entries.  One can do all at once (eg.
+lfreq|[ft](ft.md) -edX|vip, but since displayed lists are expected to be far
+smaller than input lists, we can do much better by only validating entries "on
+demand" (like [demand paging](https://en.wikipedia.org/wiki/Demand_paging) or
+other [lazy loading](https://en.wikipedia.org/wiki/Lazy_loading) systems) *just
+prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
+general and other arbitrary user entry validation can be expensive I thought a
+plug-in/shlib solution best.  So, installing a [testf plug-in](../bu/testf.nim)
+```sh
+nim c --app:lib -d:release bu/testf.nim &&
+  install -cm755 bu/libtestf.so /usr/local/lib.
 ```
-With this, `lfreq|vip -klibtestf.so:cdable` will only display directories that
-the current user is likely able to `cd` into (exists & has perms).
+lets you later do `lfreq...|vip -klibtestf.so:cdable` to only display items that
+the current user can `cd` into right now.  This may sound pedantic, but it can
+elide a zillion stat()s some of which may even automount net FSes while also
+avoiding presenting the user with many "invalid right now" `cd` targets.
 
 # Related Work
 
