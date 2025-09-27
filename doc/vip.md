@@ -183,8 +183,8 @@ your pwd log is on NFS or something, you will want something fancier.
 
 For this application, since directory existence/permissions are so dynamic, it
 makes sense to not-present missing/blocked entries.  One can do all at once (eg.
-lfreq|[ft](ft.md) -edX|vip, but since displayed lists are expected to be far
-smaller than input lists, we can do much better by only validating entries "on
+lfreq|[ft](ft.md) -edX|vip), but since *displayed lists are expected to be FAR
+SMALLER than input lists*, we can do much better by only validating entries "on
 demand" (like [demand paging](https://en.wikipedia.org/wiki/Demand_paging) or
 other [lazy loading](https://en.wikipedia.org/wiki/Lazy_loading) systems) *just
 prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
