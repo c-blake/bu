@@ -199,6 +199,11 @@ the current user can `cd` into right now.  This may sound pedantic, but it can
 elide a zillion stat()s some of which may even automount net FSes while also
 avoiding presenting the user with many "invalid right now" `cd` targets.
 
+Besides filesystem history, dynamic immediately pre-display re-validation may
+also help for other ephemeral system entities (processes for `kill`, containers,
+services) or remote/unreliable resources (SSH, cloud, network).  Any such can
+also benefit from this plug-in system.
+
 # Related Work
 
 I am unsure there is any work prior to the Emacs `anything.el` now named
