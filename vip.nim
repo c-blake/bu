@@ -240,7 +240,7 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
     putp tparm1(parm_up_cursor, cint(ixs.len + 1 + int(i == its.len - 1)))
   elif i > 0:   # parm_up_cursor interprets 0 as 1 => only mv up if put an item
     putp tparm1(parm_up_cursor, min(i, h).cint)
-  return min(its.len, i + 1)
+  return min(its.len, i)
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
