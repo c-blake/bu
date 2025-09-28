@@ -282,7 +282,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
     of CtrlI:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
     of CtrlL:  getTermSize()            # Viewport parameter
-    of Enter:  (if nIt>0: return pick)  # Exits..
+    of Enter:  return (if nIt>0: pick else: -1)  # Exits..
     of AltEnt: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
                 return its.len - 1)
     of CtrlC:  return -1                # & below exit-like suspend
@@ -320,7 +320,7 @@ proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
   if keep.len > 0: okx = cast[ExtTest](keep.loadSym)    # Maybe Load Plug-In
   try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
-  if i < 0: echo quit; return 1                         # Exit|Emit
+  if i < 0: echo (if quit.len>0: quit else: qs.join(" ")); return 1 # Exit|Emit
   echo $its[i].it
   if label != 0: write label.cint, $its[i].lab
 
