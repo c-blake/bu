@@ -27,6 +27,7 @@ exit with status = match count (0=NONE).
   -t=, --term=     char    '\n'   output path terminator
   -p=, --pattern=  string  "$1"   emit a \$1-using pattern; E.g. "match:\$1"
   -q, --quiet      bool    false  Do not emit; Just count as exit status
+  -s, --stat       bool    false  Use stat not lstat; Others say "dereference"
   -e=, --expr=     string  "e"    Concatenated extended one-letter test(1) codes
                                       e  (e)xists in any way
                                       b  is (b)lock special

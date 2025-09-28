@@ -33,9 +33,9 @@ proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
 
 proc maybeFlip(flip, val: bool): bool = (if flip: not val else: val)
 
-proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
+proc isType*(path, expr: string; euid: Uid, egid: Gid, stat: bool): bool =
   var st: Statx                 # Re-purpose stx_blksize as an lstat-Ok code
-  st.stx_blksize = if lstat(path, st) == 0: 1u32 else: 0u32
+  st.stx_blksize = if (if stat: stat(path, st) else: lstat(path, st)) == 0: 1u32 else: 0u32
   var flip = false
   result = true
   for ch in expr:
@@ -46,8 +46,8 @@ proc isType*(path, expr: string; euid: Uid, egid: Gid): bool =
       if not result: return
       flip = false
 
-proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, expr="e",
-         paths: seq[string]): int =
+proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, stat=false,
+         expr="e", paths: seq[string]): int =
   ## Batch (in both predicates & targets) `test` / `[` .  Emit subset of paths
   ## that pass `expr`.  E.g.: `$(ft -eL \*)` =~ Zsh extended glob `\*(@)`.  Can
   ## also read stdin as in `find -type f|ft -ew`. (Yes, can cobble together less
@@ -57,7 +57,7 @@ proc ft*(file="", delim='\n', term='\n', pattern="$1", quiet=false, expr="e",
   let it = both(paths, fileStrings(file, delim))
   var st = 0
   for path in it():
-    if isType(path, expr, euid, egid):
+    if isType(path, expr, euid, egid, stat):
       if not quiet: stdout.write pattern % [path], term
       inc st
   st
@@ -68,6 +68,7 @@ when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch ft, help={
   "term"   : "output path terminator",
   "pattern": "emit a \\$1-using pattern; E.g. \"match:\\$1\"",
   "quiet"  : "Do not emit; Just count as exit status",
+  "stat"   : "Use `stat` not `lstat`; Others say \"dereference\"",
   "expr"  :"""Concatenated extended one-letter test(1) codes
     e  (e)xists in any way
     b  is (b)lock special
