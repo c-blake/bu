@@ -199,19 +199,25 @@ the current user can `cd` into right now.  This may sound pedantic, but it can
 elide a zillion stat()s some of which may even automount net FSes while also
 avoiding presenting the user with many "invalid right now" `cd` targets.
 
-Besides filesystem history, dynamic immediately pre-display re-validation may
-also help for other ephemeral system entities (processes for `kill`, containers,
+Besides filesystem history, lazy, immediately pre-display validation also helps
+for other volatile/ephemeral system entities (processes to signal, containers,
 services) or remote/unreliable resources (SSH, cloud, network).  Any such can
 also benefit from this plug-in system.
 
 # Related Work
 
-I am unsure there is any work prior to the Emacs `anything.el` now named
+I am unsure there is any work prior to the 2004 Emacs `anything.el` now named
 [`Helm`](https://github.com/emacs-helm/helm) or the C
 [`canything`](https://github.com/keiji0/canything) named after it.  I didn't
 look very hard.  1970s & 1980s HCI folks seem likely culprits to have originated
 the basic idea of narrow-a-dynamic-list-as-you-go, much as they did hypertext.
 Tamas Patrovics surely knows more.  Someone should ask him for background.
+
+I haven't used it myself, but Helm `filtered-candidate-transformer` (circa 2011)
+*can* do lazy pre-display validation. It may be the only similar tool to be
+capable BUT needs `emacs` AND you still must add your own partial/windowed eval
+maybe using async/volatile sources to not validate everything all at once.  I
+searched for, but good not find any public turn-key solution.
 
 [percol](https://github.com/mooz/percol) also mentions zaw & peco and a pure Zsh
 approach that in said purity allows preserving Zsh syntax highlighting is
