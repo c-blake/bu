@@ -33,9 +33,9 @@ proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
 
 proc maybeFlip(flip, val: bool): bool = (if flip: not val else: val)
 
-proc isType*(path, expr: string; euid: Uid, egid: Gid, stat: bool): bool =
+proc isType*(path, expr: string; euid: Uid, egid: Gid, s: bool): bool =
   var st: Statx                 # Re-purpose stx_blksize as an lstat-Ok code
-  st.stx_blksize = if (if stat: stat(path, st) else: lstat(path, st)) == 0: 1u32 else: 0u32
+  st.stx_blksize = if (if s:stat(path,st)else:lstat(path,st))==0:1u32 else:0u32
   var flip = false
   result = true
   for ch in expr:
