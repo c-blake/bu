@@ -286,9 +286,9 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of AltEnt: (if nIt>0: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
                 return its.len - 1) else: return - 1)
     of CtrlC:  return -1                # & below exit-like suspend
-    of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp:       (if pick > 0      : (dec pick; if pick <  yO  : yO = pick)) #XXX okx loop
-    of LineDn,CtrlI: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO)) #XXX okx loop
+    of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt #XXX okx loops
+    of LineUp:       (if pick > 0      : (dec pick; if pick <  yO : yO = pick) else: (pick = nIt - 1; yO = pick - h + 1))
+    of LineDn,CtrlI: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO) else: (pick = 0; yO = 0))
     of PgUp:   (if pick > h      : (yO -= h; pick -= h) else: (yO=0; pick=0))
     of PgDn:   (if pick < nIt-h-1: (yO += h; pick += h) else: pick = nIt - 1)
     of Home:   yO = 0; pick = 0
