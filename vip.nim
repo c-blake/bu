@@ -239,7 +239,7 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
     putp clr_eos #..in last&curr col will be also be cleared=>mvDn 1 pre-clear.
     putp tparm1(parm_up_cursor, cint(ixs.len + 1 + int(i == its.len - 1)))
   elif i > 0:   # parm_up_cursor interprets 0 as 1 => only mv up if put an item
-    putp tparm1(parm_up_cursor, cint(if i < h: i else: h))
+    putp tparm1(parm_up_cursor, min(i, h).cint)
   return min(its.len, i + 1)
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
@@ -272,7 +272,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
       else: put1 "", "No Room For Help"
       discard iK.getKey
     elif doPicks:
-      if yO < pick - h + 1: yO = pick - h + 1
+      yO = max(yO, pick - h + 1)
       nIt = putN(yO, pick)
     putp carriage_return
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
