@@ -281,16 +281,16 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     case iK.getKey  # Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
     of CtrlI:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
-    of CtrlL:  getTermSize()            # Viewport parameter
-    of Enter:  return (if nIt>0: pick else: -1)  # Exits..
-    of AltEnt: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
-                return its.len - 1)
+    of CtrlL:  getTermSize()                      # Viewport parameter
+    of Enter:  return (if nIt>0: pick else: -1)   # Exits..
+    of AltEnt: (if nIt>0: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
+                return its.len - 1) else: return - 1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp: (if pick > 0: (dec pick; if yO > pick: dec yO)) #XXX fix Re okx
-    of LineDn: (if pick < nIt - 1: (inc pick; if yO <= pick - h: inc yO))
-    of PgUp:   (if pick > h: (pick -= h; yO = pick) else: yO = 0; pick = 0)
-    of PgDn:   (if pick + h < nIt: (pick += h; yO = pick) else: pick = nIt - 1)
+    of LineUp: (if pick > 0      : (dec pick; if pick <  yO    : dec yO)) #XXX okx loop
+    of LineDn: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO)) #XXX okx loop
+    of PgUp:   (if pick > h      : (yO -= h; pick -= h) else: (yO=0; pick=0))
+    of PgDn:   (if pick < nIt - h: (yO += h; pick += h) else: pick = nIt - 1)
     of Home:   yO = 0; pick = 0
     of End:    (if nIt > 0: pick = nIt - 1) # Last List Navigation
     of CtrlA:  jC = 0                   # Qry Bulk NavEdit: Start,End,Right,Left
