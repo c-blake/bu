@@ -176,21 +176,6 @@ proc match(s: MSlice, qs: seq[MSlice]): Slice[int] = # 7) FILTERING, SORTING
       result.b = j + q.len - 1
     else: return badSlc
 
-proc xmatch(nMch: int): int =   # As a lazy eval optimization for costly `okx`,
-  result = nMch                 #..we stop work after `h` items test ok.  This
-  let h = min(uH,pH); var c = 0 #..ALMOST mandates a .so (but coproc not awful).
-  var lastMch = nMch            # last non-zero should be at [result] (or +- 1)
-  var toMove: HashSet[int]
-  for i in 0 ..< nMch:
-    if okx(its[i].it.mem, its[i].it.len) != 1: # item fails external test
-      toMove.incl i; dec result
-    else: (inc c; (if c > h: break))
-  if result > 0 and toMove.len > 0:
-    var tmp = newSeqOfCap[Item](its.len)
-    for i in 0 ..< its.len: (if i notin toMove: tmp.add its[i])
-    for i in toMove: its[i].size = 0; tmp.add its[i]
-    its = tmp # Could elide copy by making `its` indirect & swapping ptr
-
 proc bySizeInpOrder(a, b: Item): int =
   let c = cmp(a.size, b.size)
   return if c == 0: (if Rev: cmp(b.ix, a.ix) else: cmp(a.ix, b.ix)) else: c
@@ -215,7 +200,6 @@ proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
       else: quit "poll", 1
   its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
   clean = false
-  if okx != nil: result = xmatch(result)
 
 proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
@@ -237,19 +221,23 @@ proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
   for j in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
   if hL: putp ats['c'][1]
 
+proc collect(yO, h: int): (int, seq[int]) = # Collect up to `h` indices to show
+  for i in yO ..< its.len:                  #..starting from `yO`.
+    if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
+    if okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1:
+      if result[1].len < h: result[1].add i # true|external test exists&passes
+    result[0] = i + 1
+
 proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   let h = min(uH, pH)
-  var i = yO                    # Put as many items as fit starting from `yO`.
-  for j in yO ..< its.len:      # Return nItems w/size>0.  (q="" => size > 0).
-    i = j   #TODO instead of y0..i slice, build an `ok` seq via `okx` if !nil
-    if its[i].size == 0 and q.len > 0: break
-    if i - yO < h:
-      let l = if dlm != '\0': ats['l'][0] & $its[i].lab & ats['l'][1] else: ""
-      put1 l, $its[i].it, i == pick, i
-  if i - yO < its.len and i - yO < h:   # Space left & maybe more to put
+  let (i, ixs) = collect(yO, h)
+  for j in ixs:
+    let l = if dlm != '\0': ats['l'][0] & $its[j].lab & ats['l'][1] else: ""
+    put1 l, $its[j].it, j == pick, j
+  if ixs.len < h and i - yO < its.len:  # Space left & maybe more to put
     putc '\n'    # clr_eos clrs from curr col->end. If last vis.pick chosen, hL
     putp clr_eos #..in last&curr col will be also be cleared=>mvDn 1 pre-clear.
-    putp tparm1(parm_up_cursor, cint((i - yO) + 1 + int(i == its.len - 1)))
+    putp tparm1(parm_up_cursor, cint(ixs.len + 1 + int(i == its.len - 1)))
   elif i > 0:   # parm_up_cursor interprets 0 as 1 => only mv up if put an item
     putp tparm1(parm_up_cursor, cint(if i < h: i else: h))
   return min(its.len, i + 1)
@@ -299,7 +287,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
                 return its.len - 1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp: (if pick > 0: (dec pick; if yO > pick: dec yO))
+    of LineUp: (if pick > 0: (dec pick; if yO > pick: dec yO)) #XXX fix Re okx
     of LineDn: (if pick < nIt - 1: (inc pick; if yO <= pick - h: inc yO))
     of PgUp:   (if pick > h: (pick -= h; yO = pick) else: yO = 0; pick = 0)
     of PgDn:   (if pick + h < nIt: (pick += h; yO = pick) else: pick = nIt - 1)
