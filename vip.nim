@@ -26,7 +26,7 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key = enum CtrlO,CtrlI,CtrlL, Enter,AltEnt, CtrlC,CtrlZ, LineUp,LineDn, PgUp,
+  Key=enum CtrlO,CtrlI,CtrlR,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
   Item = tuple[size: float; ix: int; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
@@ -113,7 +113,7 @@ var Ks = [Kay(CtrlO, "\x0F"), Kay(CtrlI, "\t"), Kay(CtrlL, "\f"),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del   ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(NoBind,""     )]
+  Kay(CtrlR ,"\x12" ),Kay(NoBind,""    )]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -264,9 +264,9 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     if doHelp:
       doHelp = false
       if h >= 5: # Stay <= 40 col for narrow terminal windows
-        put1 "", "^O toggleOrder ^I toggleInsen ^L Refresh"
+        put1 "", "^O toggleOrder ^R reversInsen ^L Refresh"
         put1 "", "ENTER Pick Alt-ENT PickLabel ^C/^Z usual"
-        put1 "", "ListNavigate ArrowUp/Dn,PgUp/Dn,Home,End"
+        put1 "", "ListNavigate TAB(Arrow|Pg)(Up|Dn)HomeEnd"
         put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
         put1 "", "OTHER KEYS EXIT THIS HELP; ASCII TAB=^I"
       else: put1 "", "No Room For Help"
@@ -280,15 +280,15 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     putp cursor_normal, fatal=false; oFlush()
     case iK.getKey  # Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
-    of CtrlI:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
+    of CtrlR:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
     of CtrlL:  getTermSize()                      # Viewport parameter
     of Enter:  return (if nIt>0: pick else: -1)   # Exits..
     of AltEnt: (if nIt>0: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
                 return its.len - 1) else: return - 1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp: (if pick > 0      : (dec pick; if pick <  yO    : yO = pick)) #XXX okx loop
-    of LineDn: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO)) #XXX okx loop
+    of LineUp:       (if pick > 0      : (dec pick; if pick <  yO  : yO = pick)) #XXX okx loop
+    of LineDn,CtrlI: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO)) #XXX okx loop
     of PgUp:   (if pick > h      : (yO -= h; pick -= h) else: (yO=0; pick=0))
     of PgDn:   (if pick < nIt-h-1: (yO += h; pick += h) else: pick = nIt - 1)
     of Home:   yO = 0; pick = 0
