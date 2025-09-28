@@ -20,12 +20,12 @@ proc eval(ch: char, st: Statx, euid: Uid, egid: Gid): bool =
   of 'k': (m and 0o1000) != 0           # has its sticky bit set
   of 'O': st.stx_uid == euid.uint32     # is Owned by the effective user ID
   of 'G': st.stx_gid == egid.uint32     # is owned by effective Group ID
-  of 'r': (m and 0o4) != 0              # user can read; Q: Add access(2) way?
-  of 'w': (m and 0o2) != 0              # user can write
-  of 'x': (m and 0o1) != 0              # user can execute | traverse
-  of 'R': (m and 0o400) != 0            # world can read
-  of 'W': (m and 0o200) != 0            # world can write
-  of 'X': (m and 0o100) != 0            # world can execute | traverse
+  of 'r': (m and 0o400) != 0            # user can read; Q: Add access(2) way?
+  of 'w': (m and 0o200) != 0            # user can write
+  of 'x': (m and 0o100) != 0            # user can execute | traverse
+  of 'R': (m and 0o4  ) != 0            # world can read
+  of 'W': (m and 0o2  ) != 0            # world can write
+  of 'X': (m and 0o1  ) != 0            # world can execute | traverse
   of 'A': (m and 0o040) != 0            # group can read
   of 'I': (m and 0o020) != 0            # group can write
   of 'E': (m and 0o010) != 0            # group can execute | traverse
