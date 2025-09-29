@@ -316,7 +316,7 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
         put1 "", "OTHER KEYS EXIT THIS HELP"
       else: put1 "", "No Room For Help"
       discard iK.getKey
-    elif doPicks: nIt = putN(yO, pick)
+    elif doPicks and yO >= 0: nIt = putN(yO, pick)
     putp carriage_return
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
