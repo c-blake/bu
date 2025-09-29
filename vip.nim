@@ -272,11 +272,11 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
         put1 "", "ENTER Pick Alt-ENT PickLabel ^C/^Z usual"
         put1 "", "ListNavigate TAB(Arrow|Pg)(Up|Dn)HomeEnd"
         put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
-        put1 "", "OTHER KEYS EXIT THIS HELP; ASCII TAB=^I"
+        put1 "", "OTHER KEYS EXIT THIS HELP"
       else: put1 "", "No Room For Help"
       discard iK.getKey
     elif doPicks:
-      yO = max(0, yO); yO = max(yO, pick - h + 1)
+      yO = max(0, (max(yO, pick - h + 1)))
       nIt = putN(yO, pick)
     putp carriage_return
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
