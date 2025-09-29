@@ -206,7 +206,54 @@ proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
   its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
   clean = false
 
-proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
+proc collect(yO, h: int): (int, seq[int]) = # 8) NAVIGATION OVER VALID/OK SYSTEM
+  for i in yO ..< its.len:      # Collect up to `h` indices from `yO` to show
+    if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
+    if result[1].len < h and i.ok: result[1].add i
+    result[0] = i + 1
+
+proc first(i0, nIt: int): int = # Get index of first valid >= i0
+  var i = i0
+  while i < nIt and not i.ok: i += 1
+  if i < nIt: i else: -1
+proc next(i, nIt: int): int = (if i == -1: -1 else: first(i + 1, nIt))
+
+proc last(i0: int): int =       # Get index of last valid <= i0
+  var i = i0
+  while i >= 0 and not i.ok: i -= 1
+  if i >= 0: i else: -1
+proc prev(i: int): int = (if i == -1: -1 else: last(i - 1))
+
+proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
+  if nIt == 0: return
+  let nxt = pick.next(nIt)      # Move pick to next ok|wrap;Maybe Shift viewport
+  if nxt == -1:
+    if wrap: pick = first(0, nIt); yO = pick; visIx = 0
+    return
+  pick = nxt
+  visIx += 1
+  if visIx == h:                # Shift yO down one ok step
+    let newYO = yO.next(nIt)
+    if newYO != -1: yO = newYO; visIx -= 1
+
+proc goUp(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
+  if nIt == 0: return
+  let prv = pick.prev           # Move pick to prev ok|wrap;Maybe Shift viewport
+  if prv == -1:
+    if wrap:
+      pick = last(nIt - 1); visIx = min(h, nIt) - 1; yO = pick
+      for r in 1..<h: (let newYO = yO.prev; if newYO != -1: yO = newYO)
+    return
+  pick = prv
+  if visIx == 0:
+    let newYO = yO.prev         # Shift yO up one ok step
+    if newYO != -1: yO = newYO
+    else: visIx = 0             # Cannot shift yO further up => visIx becomes 0
+  else: visIx -= 1
+
+template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
+
+proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
   let m = if i >= 0: its[i].mch else: badSlc    # `m` sez underline extent
   if hL: putp ats['c'][0]
@@ -226,12 +273,6 @@ proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
   for j in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
   if hL: putp ats['c'][1]
 
-proc collect(yO, h: int): (int, seq[int]) = # Collect up to `h` indices to show
-  for i in yO ..< its.len:                  #..starting from `yO`.
-    if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
-    if result[1].len < h and i.ok: result[1].add i
-    result[0] = i + 1
-
 proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
@@ -247,8 +288,8 @@ proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
   return min(its.len, i)
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
-proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
-  var nIt, nMch, pick, yO: int          # O = Origin/Offset
+proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
+  var nIt, nMch, pick, yO, visIx: int   # O = Origin/Offset
   var (doFilt, doPicks, qGrew, doHelp) = (true, false, false, false)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
@@ -258,7 +299,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     qGrew = false                       #..be MORE restrictive => Use last nIt.
     if doFilt:
       nMch = filterQuit(nIt); doPicks = nMch >= 0
-      if doPicks: doFilt = false; pick = 0; yO = 0
+      if doPicks: doFilt = false; pick = first(0, nIt); yO = pick; visIx = 0
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
     den[0]  = if doSort: '%' else: '/'
@@ -275,9 +316,7 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
         put1 "", "OTHER KEYS EXIT THIS HELP"
       else: put1 "", "No Room For Help"
       discard iK.getKey
-    elif doPicks:
-      yO = max(0, (max(yO, pick - h + 1)))
-      nIt = putN(yO, pick)
+    elif doPicks: nIt = putN(yO, pick)
     putp carriage_return
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
@@ -291,13 +330,13 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
                                     its[pick].it, badSlc); return its.len - 1)
                 else: return - 1)
     of CtrlC:  return -1                # & below exit-like suspend
-    of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt #XXX okx loops
-    of LineUp:       (if pick > 0      : (dec pick; if pick <  yO : yO = pick) else: (pick = nIt - 1; yO = pick - h + 1))
-    of LineDn,CtrlI: (if pick < nIt - 1: (inc pick; if pick >= yO + h: inc yO) else: (pick = 0; yO = 0))
-    of PgUp:   (if pick > h      : (yO -= h; pick -= h) else: (yO=0; pick=0))
-    of PgDn:   (if pick < nIt-h-1: (yO += h; pick += h) else: pick = nIt - 1)
-    of Home:   yO = 0; pick = 0
-    of End:    (if nIt > 0: pick = nIt - 1) # Last List Navigation
+    of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
+    of LineUp:       goUp yO,pick,visIx, h,nIt,true         # LIST NAVIGATION (
+    of LineDn,CtrlI: goDn yO,pick,visIx, h,nIt,true
+    of PgUp:   (for r in 1..h: goUp yO,pick,visIx, h,nIt,false) # Ok to mv visIx
+    of PgDn:   (for r in 1..h: goDn yO,pick,visIx, h,nIt,false) #..to top/bot??
+    of Home:   goHm
+    of End:    goHm; goUp yO,pick,visIx, h,nIt,true
     of CtrlA:  jC = 0                   # Qry Bulk NavEdit: Start,End,Right,Left
     of CtrlE:  jC = q.len               # Ensure jC byte idx ends @End Of UChar
     of CtrlK:  q.delete jC ..< q.len; doFilt = true
