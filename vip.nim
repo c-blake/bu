@@ -26,7 +26,7 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key=enum CtrlO,CtrlI,CtrlR,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
+  Key=enum CtrlO,CtrlI,CtrlT,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
   Item = tuple[size: float; ix,ok:uint32; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
@@ -118,7 +118,7 @@ var Ks = [Kay(CtrlO, "\x0F"), Kay(CtrlI, "\t"), Kay(CtrlL, "\f"),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del   ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(CtrlR ,"\x12" ),Kay(NoBind,""    )]
+  Kay(CtrlT ,"\x14" ),Kay(NoBind,""    )]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -309,7 +309,7 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     if doHelp:
       doHelp = false
       if h >= 5: # Stay <= 40 col for narrow terminal windows
-        put1 "", "^O toggleOrder ^R reversInsen ^L Refresh"
+        put1 "", "^O toggleOrder ^T toggleInsen ^L Refresh"
         put1 "", "ENTER Pick Alt-ENT PickLabel ^C/^Z usual"
         put1 "", "ListNavigate TAB(Arrow|Pg)(Up|Dn)HomeEnd"
         put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
@@ -323,7 +323,7 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     putp cursor_normal, fatal=false; oFlush()
     case iK.getKey  # Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
-    of CtrlR:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
+    of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
     of CtrlL:  getTermSize()                      # Viewport parameter
     of Enter:  return (if nIt>0: pick else: -1)   # Exits..
     of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
