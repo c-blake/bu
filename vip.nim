@@ -379,7 +379,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "digits": "num.digits for nMatch/nItem on query Line",
   "rev"   : "reverse default \"log file\" input order",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
-  "keep"  : "eg. `-kfoo.so:Ok==1` keeps if cstr->cint==1",
+  "keep"  : "eg. `-kfoo.so:Ok==1` ptr,len->cint==1=>keep",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
   qtext choice match label"""}, short={"color": 'c', "digits": 'D'}

@@ -43,7 +43,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -l=, --label=  int     0      emit parsed label to this file descriptor
   -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
   -q=, --quit=   string  ""     value written upon quit (e.g. Ctrl-C)
-  -k=, --keep=   string  ""     display only if foo.so:Ok==1{cstring->cint}
+  -k=, --keep=   string  ""     eg. -kfoo.so:Ok==1 ptr,len->cint==1=>keep
   -r, --rev      bool    false  reverse default "log file" input order
   --colors=      strings {}     colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}     ;-separated on/off attrs for UI elements:
@@ -55,14 +55,14 @@ set all those things in a config file|config directory like `~/.config/vip`.
 Textual User Interface:
 ```
 Ctrl-O    Toggle Order By Match Size Fraction Mode (/|% in match count )
-Ctrl-I    (Aka TAB) Toggle Insensitive Case Mode   ( |- in query prompt)
+Ctrl-T    Toggle Insensitive Case Mode   ( |- in query prompt)
 Ctrl-L    Refresh
 ENTER     Pick Selected Item
 Alt-ENTER Pick Label For Item
 Ctrl-C    Quit Selection
 Ctrl-Z    Suspend Selection
 List Navigation
-    ArrowUp/Down     Up&Down 1-item
+    ArrowUp/Down|TAB Up&Down 1-item
     PageUp/PageDn    Up&Down 1 Page
     Home/End         First|Last Page
 Query Editing
