@@ -28,7 +28,7 @@ proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key=enum CtrlO,CtrlI,CtrlR,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
-  Item = tuple[size: float; ix: int; it,lab: MSlice; mch: Slice[int]] # 64B
+  Item = tuple[size: float; ix,ok:uint32; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)ser
@@ -41,6 +41,11 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
   okx: ExtTest          # An external test function return 1 to for ok/keep
+
+proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
+  if i < its.len and its[i].ok > 0:
+    return bool(its[i].ok - 1)
+  okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
   const def = @["h bold;-bold", "q WHITE on_blue;-bg -fg", "c inverse;-inverse",
@@ -159,9 +164,9 @@ proc parseIn() =
     if line.len > int(dlm != '\0'):     # Do not admit an empty line & label
       if dlm != '\0':
         if line.msplit(labIt, dlm, n=2) == 2:
-          its.add (1.0, i, labIt[1], labIt[0], badSlc)
+          its.add (1.0, i.uint32, 0u32, labIt[1], labIt[0], badSlc)
       else:
-          its.add (1.0, i, line    , emptyS  , badSlc)
+          its.add (1.0, i.uint32, 0u32, line    , emptyS  , badSlc)
       inc i
   if not Rev: its.reverse
   clean = true
@@ -224,8 +229,7 @@ proc put1(l,s: string; hL=false,i= -1)= # 8) RENDERING
 proc collect(yO, h: int): (int, seq[int]) = # Collect up to `h` indices to show
   for i in yO ..< its.len:                  #..starting from `yO`.
     if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
-    if okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1:
-      if result[1].len < h: result[1].add i # true|external test exists&passes
+    if result[1].len < h and i.ok: result[1].add i
     result[0] = i + 1
 
 proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
@@ -283,8 +287,9 @@ proc tui(alt=false, d=5): int =    # 9) MAIN TERMINAL USER-INTERFACE
     of CtrlR:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
     of CtrlL:  getTermSize()                      # Viewport parameter
     of Enter:  return (if nIt>0: pick else: -1)   # Exits..
-    of AltEnt: (if nIt>0: (its.add (1.0, its.len, its[pick].lab, its[pick].it, badSlc);
-                return its.len - 1) else: return - 1)
+    of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
+                                    its[pick].it, badSlc); return its.len - 1)
+                else: return - 1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt #XXX okx loops
     of LineUp:       (if pick > 0      : (dec pick; if pick <  yO : yO = pick) else: (pick = nIt - 1; yO = pick - h + 1))
