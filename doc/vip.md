@@ -215,9 +215,9 @@ Tamas Patrovics surely knows more.  Someone should ask him for background.
 
 I haven't used it myself, but Helm `filtered-candidate-transformer` (circa 2011)
 *can* do lazy pre-display validation. It may be the only similar tool to be
-capable BUT needs `emacs` AND you still must add your own partial/windowed eval
-maybe using async/volatile sources to not validate everything all at once.  I
-searched for, but good not find any public turn-key solution.
+capable BUT needs `emacs` AND I could find no public turn-key solution.  So, you
+still must add your own partial/windowed eval maybe using async/volatile sources
+to not validate everything all at once.
 
 [percol](https://github.com/mooz/percol) also mentions zaw & peco and a pure Zsh
 approach that in said purity allows preserving Zsh syntax highlighting is
