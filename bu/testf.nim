@@ -10,6 +10,10 @@ proc cdable(path: pointer, nPath: clong): cint {.noconv, exportc, dynlib.} =
   cpath.setLen nPath    # `vip` does not open any files post `parseIn()`
   copyMem cpath[0].addr, path, nPath
   cint(chdir(cast[cstring](cpath[0].addr)) == 0)
+#NOTE: Above assumes strings come as rooted paths ("/a/b/leafDir").  Lacking a
+#      leading "/" makes it a relative path which can succeed relative to the
+#      (newly, per all our chdirs) current working directory, but which would
+#      fail relative to the original parent process.
 
 #[ To cursor down, `vip` must test one at a time until a success.  To get more
 async/scalable needs a batch interface with forked kids which an ok idea since a
