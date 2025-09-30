@@ -43,9 +43,10 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   okx: ExtTest          # An external test function return 1 to for ok/keep
 
 proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
-  if i < its.len and its[i].ok > 0:
-    return bool(its[i].ok - 1)
-  okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1
+  if i notin 0..<its.len: IndexDefect !! "in ok()"
+  if its[i].ok == 0:
+    its[i].ok = 1 + uint32(okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1)
+  bool(its[i].ok - 1)
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
   const def = @["h bold;-bold", "q WHITE on_blue;-bg -fg", "c inverse;-inverse",
