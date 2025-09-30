@@ -267,19 +267,14 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   for j in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
   if hL: putp ats['c'][1]
 
-proc putN(yO: int; pick: int): int =    # put1 pH times from `its`
+proc putN(yO, pick: int): int =         # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
   for j in ixs:
     let l = if dlm != '\0': ats['l'][0] & $its[j].lab & ats['l'][1] else: ""
     put1 l, $its[j].it, j == pick, j
-  if ixs.len < h and i - yO < its.len:  # Space left & maybe more to put
-    putc '\n'    # clr_eos clrs from curr col->end. If last vis.pick chosen, hL
-    putp clr_eos #..in last&curr col will be also be cleared=>mvDn 1 pre-clear.
-    putp tparm1(parm_up_cursor, cint(ixs.len + 1 + int(i == its.len - 1)))
-  elif i > 0:   # parm_up_cursor interprets 0 as 1 => only mv up if put an item
-    putp tparm1(parm_up_cursor, min(i, h).cint)
-  return min(its.len, i)
+  putp tparm1(parm_up_cursor, ixs.len.cint)
+  return i
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
