@@ -297,12 +297,12 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     put1 hdr, ats['q'][0] & q & ats['q'][1]
     if doHelp:
       doHelp = false
-      if h >= 5: # Stay <= 40 col for narrow terminal windows
-        put1 "", "^O toggleOrder ^T toggleInsen ^L Refresh"
-        put1 "", "ENTER Pick Alt-ENT PickLabel ^C/^Z usual"
-        put1 "", "ListNavigate TAB(Arrow|Pg)(Up|Dn)HomeEnd"
-        put1 "", "QueryEdit ArrowL/R/Backspace/Delete ^U^K"
-        put1 "", "OTHER KEYS EXIT THIS HELP"
+      if h >= 5: # Stay <= 46 col for narrow terminal windows
+        put1 "", "^O toggleOrder ^T      toggleInsen  ^L Refresh"
+        put1 "", "ENTER Pick     Alt-ENT PickLabel   ^C/^Z Usual"
+        put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
+        put1 "", "QueryEdit      ArrowL/R,Backspace|Delete/^U|^K"
+        put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
       else: put1 "", "No Room For Help"
       discard iK.getKey
     elif doPicks and yO >= 0: nIt = putN(yO, pick)
