@@ -213,46 +213,39 @@ proc collect(yO, h: int): (int, seq[int]) = # 8) NAVIGATION OVER VALID/OK SYSTEM
     if result[1].len < h and i.ok: result[1].add i
     result[0] = i + 1
 
-proc first(i0, nIt: int): int = # Get index of first valid >= i0
-  var i = i0
-  while i < nIt and not i.ok: i += 1
-  if i < nIt: i else: -1
-proc next(i, nIt: int): int = (if i == -1: -1 else: first(i + 1, nIt))
+proc first(i0, nIt: int): int = # Get index of first valid >= i0 or -2
+  for i in i0 ..< nIt: (if i.ok: return i)
+  return -2
+proc next(i,nIt: int): int = (if i in -1 .. nIt - 2: first(i + 1, nIt) else: -2)
 
-proc last(i0: int): int =       # Get index of last valid <= i0
-  var i = i0
-  while i >= 0 and not i.ok: i -= 1
-  if i >= 0: i else: -1
-proc prev(i: int): int = (if i == -1: -1 else: last(i - 1))
+proc last(i0: int): int =       # Get index of last valid <= i0 or -2
+  for i in countdown(i0, 0, 1): (if i.ok: return i)
+  return -2
+proc prev(i,nIt: int): int = (if i in +1 .. nIt: last(i - 1) else: -2)
+
+template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
 
 proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
   if nIt == 0: return
   let nxt = pick.next(nIt)      # Move pick to next ok|wrap;Maybe Shift viewport
-  if nxt == -1:
-    if wrap: pick = first(0, nIt); yO = pick; visIx = 0
-    return
+  if nxt == -2: (if wrap: goHm); return
   pick = nxt
-  visIx += 1
-  if visIx == h:                # Shift yO down one ok step
-    let newYO = yO.next(nIt)
-    if newYO != -1: yO = newYO; visIx -= 1
+  if visIx == min(h, nIt) - 1:
+    let newYO = yO.next(nIt)    # Shift yO down one ok step
+    if newYO != -2: yO = newYO
+  else: visIx += 1
 
 proc goUp(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
   if nIt == 0: return
-  let prv = pick.prev           # Move pick to prev ok|wrap;Maybe Shift viewport
-  if prv == -1:
+  let prv = pick.prev(nIt)      # Move pick to prev ok|wrap;Maybe Shift viewport
+  if prv == -2:
     if wrap:
       pick = last(nIt - 1); visIx = min(h, nIt) - 1; yO = pick
-      for r in 1..<h: (let newYO = yO.prev; if newYO != -1: yO = newYO)
+      for r in 1..<h: (let newYO = yO.prev(nIt); if newYO != -2: yO = newYO)
     return
   pick = prv
-  if visIx == 0:
-    let newYO = yO.prev         # Shift yO up one ok step
-    if newYO != -1: yO = newYO
-    else: visIx = 0             # Cannot shift yO further up => visIx becomes 0
-  else: visIx -= 1
-
-template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
+  if visIx > 0: visIx -= 1
+  else: yO = pick
 
 proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
@@ -337,7 +330,7 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     of PgUp:   (for r in 1..h: goUp yO,pick,visIx, h,nIt,false) # Ok to mv visIx
     of PgDn:   (for r in 1..h: goDn yO,pick,visIx, h,nIt,false) #..to top/bot??
     of Home:   goHm
-    of End:    goHm; goUp yO,pick,visIx, h,nIt,true
+    of End:    goHm; goUp yO,pick,visIx, h,nIt,true         # LIST NAVIGATION )
     of CtrlA:  jC = 0                   # Qry Bulk NavEdit: Start,End,Right,Left
     of CtrlE:  jC = q.len               # Ensure jC byte idx ends @End Of UChar
     of CtrlK:  q.delete jC ..< q.len; doFilt = true
