@@ -76,6 +76,7 @@ when defined(Windows):
 
   "noa",        # "--"-aware Python-like indexing of non-option arguments
   "okpaths",    # Validate/trim PATH-like vars by probing the system
+  "zeh",        # Zsh Extended History Manipulations (eg. fast k-way merge)
   "nrel",       # Edit .nimble version, commit, tag, push & maybe release
   "dirq",       # Kind of its own system-building atom thing
 # "funnel",     # A reliable, record boundary respecting "FIFO funnel"
@@ -158,6 +159,7 @@ else:
 
   "noa",        # "--"-aware Python-like indexing of non-option arguments
   "okpaths",    # Validate/trim PATH-like vars by probing the system
+  "zeh",        # Zsh Extended History Manipulations (eg. fast k-way merge)
   "nrel",       # Edit .nimble version, commit, tag, push & maybe release
   "dirq",       # Kind of its own system-building atom thing
   "funnel",     # A reliable, record boundary respecting "FIFO funnel"

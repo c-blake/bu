@@ -152,6 +152,8 @@ only tools, but some may be more cross-platform.
 
 [okpaths - Validate/trim PATH-like vars by probing the system](doc/okpaths.md)
 
+[zeh - Zsh Extended History Manipulations (eg. fast k-way merge)](doc/zeh.md)
+
 [nrel - Edit .nimble version, commit, tag, push & maybe release](doc/nrel.md)
 
 [dirq - Kind of its own system-building atom thing](doc/dirq.md)
