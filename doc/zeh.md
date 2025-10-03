@@ -39,6 +39,8 @@ Check a file { or do a parsing benchmark :-) } :
 
 `zeh -c $ZDOTDIR/history`
 
+XXX should really add a bunch of vignettes here.
+
 # Future work
 An idea for near-term extensions might be adding a fancier filter language than
 just "length >= min", such as the first whitespace delimited command is not in
