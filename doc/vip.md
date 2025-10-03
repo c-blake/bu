@@ -63,8 +63,8 @@ Ctrl-C    Quit Selection
 Ctrl-Z    Suspend Selection
 List Navigation
     ArrowUp/Down|TAB Up&Down 1-item
-    PageUp/PageDn    Up&Down 1 Page
-    Home/End         First|Last Page
+    PageUp/PageDn    Up&Down 1 Page   Also Esc-Alt-v/Space
+    Home/End         First|Last Page  Also Esc-Alt-</>
 Query Editing
     ArrowLeft/Right  Move edit cursor
     Backspace/Delete Delete to Left/Right
