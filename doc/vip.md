@@ -63,13 +63,15 @@ Ctrl-C    Quit Selection
 Ctrl-Z    Suspend Selection
 List Navigation
     ArrowUp/Down|TAB Up&Down 1-item
-    PageUp/PageDn    Up&Down 1 Page   Also Esc-Alt-v/Space
-    Home/End         First|Last Page  Also Esc-Alt-</>
+    PageUp/PageDn    Up&Down 1 Page   Also Esc-Alt-u/d
+    Home/End         First|Last Page  Also Esc-Alt-h/e
 Query Editing
     ArrowLeft/Right  Move edit cursor
     Backspace/Delete Delete to Left/Right
-    Ctrl-U           Delete from cursor to start of q
-    Ctrl-K           Delete from cursor to end of q
+    Ctrl-A           Move cursor to beginning of q
+    Ctrl-E           Move cursor to end of q
+    Ctrl-U           LeftKill: Delete from cursor to start of q
+    Ctrl-K           RightKill: Delete from cursor to end of q
 ```
 
 # Examples

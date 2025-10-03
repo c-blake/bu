@@ -112,9 +112,9 @@ var Ks = [Kay(CtrlO, "\x0F"), Kay(CtrlI, "\t"), Kay(CtrlL, "\f"),
   Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtrlC ,VINTR ),Tio(CtrlZ,VSUSP),
   Cap(LineUp,"kcuu1"),Kay(LineUp,"\x10"),Kay(LineUp,"\eOA"),
   Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"),
-  Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\ev" ),   # v<--- Alternate Dn,Hm,End bindings
-  Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\e " ),
-  Cap(Home  ,"khome"),Kay(Home  ,"\e<" ),Cap(End   ,"kend"),Kay(End  , "\e>"),
+  Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\eu" ),   # v<--- Alternate Dn,Hm,End bindings
+  Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\ed" ),
+  Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End  , "\ee"),
   Kay(CtrlA ,"\x01" ),Kay(CtrlE ,"\x05"),Kay(CtrlU ,"\x15"),Kay(CtrlK, "\v" ),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
@@ -297,12 +297,13 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     put1 hdr, ats['q'][0] & q & ats['q'][1]
     if doHelp:
       doHelp = false
-      if h >= 6: # Stay <= 46 col for narrow terminal windows
+      if h >= 7: # Stay <= 46 col for narrow terminal windows
         put1 "", "^O toggleOrder ^T      toggleInsen  ^L Refresh"
         put1 "", "ENTER Pick     Alt-ENT PickLabel   ^C/^Z Usual"
         put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
-        put1 "", "          Esc-|Alt-v <> for PgUpDn|Home|End"
-        put1 "", "QueryEdit      ArrowL/R,Backspace|Delete/^U|^K"
+        put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
+        put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
+        put1 "", "               ^A Beg ^E End ^U LKill ^K RKill"
         put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
       else: put1 "", "No Room For Help"
       discard iK.getKey
