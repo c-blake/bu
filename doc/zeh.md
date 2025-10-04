@@ -34,6 +34,20 @@ the order of timestamps in the file => provide 3 more modes on to of --check:
   -e, --endT  bool false sub dur to take endTm,dur -> startTm,dur
 ```
 
+# Testing
+This is new code a new `adix/ways.kWayMerge` iterator.  So, it's very possible
+there are bugs, but this works anyway, and maybe constitutes an example:
+```sh
+seq2zh() { sed 's/^\(.*\)$/: 1000000\1:0;cmd\1/' ;}
+zh2cmd() { sed 's/.*;//' ;}
+seq -w 1 3 100|seq2zh>by3
+seq -w 2 2 100|seq2zh>by2
+seq -w 4 4 100|seq2zh>by4
+cat by[234]|zh2cmd|sort>costly
+zeh by*|zh2cmd>cheap
+cmp cheap costly
+```
+
 # Examples
 Check a file { or do a parsing benchmark :-) } :
 
