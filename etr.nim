@@ -43,8 +43,9 @@ proc `$`*(e: ETR): string =
   &"{left0}{e.leftMid:.3f} +- {0.5*(e.leftHi - e.leftLo):.2f} s{left1}"
 
 proc expSize(e: ETR; osz, relTo: float): string =
-  if relTo == 1.0: $int(osz.float/e.done)
-  else: &"{osz.float/e.done/relTo.float:.3f}"
+  result = if relTo == 1.0: $int(osz.float/e.done)
+           else: &"{osz.float/e.done/relTo.float:.3f}"
+  if result.startsWith("0."): result = result[1..^1]
 
 func notInt(str: string): bool =
   for ch in str: (if ch notin {'-','0'..'9'}: return true)
