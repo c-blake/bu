@@ -50,14 +50,21 @@ proc mkZHistEntItr*(path: string, trim=false): iterator(): ZHistEnt =
       else: yield he
 
 proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
-         paths: seq[string]) =
+         reps=0, paths: seq[string]) =
   ## Check|Merge, de-duplicate&clean short cmds/trailing \\n Zsh EXTENDEDHISTORY
   ## (format ": {t0%d}:{dur%d};CMD-LINES[\\]"); Eg.: `zeh -tm3 h1 h2 >H`.  Zsh
   ## saves start & duration *@FINISH TIME* => with >1 shells in play, only brief
   ## cmds match the order of timestamps in the file => provide 3 more modes on
   ## to of `--check`: `--endT`, `--sort`, `--begT`.
   if paths.len < 1: Help !! "Need >= 1 path; Full $HELP"
-  if begT:
+  if reps > 0:  # Make large histories from a smaller sample (to measure stuff)
+    var hes = collect(for he in paths[0].zHistEnts: he)
+    if hes.len > 1:
+      let span = hes[^1].tm - hes[0].tm + 1
+      for r in 0..<reps:
+        for hent in paths[0].zHistEnts:
+          var he = hent; he.tm += r*span; outu he,'\n'
+  elif begT:
     for he in paths[0].zHistEnts:
       var he = he; he.tm -= he.dur; outu he,'\n'
   elif endT:
@@ -90,4 +97,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch zeh, help={
   "check": "Only check validity of each of `paths`",
   "sort" : "sort exactly 1 path by startTm,duration",
   "begT" : "add dur to take startTm,dur -> endTm,dur",
-  "endT" : "sub dur to take endTm,dur -> startTm,dur"}
+  "endT" : "sub dur to take endTm,dur -> startTm,dur",
+  "reps" : "make `reps` copies of $1 w/increasing tms"}
