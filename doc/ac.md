@@ -67,6 +67,7 @@ which enables e.g.: ac mkdir bar; ac mv foo*.mp4 bar.mp4.
   -s=, --subs=   strings {}        additional from-to substitution rules
   -v, --verbose  bool    false     explain what is being done
   -n, --dry-run  bool    false     explain what would be done
+  -k, --keep     bool    false     keep going after failed commands
   -w=, --wd=     string  ""        overrides true PWD (e.g. if a symlnk)
 ```
 

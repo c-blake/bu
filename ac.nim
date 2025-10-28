@@ -20,7 +20,7 @@ proc mkNoD(cmd: seq[string], rules: seq[ApeRule]): seq[bool] =
       for i in 1 ..< cmd.len: result[i] = not cmd[i].dirExists
       break
 
-proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
+proc apedCmds*(verbose=false, dryRun=false, keep=false, rules: seq[ApeRule],
                args: seq[string]): int = ## `bu/doc/ac.md` has usage details.
   var opts = {poUsePath, poParentStreams}
   var cmd  = args               # Aped command being built
@@ -42,9 +42,9 @@ proc apedCmds*(verbose=false, dryRun=false, rules: seq[ApeRule],
     of acSep: discard           # Maybe many subst sets giving mult. aped cmds
     if i == rules.len - 1 or kind == acSep: # Order matters; `acSep` separates
       if dryRun or verbose: stderr.write cmd.join(" "), "\n"  # shellQuote?
-      if not dryRun and
-         (let x=startProcess(cmd[0], wd, cmd[1..^1],eP,opts).waitForExit;x!=0):
-        return x                # Stop at the first failed command
+      if not dryRun:
+        let ex = startProcess(cmd[0], wd, cmd[1..^1], eP, opts).waitForExit
+        if not keep and ex != 0: return ex # Stop at the first failed command
       if i != rules.len - 1:    # Revert to initial states
         cmd = args; eP = envs; wd = pwd
 
@@ -84,7 +84,7 @@ when isMainModule:
   import cligen, cligen/sysUt; include cligen/mergeCfgEnv
 
   proc ac(config=".ac.cfg", subs: seq[string] = @[], verbose=false,
-          dryRun=false, wd="", cmdArgs: seq[string]): int =
+          dryRun=false, keep=false, wd="", cmdArgs: seq[string]): int =
     ## Aped `cmdArgs` runs both model command & however many apes.  Aping rules
     ## come from *1st* `config` file going up from PWD | `wd` then CL.  `subs`
     ## are (*CMD*, *KIND*, *FROM*, *TO*) with *FROM* a regex & *$1*.. in *TO*
@@ -112,11 +112,12 @@ when isMainModule:
     for i in countup(0, subs.len-1, 4): # Add CL subs on top of above cf subs
       if subs[i+0] == cmdArgs[0]:       # Filter relevant rules for this launch
         rules.add (parseEnum[AcKind](subs[i+1]), subs[i+2].re, subs[i+3])
-    apedCmds verbose, dryRun, rules, cmdArgs
+    apedCmds verbose, dryRun, keep, rules, cmdArgs
 
   dispatch ac, short={"dryRun": 'n'}, help={"cmdArgs": "CMD WITH ARGS",
     "config" : "*basename* of ini file going up to root",
     "subs"   : "additional from-to substitution rules",
     "verbose": "explain what is being done",
     "dry-run": "explain what would be done",
+    "keep"   : "keep going after failed commands",
     "wd"     : "overrides true PWD (e.g. if a symlnk)"}
