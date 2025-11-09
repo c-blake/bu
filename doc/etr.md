@@ -47,7 +47,6 @@ Options:
   -l=, --locus=   int     15       window for moving rate location (for ETC)
   -s=, --scale=   Slice   0.2..0.8 lo,hi probabilities for rate/etc range
   -u, --update    bool    false    re-query total each sample in measure mode
-  -w=, --write=   string  ""       log "raw" data samples to this file
   -c=, --colors=  strings {}       color aliases; Syntax: name = ATTR1 ATTR2..
   --color=        strings {}       text attrs for syntax elts; Like lc/etc.
 ```

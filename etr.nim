@@ -74,7 +74,7 @@ proc wrStatus(e: ETR; outp,pfs,relTo: string; tot,estMin,RatMin: float): int =
 
 proc etr*(pid=0,did="",total="",age="",ageScl=1.0,measure=0.0, outp="",relTo="",
  RatMin=1e17, estMin=0.0, kill="NIL", locus=15, scale=0.2..0.8, update=false,
- write="", colors: seq[string] = @[], color: seq[string] = @[]): int =
+ colors: seq[string] = @[], color: seq[string] = @[]): int =
   ## Estimate Time Remaining (ETR) using A) work already done given by `did`,
   ## B) expected total work as given by the output of `total`, and C) the age of
   ## processing (age of `pid` or that produced by the `age` command).  Commands
@@ -117,8 +117,6 @@ proc etr*(pid=0,did="",total="",age="",ageScl=1.0,measure=0.0, outp="",relTo="",
       let ms = int(measure*1e3) # Nim sleep takes millisec
       var rate = initRDist(abs(locus))
       rate.add r0
-      let w = if write.len>0: (try: open(write, fmAppend, 0) except:nil)else:nil
-      if w != nil: w.write &"age dt did0 did1 tot\n"
       while pfs.dirExists:      # Re-query time to trust sleep dt less..
         sleep ms                #..in case we get SIGSTOP'd or etc.
         let did1 = qD; let t = now()
@@ -126,7 +124,6 @@ proc etr*(pid=0,did="",total="",age="",ageScl=1.0,measure=0.0, outp="",relTo="",
         let da = (t - t00).inNanoseconds.float*1e-9
         let dt = (t - t0).inNanoseconds.float*1e-9
         rate.add (did1 - did0)/dt
-        if w != nil: w.write &"{age+da:.6f} {dt:.6f} {did0} {did1} {tot}\n"
         did0 = did1; t0 = t
         let (a, b) = (rate.quantile scale.a, rate.quantile scale.b)
         let m = if locus < 0: 0.5*(a + b) else: rate.quantile 0.5
@@ -149,7 +146,6 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch etr,
         "locus"  : "window for moving rate location (for ETC)",
         "scale"  : "lo,hi probabilities for rate/etc range",
         "update" : "re-query total each sample in measure mode",
-        "write"  : "log \"raw\" data samples to this file",
         "colors" : "color aliases; Syntax: name = ATTR1 ATTR2..",
         "color"  : "text attrs for syntax elts; Like lc/etc."},
   short={"ageScl": 'A'}
