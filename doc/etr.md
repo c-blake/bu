@@ -90,6 +90,7 @@ color = "etc0    bold italic"
 color = "etc1   -bold -italic"
 color = "ratio0  underline"
 color = "ratio1 -underline"
+color = "plusMinus ±"       # | +/- | +-
 ```
 
 # Naming Note
