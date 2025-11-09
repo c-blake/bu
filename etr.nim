@@ -8,11 +8,12 @@ proc initRDist(w: int): RDist = initRDist(win=w)
 type ETR* = tuple[done,total, rateMid,leftLo,leftMid,leftHi: float;etc:DateTime]
 
 var done0, done1, rate0, rate1, left0, left1, etc0, etc1, ratio0, ratio1 = ""
+var pm = "+-"
 proc parseColor(color: seq[string]) =
   for spec in color:
     let cols = spec.strip.splitWhitespace(1)
-    if cols.len < 2: Value !! "bad color line: \"" & spec & "\""
-    let v = cols[1].textAttr
+    if cols.len < 2: Value !! "Bad color line: \"" & spec & "\""
+    let v = try: cols[1].textAttr except: cols[1]
     case cols[0].optionNormalize # key
     of "done0" : done0  = v
     of "done1" : done1  = v
@@ -24,6 +25,7 @@ proc parseColor(color: seq[string]) =
     of "left1" : left1  = v
     of "ratio0": ratio0 = v
     of "ratio1": ratio1 = v
+    of "plusminus": pm  = v
     else: Value !! "bad color line: \"" & spec & "\""
 
 proc etc*(t0: DateTime; total, did, rateLo, rateMid, rateHi: float): ETR =
@@ -40,7 +42,7 @@ proc `$`*(e: ETR): string =
   let et = e.etc.format("MMdd'T'HH:mm:ss'.'fff")
   &"{done0}{1e2*e.done:07.4f} %{done1} {rate0}{1e4*e.rateMid:.2f} bp/s " &
   &"{e.rateMid*e.total:.4g} /s{rate1} {etc0}{et}{etc1} " &
-  &"{left0}{e.leftMid:.3f} +- {0.5*(e.leftHi - e.leftLo):.2f} s{left1}"
+  &"{left0}{e.leftMid:.3f} {pm} {0.5*(e.leftHi - e.leftLo):.2f} s{left1}"
 
 proc expSize(e: ETR; osz, relTo: float): string =
   result = if relTo == 1.0: $int(osz.float/e.done)
