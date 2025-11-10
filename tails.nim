@@ -40,15 +40,19 @@ proc uriteHdr*(f: File, h: string) =
   if h.len > 0: discard tails.uriteBuffer(f, h[0].addr, h.len)
 
 template rest(r) =    # Input buffer to drop on write error
-  var buf = newString(65536)
-  while true:         # Nixing stdio use can elim work; Also sendfile/splice?
-    let n = f.ureadBuffer(buf[0].addr, buf.len)
-    if n > 0 and stdout.uriteBuffer(buf[0].addr, n) < n:
-      r.drop; return -result            # Write Error => flip accum sign
-    if n < buf.len: break
+  if nPut > 0: (var r: Rec; while r.get: put r.cs, r) # Either keep parsing..
+  else:                                               #..or fast big buffer rest
+    var buf = newString(65536)
+    while true:         # Nixing stdio use can elim work; Also sendfile/splice?
+      let n = f.ureadBuffer(buf[0].addr, buf.len)
+      if n > 0 and stdout.uriteBuffer(buf[0].addr, n) < n:
+        r.drop; return -result            # Write Error => flip accum sign
+      if n < buf.len: break
 
-proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
+proc rowFilter(f:File; head,tail,oM:int; ird,eor:char; divr="--\n";sk=true):int=
+  var nPut = oM
   if sk and head == 0 and tail > 0 and eor == ird: #XXX Adapt to head<0 & etc.
+    if nPut > 0: inc nPut
     let mf = mopen(f.getFileHandle)             # Zero size seekable =>
     if mf == nil: return -int(mf.fi.size > 0)   #..no-ops without err.
     try: f.setFilePos mf.mslc.len except: discard # In case of a later `track`
@@ -58,6 +62,7 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
       E = cmemrchr(mf.mslc.mem, ird, n)
       if E.isNil: e = mf.mslc.mem; break
       else: e = E; n = csize_t(e -! mf.mslc.mem)
+      nPut.dec; if nPut == 0: break     # Simulated EOF @put-enough
     if not E.isNil: e = e +! 1          # Ordinary 0..tail loop exit; jump ird
     let m = int(mf.mslc.mem +! mf.mslc.len -! e)
     if stdout.uriteBuffer(e, m) < m: return -result
@@ -75,12 +80,14 @@ proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
       if b[n-1] == ird: b[n-1] = eor
       if stdout.uriteBuffer(b[0].addr, n) < n:
         r.drop; return -result          # Write error; Return true
+      nPut.dec; if nPut==0: return      # Simulated EOF @put-enough
     template divide(r) =
       if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
         r.drop; return -result          # Write error; Return true
     headTail Rec, string, get, put, copy, drop, rest, head, tail, divide
 
-proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): int =
+proc byteFilter(f: File; head,tail,oM: int; divr="--\n"; sk=true): int =
+  var nPut = oM
   when defined(linux) and not defined(android):
     proc fgetc(f: File): cint {.importc: "fgetc_unlocked".}
     proc putchar(c: cint): cint {.importc: "putchar_unlocked".}
@@ -94,6 +101,7 @@ proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): int =
   template drop(r) = discard
   template put(b, r) =  # Buffer to write, Input buffer to drop on write error
     if putchar(b.cint) < 0: return -result # Write error; Return < 0
+    nPut.dec; if nPut==0: return        # Simulated EOF @put-enough
   template divide(r) =  #XXX byteFilter:divide should maybe just use gDelimit
     if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
       r.drop; return -result            # Write error; Return < 0
@@ -127,10 +135,10 @@ proc nToFit(height, nH1, nH, nF: int): int =
   result = budget div nF
   if result*nF > budget: dec result
 
-proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
-           header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
-           eor='\n', sleepInterval=0.25, delimit="", Count=0, plain=false,
-           paths: seq[string]): int =
+proc tails(head=NRow(), tail=NRow(), bytes=false, outMax=0, follow=false,
+           divide="--", header: seq[string] = @[], quiet=false, verbose=false,
+           ird='\n', eor='\n', sleepInterval=0.25, delimit="", Count=0,
+           plain=false, paths: seq[string]): int =
   ## Unify+enhance head/tail to emit/cut head/tail/both.  "/[n]" for `head/tail`
   ## infers numRows so `n`-file output fits in ${LC_LINES:-${LINES:-ttyHeight}}
   ## terminal rows.  "/" alone infers that `n`=numInputs.  `header`, `delimit` &
@@ -172,8 +180,8 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
       else: stdout.uriteHdr hdrs[i mod hdrs.len]%path
     let f = if path.len > 0: open(path) else: stdin
     let seekable = (try: (setFilePos(f, 0); true) except: false)
-    if bytes: cnt = f.byteFilter(head.n, tail.n, divider, seekable)
-    else: cnt = f.rowFilter(head.n, tail.n, ird,eor, divider, seekable)
+    if bytes: cnt = f.byteFilter(head.n, tail.n, outMax, divider, seekable)
+    else: cnt = f.rowFilter(head.n, tail.n, outMax, ird,eor, divider, seekable)
     if Count != 0: write(Count.cint, $abs(cnt) & "\n")
     if cnt < 0: return 1
     if follow: fs.add (path, f, seekable)
@@ -240,6 +248,7 @@ when isMainModule:
     "tail"   : ">0 emit | <0 cut this many @end;\n" &
                "Leading \"+\" => `head` = 1 - THIS.",
     "bytes"  : "`head` & `tail` are bytes not rows",
+    "outMax" : "output max/atMost rows|bytes (>0)",
     "follow" : "output added data as files get it",
     "divide" : "separator, for non-contiguous case",
     "header" : "header formats (used cyclically);\n" &

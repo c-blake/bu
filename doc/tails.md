@@ -50,6 +50,7 @@ like %[WHITE on_red].
   -h=, --head=           int|/[n] 0     >0 emit | <0 cut this many @start
   -t=, --tail=           int|/[n] 0     >0 emit | <0 cut this many @end;
                                         Leading "+" => head = 1 - THIS.
+  -o=, --outMax=         int      0     output max/atMost rows|bytes (>0)
   -f, --follow           bool     false output added data as files get it
   -c, --bytes            bool     false head & tail are bytes not rows
   -d=, --divide=         string   "--"  separator, for non-contiguous case
