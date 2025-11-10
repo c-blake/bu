@@ -131,10 +131,10 @@ proc tails(head=NRow(), tail=NRow(), follow=false, bytes=false, divide="--",
            header: seq[string] = @[], quiet=false, verbose=false, ird='\n',
            eor='\n', sleepInterval=0.25, delimit="", Count=0, plain=false,
            paths: seq[string]): int =
-  ## Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]" for
-  ## `head|tail` infers a num.rows s.t. output for n files fits in
-  ## ${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
-  ## `header`, `delimit` & `divide` all expand `lc` attrs like %[WHITE on_red].
+  ## Unify+enhance head/tail to emit/cut head/tail/both.  "/[n]" for `head/tail`
+  ## infers numRows so `n`-file output fits in ${LC_LINES:-${LINES:-ttyHeight}}
+  ## terminal rows.  "/" alone infers that `n`=numInputs.  `header`, `delimit` &
+  ## `divide` all expand `lc` attrs like %[WHITE on_red].
   template hl(s: string): untyped = s.specifierHighlight({},plain,keepPct=false)
   let paths = if paths.len > 0: paths else: @[""]
   let divider = divide.hl & $eor; gDelimit = delimit.hl; gEOR = eor

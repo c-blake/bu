@@ -41,10 +41,10 @@ Usage
 ```
     tails [optional-params] [paths: string...; '' => stdin]
 
-Unify & enhance normal head/tail to emit|cut head|tail|both.  "/[n]"
-for head|tail infers a num.rows s.t. output for n files fits in
-${LC_LINES:-${LINES:-ttyHeight}} rows. "/" alone infers that n=num.inputs.
-header, delimit & divide all expand lc attrs like %[WHITE on_red].
+Unify+enhance head/tail to emit/cut head/tail/both.  "/[n]" for head/tail infers
+numRows so n-file output fits in ${LC_LINES:-${LINES:-ttyHeight}} terminal rows.
+"/" alone infers that n=numInputs.  header, delimit & divide all expand lc attrs
+like %[WHITE on_red].
 
   -?, --help                            print this cligen-erated help
   -h=, --head=           int|/[n] 0     >0 emit | <0 cut this many @start
