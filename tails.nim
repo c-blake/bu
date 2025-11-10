@@ -89,7 +89,7 @@ proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): int =
     proc putchar(c: cint): cint {.importc.}
   type Rec = tuple[cs: char]
   template get(r): untyped =
-    let i = f.fgetc; r.cs = char(i); result += (i >= 0).int; i >= 0
+    let i = f.fgetc; (if i >= 0: r.cs = i.char); result += int(i >= 0); i >= 0
   template copy(d, s) = d = s.cs
   template drop(r) = discard
   template put(b, r) =  # Buffer to write, Input buffer to drop on write error
