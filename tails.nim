@@ -48,7 +48,7 @@ template rest(r) =    # Input buffer to drop on write error
     if n < buf.len: break
 
 proc rowFilter(f:File; head,tail:int; ird,eor:char; divr="--\n"; sk=true): int =
-  if sk and head == 0 and tail > 0 and eor == ird:
+  if sk and head == 0 and tail > 0 and eor == ird: #XXX Adapt to head<0 & etc.
     let mf = mopen(f.getFileHandle)             # Zero size seekable =>
     if mf == nil: return -int(mf.fi.size > 0)   #..no-ops without err.
     try: f.setFilePos mf.mslc.len except: discard # In case of a later `track`
@@ -94,7 +94,7 @@ proc byteFilter(f: File; head,tail: int; divr="--\n"; sk=true): int =
   template drop(r) = discard
   template put(b, r) =  # Buffer to write, Input buffer to drop on write error
     if putchar(b.cint) < 0: return -result # Write error; Return < 0
-  template divide(r) =  # A bit questionable if both-mode+bytes should divide.
+  template divide(r) =  #XXX byteFilter:divide should maybe just use gDelimit
     if divr.len > 0 and stdout.uriteBuffer(divr[0].addr, divr.len) < divr.len:
       r.drop; return -result            # Write error; Return < 0
   headTail Rec, char, get, put, copy, drop, rest, head, tail, divide
