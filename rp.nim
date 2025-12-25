@@ -95,7 +95,7 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch rp, help={
   "args"   : "\"\": -d:danger; '+' prefix appends",
   "cache"  : "\"\": --nimcache:/tmp/rp (--incr:on?)",
   "lgLevel": "Nim compile verbosity level",
-  "outp"   : "output executable; .nim NOT REMOVED",
+  "outp"   : "output path; .nim added to the gen src",
   "Warn"   : "\"\": --warning[CannotOpenFile]=off"}, doc = """
 Gen+Run *prelude*,*fields*,*begin*,*where*,*stmts*,*epilog* row processor
 against *input*.  Defined within *where* & every *stmt* are:
