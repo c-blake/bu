@@ -18,7 +18,7 @@ The `rp --help` usage message (slightly reformatted) covers the basics.
 Usage
 -----
 ```
-  rp [optional-params] Nim stmts to run (guarded by `where`); none => echo row
+  rp [optional-params] Nim stmts to run (guarded by --where); none => echo row
 
 Gen & Run prelude,fields,begin,where,stmts,epilog row processor against input.
 
@@ -32,7 +32,7 @@ you know AWK & Nim, you can learn rp FAST.
 
 Examples (most need data):
 
-  seq 0 1000000 | rp -w'row.len<2'            # Print short rows
+  seq 0 1000000|rp -w'row.len<2'              # Print short rows
   rp 'echo s[1]," ",s[0]'                     # Swap field order
   rp -vt=0 t+=nf -e'echo t'                   # Print total field count
   rp -vt=0 -w'0.i>0' t+=0.i -e'echo t'        # Total >0 field0 ints
@@ -45,24 +45,24 @@ Add niceties (eg. import lenientops) to prelude in ~/.config/rp.
 
 Options:
   -p=, --prelude= strings {}           Nim code for prelude/imports section
+  -v=, --vars=    strings {}           begin starts w/"var "+these shorthand
   -b=, --begin=   strings {}           Nim code for begin/pre-loop section
-  -v=, --var=     strings {}           begin starts w/"var "+these shorthand
   -m=, --match=   string  ""           row must match this regex
   -w=, --where=   string  "true"       Nim code for row inclusion
   -e=, --epilog=  strings {}           Nim code for epilog/end loop section
+  -d=, --delim=   string  "white"      inp delim chars; Any repeats => fold
   -f=, --fields=  string  ""           delim-sep field names (match row0)
+  -M=, --MaxCols= int     0            max split optimization; 0 => unbounded
   -g=, --genF=    string  "$1"         make field names from this fmt; eg c$1
-  -n=, --nim=     string  "nim"        path to a nim compiler (>=v1.4)
+  -i=, --input=   string  ""           path to mmap|read; ""=stdin
+  -u, --uncheck   bool    false        do not check&skip header row vs fields
+  -s, --src       bool    false        show generated Nim source on stderr
+  -n=, --nim=     string  ""           "" => nim {if run:r else:c} {args}
   -r, --run       bool    true         Run at once using nim r ..
   -a=, --args=    string  ""           "": -d:danger; '+' prefix appends
   -c=, --cache=   string  ""           "": --nimcache:/tmp/rp (--incr:on?)
   -l=, --lgLevel= int     0            Nim compile verbosity level
-  -o=, --outp=    string  "/tmp/rpXXX" output executable; .nim NOT REMOVED
-  -s, --src       bool    false        show generated Nim source on stderr
-  -i=, --input=   string  ""           path to mmap|read; ""=stdin
-  -d=, --delim=   string  "white"      inp delim chars; Any repeats => fold
-  -u, --uncheck   bool    false        do not check&skip header row vs fields
-  -M=, --MaxCols= int     0            max split optimization; 0 => unbounded
+  -o=, --outp=    string  "/tmp/rpXXX" output path; .nim added to the gen src
   -W=, --Warn=    string  ""           "": --warning[CannotOpenFile]=off
 ```
 
