@@ -43,6 +43,9 @@ There is no need for `STRIP_SUB` to be ssh targets.  Any regular pool of work
 labels will do.  For example, you could do a 2-way or 4-way tile of images with
 some dispatcher savvy about screen-halves/quadrants/etc.
 
+The default logging strings specified by 'D' (or 'd', actually) for -b/-a/-i are
+just for those not wanting to decide on their log formats for a given use case.
+
 Related Work
 ------------
 
