@@ -47,24 +47,24 @@ do better than 0-tech!
 
 ---
 
-A low tech way to estimate reproducibly Eq.1's `t0`, in spite of hostile noise,
-is a simple sample minimum.  This **filters out all but noise(minimum)** - far
-better behaved than average noise.[^5]  However, this gives no uncertainty to
-its estimate for principled comparisons among alternatives.  To get a population
-minimum without error, one needs an **infinite** number of trials.  We instead
-want to economize on repetitions.
+A **low tech** way to estimate reproducibly Eq.1's `t0`, in spite of hostile
+noise, is a simple **sample minimum**.  This **filters out all but
+noise(minimum)** - far better behaved than average noise.[^5]  However, this
+gives no uncertainty to its estimate for principled comparisons among
+alternatives.  To get a population minimum without error, one needs an
+**infinite** number of trials.  We instead want to economize on repetitions.
 
-A low art way to estimate the error on the sample min `t0` estimate is to find
-the mean,sdev for the best several times out of many runs to approximate the
-error on the sample min.[^5] Differences between two smallest times or various
-statistical formulae or nesting with sample stats on min(several) are surely
-possible, but these all share a problem: the population-min is guaranteed to be
-less than any sample min.
+A low art way to estimate the **error on the sample min** `t0` estimate is to
+find the mean,sdev for the best several times out of many runs to approximate
+the error on the sample min.[^5] Differences between two smallest times or
+various statistical formulae or nesting with sample stats on min(several) are
+surely possible, but these all share a problem: the population-min is guaranteed
+to be less than any sample min.
 
 `tim` used to do an Einmahl moments estimator or an sdev(low quantiles) way but
 now is more sophisticated & reliable using the Fraga Alves-Neves estimator[^6]
-for the true endpoint to extrapolate beyond a sample min and samples of smaller
-windows to estimate its uncertainty (to side-step tail index estimation).
+for the **true endpoint to extrapolate** beyond a sample min and samples of
+smaller windows to estimate its uncertainty (to side-step tail index estimates).
 
 Usage
 =====
