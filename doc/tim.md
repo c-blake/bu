@@ -236,7 +236,11 @@ distribution of the sample minimum (noise) itself is the N-th power of the base
 hostile distribution.  This makes, e.g., median(min(nTimes)) the
 [0.5^n](https://en.wikipedia.org/wiki/Extreme_value_theory#Univariate_theory)
 quantile of the underlying times distribution.  For n=20 this is ~1/million.
-That sounds small, but is quite variable on most systems!
+That sounds small, but is quite variable on most systems!  The median, using the
+most data on either side, probably has the lowest estimation error in some
+theoretical senses, but, as the main text mentions, any central tendency measure
+is contaminated by estimates of the hostile noise (itself not well summarized by
+any one number).  Even Harrell-Davis median smoothing does not address that.
 
 [^6]: An Einmahl reference is DOI 10.1111/j.1467-9574.2010.00470.x, old methods
 in version control here, & FA-N estimator is in https://arxiv.org/abs/1412.3972
