@@ -8,9 +8,9 @@ interacting with physical devices, all you can really measure is:
 (1) `observed_time = tDesired + tBackground(noise)`
 
 Even with no time-sharing, peripheral interactions[^2] degrade determinism
-motivating a random model for `tBackground` and the name "noise".  **`t0` is
-often what you want** because background activity and precise synchronization of
-load-based CPU dynamic frequency scale-up simply does not reproduce to other
+motivating a random model for `tBackground` and the name "noise".  **`tDesired`
+is often what you want** because background activity and precise synchronization
+of load-based CPU dynamic frequency scale-up simply does not reproduce to other
 milliseconds / minutes / days / environments.  Understanding begins with
 reproduction.[^3]
 
@@ -37,25 +37,25 @@ deltas can be composed of improvement with many incremental small improvements
 which then still need a solution.  Truly cold-cache times often have far bigger
 deltas relative to hot than any proposed range.
 
-The scale of `noise` compared to `t0` can vary considerably.  A popular approach
-is to avoid sub-second times entirely, making benchmarks **many seconds long**
-to suppress `noise`.  Sometimes people "scale up" naively[^4] to get hard to
-interpret &| misleading results.  Since it is also rarely clear how much scaling
-up is "enough" anyway or what the residual noise scale is, this can **compound**
-waiting time for results via several samples of longer benchmarks.  Maybe we can
-do better than 0-tech!
+The scale of `noise` compared to `tDesired` can vary considerably.  A popular
+approach is to avoid sub-second times entirely, making benchmarks **many seconds
+long** to suppress `noise`.  Sometimes people "scale up" naively[^4] to get hard
+to interpret &| misleading results.  Since it is also rarely clear how much
+scaling up is "enough" anyway or what the residual noise scale is, this can
+**compound** waiting time for results via several samples of longer benchmarks.
+Maybe we can do better than 0-tech!
 
 ---
 
-A **low tech** way to estimate reproducibly Eq.1's `t0`, in spite of hostile
-noise, is a simple **sample minimum**.  This **filters out all but
+A **low tech** way to estimate reproducibly Eq.1's `tDesired`, in spite of
+hostile noise, is a simple **sample minimum**.  This **filters out all but
 noise(minimum)** - far better behaved than average noise.[^5]  However, this
 gives no uncertainty to its estimate for principled comparisons among
 alternatives.  To get a population minimum without error, one needs an
 **infinite** number of trials.  We instead want to economize on repetitions.
 
-A low art way to estimate the **error on the sample min** `t0` estimate is to
-find the mean,sdev for the best several times out of many runs to approximate
+A low art way to estimate the **error on the sample min** `tDesired` estimate is
+to find the mean,sdev for the best several times out of many runs to approximate
 the error on the sample min.[^5] Differences between two smallest times or
 various statistical formulae or nesting with sample stats on min(several) are
 surely possible, but these all share a problem: the population-min is guaranteed
@@ -218,11 +218,11 @@ all (& not flattening time series structure!) is a more informative comparison.
 Since humans are bad at reading such reports, views on the debate mostly come
 down to disagreeing estimates of P(misinterpretation | strong subjective
 experience components).  In any event, if one *does* care about whole distros,
-not merely `t0`, science mandates checking ***whole distros reproduce*** by K-S
-tests etc. (unlikely but not impossible for most noise in my experience) and has
-order-independence (via permutation tests).  This may be Future Work for `tim`,
-but usually means *big* samples (slow) as well as environmental control (hard to
-make portable across deployments).
+not merely `tDesired`, science mandates checking ***whole distros reproduce***
+by K-S tests etc. (unlikely but not impossible for most noise in my experience)
+and has order-independence (via permutation tests).  This may be Future Work for
+`tim`, but usually means *big* samples (slow) as well as environmental control
+(hard to make portable across deployments).
 
 [^4]: For example, [Ben Hoyt's King James Bible ***concatenated ten
 times***](https://benhoyt.com/writings/count-words/) means branch predictors and
