@@ -176,7 +176,7 @@ but also be more "preparatory work" whenever you want to benchmark something.
 So, we can answer the question "Does it work?" with "kinda!".  10σ devs with no
 underlying difference are far too common, yet errors are still small in absolute
 terms letting you separate fairly subtle effects with only a few dozen runs. So,
-it seems useful if take reported uncertainties with a "cube of salt" a bit
+it seems useful if reported uncertainties are taken with a "cube of salt" a bit
 bigger than the one common in particle physics.[^8]
 
 Other issues
@@ -228,7 +228,7 @@ make portable across deployments).
 times***](https://benhoyt.com/writings/count-words/) means branch predictors and
 likely memory prefetching begins to work perfectly after ~10% of his benchmark.
 Beyond this, hash tables fit better in L1/L2 CPU caches & become non-reflective
-of natural language vocabulary scaling.  How much this degrades his prog.lang
+of natural language vocabulary scaling.  How much this degrades his prog.lang.
 comparisons is hard to say, but it's better to avoid it than guess at it.
 
 [^5]: For *independent* samples, which is of course *NOT* really true here, the
@@ -255,11 +255,13 @@ dispatch overhead or want 3.21x faster "ratios".
 
 [^8]: Particle physics has "5 sigma" rules of thumb to declare results.  5 seems
 too small for this hostile noise context.  10..15 is more about right, but again
-leptokurtosis makes sigma alone inadequate.
+leptokurtosis makes sigma alone inadequate.  I am not against conf.ival reports,
+but since so few developers already understand +- / hypothesis testing, this
+would probably need to be a (`~/.config/tim`-tunable) option not on by default.
 
 [^9]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
 https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
 this a la [fitl/gof](https://github.com/c-blake/fitl/blob/main/fitl/gof.nim),
 but perhaps trimmed or strongly min-tail-weighted.  Tests like these do require
 independent samples which may also be tested, though the results of such tests
-are likely to be "Nope, not independent - by design".
+are likely to be "Nope, not independent - by system design, actually".
