@@ -61,10 +61,18 @@ various statistical formulae or nesting with sample stats on min(several) are
 surely possible, but these all share a problem: the population-min is guaranteed
 to be less than any sample min.
 
-`tim` used to do an Einmahl moments estimator or an sdev(low quantiles) way but
+`tim` used to do an Einmahl moments estimator and then sdev(low quantiles) but
 now is more sophisticated & reliable using the Fraga Alves-Neves estimator[^6]
 for the **true endpoint to extrapolate** beyond a sample min and samples of
-smaller windows to estimate its uncertainty (to side-step tail index estimates).
+smaller windows to estimate its uncertainty (to side-step tail index estimates
+and many statistical assumptions).
+
+Error care helps for AB/perf-regression testing, but sample mins alone can
+(almost) restore perf reasoning to ["1960s/TAOCP era" time
+equations](https://github.com/nim-lang/Nim/issues/23678#issuecomment-2170478921)
+which incidentally are usually more interpretable than "rates" because
+reciprocals distort/break "effect additivity", though the amortized/throughput
+sense of costs should always be highlighted to readers somehow.
 
 Usage
 =====
@@ -263,5 +271,5 @@ would probably need to be a (`~/.config/tim`-tunable) option not on by default.
 https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test) testing to check
 this a la [fitl/gof](https://github.com/c-blake/fitl/blob/main/fitl/gof.nim),
 but perhaps trimmed or strongly min-tail-weighted.  Tests like these do require
-independent samples which may also be tested, though the results of such tests
-are likely to be "Nope, not independent - by system design, actually".
+independence which may also be tested, though the results of such tests are
+likely to be "Nope, not independent - by system design, actually".
