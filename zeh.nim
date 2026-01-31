@@ -74,7 +74,10 @@ proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
     if paths.len != 1: Help !! "Need == 1 path; Full $HELP"
     var hes = collect(for he in paths[0].zHistEnts: he)
     hes.sort
-    for he in hes: outu he,'\n'
+    var last: ZHistEnt
+    for he in hes:
+      if he != last: outu he,'\n'
+      last = he
   elif check:
     for path in paths:
       var eno, tLast = 0
