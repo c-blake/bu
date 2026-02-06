@@ -100,92 +100,81 @@ estimate.  doc/tim.md explains more.
 
 Example / Evaluation
 ====================
-Let's see by running it 3 times & comparing results!  (Here `lb=/usr/local/bin`
+Let's see by running it 2 times & comparing results!  Here `lb=/usr/local/bin`
 is an environment variable to avoid `env -i PATH="$PATH"` & `/n` is a symlink
-to "/dev/null" for brevity):
+to "/dev/null" for brevity; Both command lines need super-user to run and are
+designed to maximize relative accuracy, not maximize speed:
 ```
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(2.0398 +- 0.0091)e-04 s  (AlreadySubtracted)Overhead
-(1.820 +- 0.017)e-04 s    /bin/dash -c exit
-(2.111 +- 0.015)e-04 s    /bin/rc -lic exit
-(7.045 +- 0.049)e-04 s    /bin/bash -c exit
-(1.2383 +- 0.0069)e-03 s  /bin/dash -lic exit
-(1.800 +- 0.016)e-03 s    /bin/ksh -lic exit
-(8.414 +- 0.023)e-03 s    /bin/bash -lic exit 2>/n
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(1.9455 +- 0.0072)e-04 s  (AlreadySubtracted)Overhead
-(2.007 +- 0.011)e-04 s    /bin/dash -c exit
-(2.251 +- 0.013)e-04 s    /bin/rc -lic exit
-(7.121 +- 0.030)e-04 s    /bin/bash -c exit
-(1.2239 +- 0.0059)e-03 s  /bin/dash -lic exit
-(1.849 +- 0.017)e-03 s    /bin/ksh -lic exit
-(8.386 +- 0.014)e-03 s    /bin/bash -lic exit 2>/n
-$ chrt 99 taskset 0x8 env -i CLIGEN=/n $lb/tim -us "/bin/dash -c exit" "/bin/rc -lic exit" "/bin/bash -c exit" "/bin/dash -lic exit" "/bin/ksh -lic exit" "/bin/bash -lic exit 2>/n"
-(2.0226 +- 0.0084)e-04 s  (AlreadySubtracted)Overhead
-(1.976 +- 0.012)e-04 s    /bin/dash -c exit
-(2.135 +- 0.011)e-04 s    /bin/rc -lic exit
-(7.133 +- 0.044)e-04 s    /bin/bash -c exit
-(1.2155 +- 0.0070)e-03 s  /bin/dash -lic exit
-(1.7999 +- 0.0085)e-03 s  /bin/ksh -lic exit
-(8.434 +- 0.038)e-03 s    /bin/bash -lic e
+$ cd /sys/devices/system/cpu/intel_pstate; cat min_perf_pct > max_perf_pct
+$ chrt 99 taskset -c 3 env -i CLIGEN=/n $lb/tim -w1 -k2 -n9 -m9 -o9 -uμ "/bin/dash -c exit" "/bin/bash -c exit" "/bin/dash -c exit" "/bin/bash -c exit"
+1254.8 +- 6.2 μ (AlreadySubtracted)Overhead
+1062 +- 14 μ    /bin/dash -c exit
+2050 +- 12 μ    /bin/bash -c exit
+1054 +- 15 μ    /bin/dash -c exit
+2034 +- 13 μ    /bin/bash -c exit
+$ !!
+1259.3 +- 6.6 μ (AlreadySubtracted)Overhead
+1061 +- 15 μ    /bin/dash -c exit
+2023 +- 14 μ    /bin/bash -c exit
+1055 +- 16 μ    /bin/dash -c exit
+2042 +- 12 μ    /bin/bash -c exit
 ```
 
-The overhead time itself has (2.0398 +- 0.0091) - (1.9455 +- 0.0072) = 0.094 +-
-0.012[^7] or 94/12 =~ 7.8σ variation which is kind of big.[^8]  Actual timings
-of programs reproduce reliably with "similar" error scale from trial to trial.
-This can be made easier to more or less just read-off reproduction by just
-sorting and adding some blanks:
+The overhead time itself has (1259.3 ± 6.6) - (1254.8 ± 6.2) = 4.5 ± 9.1[^7] or
+4.5/9.1 ~ 0.5σ.  Actual timings of programs reproduce quite reliably with
+"similar" error scale from trial to trial.  This can be made easier to more or
+less just read-off reproduction by grouping and adding some blanks:
 ```
-(1.9455 +- 0.0072)e-04 s  (AlreadySubtracted)Overhead
-(2.0226 +- 0.0084)e-04 s  (AlreadySubtracted)Overhead
-(2.0398 +- 0.0091)e-04 s  (AlreadySubtracted)Overhead
+1254.8 +- 6.2 μ (AlreadySubtracted)Overhead
+1259.3 +- 6.6 μ (AlreadySubtracted)Overhead
 
-(1.820 +- 0.017)e-04 s    /bin/dash -c exit
-(1.976 +- 0.012)e-04 s    /bin/dash -c exit
-(2.007 +- 0.011)e-04 s    /bin/dash -c exit
+1062 +- 14 μ    /bin/dash -c exit
+1061 +- 15 μ    /bin/dash -c exit
 
-(2.111 +- 0.015)e-04 s    /bin/rc -lic exit
-(2.135 +- 0.011)e-04 s    /bin/rc -lic exit
-(2.251 +- 0.013)e-04 s    /bin/rc -lic exit
+2050 +- 12 μ    /bin/bash -c exit
+2023 +- 14 μ    /bin/bash -c exit
 
-(7.045 +- 0.049)e-04 s    /bin/bash -c exit
-(7.121 +- 0.030)e-04 s    /bin/bash -c exit
-(7.133 +- 0.044)e-04 s    /bin/bash -c exit
+1054 +- 15 μ    /bin/dash -c exit
+1055 +- 16 μ    /bin/dash -c exit
 
-(1.2155 +- 0.0070)e-03 s  /bin/dash -lic exit
-(1.2239 +- 0.0059)e-03 s  /bin/dash -lic exit
-(1.2383 +- 0.0069)e-03 s  /bin/dash -lic exit
-
-(1.7999 +- 0.0085)e-03 s  /bin/ksh -lic exit
-(1.800 +- 0.016)e-03 s    /bin/ksh -lic exit
-(1.849 +- 0.017)e-03 s    /bin/ksh -lic exit
-
-(8.386 +- 0.014)e-03 s    /bin/bash -lic exit 2>/n
-(8.414 +- 0.023)e-03 s    /bin/bash -lic exit 2>/n
-(8.434 +- 0.038)e-03 s    /bin/bash -lic exit 2>/n
+2034 +- 13 μ    /bin/bash -c exit
+2042 +- 12 μ    /bin/bash -c exit
 ```
-A statically linked Plan 9 rc shell, `/bin/rc -lic exit`, for example, has time
-measurement errors below 2 microseconds and deltas of 2.4±1.9μs = 1.26σ and
-11.6±1.7μs = 6.8σ.  In general, errors are around 1..40μs, 0.1%..0.5%, 0..10σ.
+If anything, current error estimates look big.  They are currently more an upper
+bound - sdev(estimate over all batches) - *unreduced* by count of batches which
+is an attempt to be conservative for more hostile, highly correlated durations
+which are generally more common in the wild.  Even so, the 2 first-bashes, 2050
+± 12 - 2023 ± 14 = 27 ± 18 are 1.5σ apart.  For this experiment errors are 5..15
+μ, 0.5%..1%, 0..1.5σ.  Had we assumed IID and reduced them by sqrt(9) this would
+become 4.5σ which is highly unlikely by chance alone.[^8]
 
-The large sigma distances suggest errors are a bit underestimated.  More careful
-study showed the situation is mostly very leptokurtotic.. (I saw excess kurtosis
-over 12) meaning wild tail events are much more common than expectations from
-light-tailed noise.  You can run experiments on your own Unix computers with a
-simple pipeline like this Zsh: `repeat 1000 tim "" | grep -v Overhead | sed -e
-'s/.*(//g' -e 's/).*$//g' -e 's/ ms//' | awk '{print $1/$3}'`.  "Well behaved"
-results would be N(0,1) or "unit normal", but you are unlikely to see that.
+So, large sigma (adjusted assuming IID against design to the contrary) distances
+suggest more careful study.  In general given the bumps/delays/side work kernels
+do, one *expects* wild positive tail events in durations, but it always depends
+on a lot like what else is running and for how long.  You can run experiments on
+your own Unix computers with a simple pipeline like this Zsh:
+```
+(repeat 1000 env -i CLIGEN=/n $lb/tim -w1 -k2 -n9 -m9 -o9 -uμ '') |
+  awk '/[^d]$/{print $1/$3}' | cstats mn sd sk kt
+```
+In a chrt/taskset/max_perf_pct environment, I got `-0.011,0.481,0.1336,-0.1403`
+while "unit normal" aka `N(0,1)` results would be `0,1,0,0`.  So, the testing
+environment on bare metal has no worrisome kurtosis for us (excess kurt is even
+negative!).  Such care is uncommon in the wild.  If repeat the experiment with
+CPU DVS scaling turned back on and no chrt/taskset, I instead get much smaller
+times, but I *also* get errors of order 10% and a kurtosis of a whopping 7.3.
 
-Leptokurtosis itself means one *cannot use sigmas alone* for comparison.  This
-wild distribution itself is also likely irreproducible over time, across test
-machines, OS settings, etc.  Running a set of tests with fixed CPU frequency and
-minimal background activity would likely make noise distributions less hostile,
-but also be more "preparatory work" whenever you want to benchmark something.
+Any leptokurtosis means one *cannot use sigmas alone* for comparison since the
+distribution is not characterized by 1st & 2nd moment alone.  Wild distributions
+themselves are also likely irreproducible over time, across test machines, OS
+settings, etc.  Even with much fixed getting a small "error on the distribution
+itself" takes a great many samples beyond the patience of most OS researchers.
 
-So, we can answer the question "Does it work?" with "kinda!".  10σ devs with no
+So, we can answer the question "Does it work?" with "kinda - in well controlled
+circumstances!".  In less well controlled circumstances, 10σ devs without an
 underlying difference are far too common, yet errors are still small in absolute
-terms letting you separate fairly subtle effects with only a few dozen runs. So,
-it seems useful if reported uncertainties are taken with a "cube of salt" a bit
+terms.   A few dozen to 100 runs let you separate fairly subtle effects.  So, it
+seems useful if reported uncertainties are taken with a "cube of salt" a bit
 bigger than the one common in particle physics.[^8]
 
 Other issues
@@ -263,7 +252,7 @@ calculations more automatic, especially if you are, say, subtracting uncertain
 dispatch overhead or want 3.21x faster "ratios".
 
 [^8]: Particle physics has "5 sigma" rules of thumb to declare results.  5 seems
-too small for this hostile noise context.  10..15 is more about right, but again
+too small for a hostile noise context.  10..15 is more about right, but again
 leptokurtosis makes sigma alone inadequate.  I am not against conf.ival reports,
 but since so few developers already understand +- / hypothesis testing, this
 would probably need to be a (`~/.config/tim`-tunable) option not on by default.
