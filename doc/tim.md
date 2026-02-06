@@ -82,19 +82,20 @@ Usage
 Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
 estimate.  doc/tim.md explains more.
 
-Options:
   -w=, --warmup=    int     1     number of warm-up runs to discard
   -k=, --k=         int     2     number of best tail times to use/2
-  -n=, --n=         int     7     number of inner trials; 1/m total
+  -n=, --n=         int     7     number of inner trials; >=2k; 1/m total
   -m=, --m=         int     3     number of outer trials
   -o=, --ohead=     int     7     number of "" overhead runs;  If > 0, value
                                   (measured same way) is taken from each time
   -s=, --save=      string  ""    also save TIMES<TAB>CMD<NL>s to this file
   -r=, --read=      string  ""    read output of save instead of running
-  -p=, --prepare=   strings {}    cmds to run before corresponding cmd<i>s
-  -c=, --cleanup=   strings {}    cmds to run after corresponding cmd<i>s
-  -u=, --time-unit= string  "ms"  Can be: ns us ms s min
+  -p=, --prepare=   strings {}    cmd to run before each corresponding cmd<i>
+  -c=, --cleanup=   strings {}    cmd to run after each corresponding cmd<i>
+  -u=, --time-unit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
+                                  OR min[s] minute[s] { [s]=an optional 's' }
   -v, --verbose     bool    false log parameters & some activity to stderr
+
 ```
 
 Example / Evaluation

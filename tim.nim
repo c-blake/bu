@@ -7,7 +7,6 @@ proc timePrefix(s: string): string =   # A very "big tent" setup supporting..
   elif s.endsWith("sec"): s[0..^4] elif s.endsWith("s"): s[0..^2] else: s
 let timeScales={"n":1e9, "nano":1e9, "micro":1e6, "u":1e6, "μ":1e6, "m":1e3,
                 "milli":1e3, "":1.0, "min":1.0/60.0, "minute":1.0/60.0}.toTable
-var dtScale = 1.0
 
 var seqNo = 0
 proc sample1(f: File; cmd, prepare, cleanup: string): float =
@@ -18,7 +17,7 @@ proc sample1(f: File; cmd, prepare, cleanup: string): float =
   let t0 = epochTime(); cmd.runOrQuit 3; let dt = epochTime() - t0 # Time
   if cleanup.len > 0: cleanup.runOrQuit 4                          # Maybe Clean
   if not f.isNil: f.write $dt,'\t',cmd,'\n'                        # Maybe log
-  dt*dtScale
+  dt
 
 proc maybeRead(path: string): Table[string, Deque[float]] = # Parse saved data
   if path.len > 0:                      # Use Deque[] since temporal correlation
@@ -37,8 +36,8 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   ## time & error estimate.  `doc/tim.md` explains more.
   let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
   if cmds.len == 0: Help !! "Need cmds; Full $HELP"
-  try: dtScale = timeScales[timeunit.timePrefix]
-  except KeyError: Help !! "Bad time unit; Full $HELP"
+  let dtScale = (try: timeScales[timeunit.timePrefix] except KeyError:
+                   Help !! &"Bad time unit '{timeunit}'; Full $HELP")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
   if verbose:stderr.write &"tim: warmup  {warmup}\ntim: k       {k}\n",
@@ -49,10 +48,11 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
   let f = if save.len > 0: open(save, fmAppend) else: nil
   var r = read.maybeRead
   proc get1(cmd: string, i = -1): float =             # Either use read times..
-    if cmd in r:                                      #..or sample new ones, but
-      try   : r[cmd].popFirst                         #..don't cross mode perCmd
-      except: IO !! "`"&cmd&"`: undersampled in `read`"
-    else: f.sample1 cmd, if i<0:"" else: prepare[i], if i<0:"" else: cleanup[i]
+    result = if cmd in r:                             #..or sample new ones, but
+        try   : r[cmd].popFirst                       #..don't cross mode perCmd
+        except: IO !! "`"&cmd&"`: undersampled in `read`"
+      else: f.sample1 cmd, if i<0:"" else:prepare[i], if i<0:"" else:cleanup[i]
+    result *= dtScale
   var o: MinEst                                       # Auto-Init to 0.0 +- 0.0
   if ohead > 0:                                       # Measure overhead
     for t in 1..warmup: discard "".get1
@@ -74,8 +74,8 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
 (measured same way) is taken from each time""",
   "save"   : "also save TIMES<TAB>CMD<NL>s to this file",
   "read"   : "read output of `save` instead of running",
-  "prepare": "cmds to run before *corresponding* cmd<i>s",
-  "cleanup": "cmds to run after *corresponding* cmd<i>s",
+  "prepare": "cmd to run before each *corresponding* cmd<i>",
+  "cleanup": "cmd to run after each *corresponding* cmd<i>",
   "time-unit": """(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
 OR min[s] minute[s] { [s]=an optional 's' }""",
   "verbose": "log parameters & some activity to stderr"}, short={"timeunit":'u'}
