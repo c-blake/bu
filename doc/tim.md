@@ -148,7 +148,7 @@ which are generally more common in the wild.  Even so, the 2 first-bashes, 2050
 μ, 0.5%..1%, 0..1.5σ.  Had we assumed IID and reduced them by sqrt(9) this would
 become 4.5σ which is highly unlikely by chance alone.[^8]
 
-So, large sigma (adjusted assuming IID against design to the contrary) distances
+Large sigma (adjusted assuming IID against design to the contrary) distances
 suggest more careful study.  In general given the bumps/delays/side work kernels
 do, one *expects* wild positive tail events in durations, but it always depends
 on a lot like what else is running and for how long.  You can run experiments on
@@ -161,8 +161,8 @@ In a chrt/taskset/max_perf_pct environment, I got `-0.011,0.481,0.1336,-0.1403`
 while "unit normal" aka `N(0,1)` results would be `0,1,0,0`.  So, the testing
 environment on bare metal has no worrisome kurtosis for us (excess kurt is even
 negative!).  Such care is uncommon in the wild.  If repeat the experiment with
-CPU DVS scaling turned back on and no chrt/taskset, I instead get much smaller
-times, but I *also* get errors of order 10% and a kurtosis of a whopping 7.3.
+CPU DVS reactivated and no chrt/taskset, I instead get much smaller times, but I
+*also* get errors of order 10% (vs ~0.5%) & whopping +7.3 excess kurtosis.
 
 Any leptokurtosis means one *cannot use sigmas alone* for comparison since the
 distribution is not characterized by 1st & 2nd moment alone.  Wild distributions
