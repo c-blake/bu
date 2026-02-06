@@ -16,6 +16,7 @@ template eMin*(k=2, n=7, m=3, get1): untyped =
     samp.sort
     sest.push samp.eLE(a)
     xall.add samp
+  xall.sort
   (est: xall.eLE(a_ik(2*k)), err: sest.standardDeviation) #/sqrt(m.float)4big m?
 
 when isMainModule:
