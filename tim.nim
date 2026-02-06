@@ -54,10 +54,10 @@ proc tim(warmup=1, k=2, n=7, m=3, ohead=7, save="", read="", cmds: seq[string],
       else: f.sample1 cmd, if i<0:"" else:prepare[i], if i<0:"" else:cleanup[i]
     result *= dtScale
   var o: MinEst                                       # Auto-Init to 0.0 +- 0.0
-  if ohead > 0:                                       # Measure overhead
+  if ohead.abs > 0:                                   # Measure overhead
     for t in 1..warmup: discard "".get1
-    o = eMin(k, max(n,ohead), m, get1="".get1)        # Measure&Report overhead
-    echo fmtUncertain(o.est, o.err)," ",timeunit,"\t(AlreadySubtracted)Overhead"
+    o = eMin(k, max(n,ohead.abs), m, get1="".get1)    # Measure&Report overhead
+    echo fmtUncertain(o.est, o.err)," ",timeunit, if ohead > 0: "\t(AlreadySubtracted)Overhead" else: "\tRawOverhead"
   for i, cmd in cmds:                                 # Measure each cmd
     for t in 1..warmup: discard cmd.get1(i)
     var e = eMin(k, n, m, get1=cmd.get1(i))
