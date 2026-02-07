@@ -118,6 +118,7 @@ $ !!
 2023 +- 14 μ    /bin/bash -c exit
 1055 +- 16 μ    /bin/dash -c exit
 2042 +- 12 μ    /bin/bash -c exit
+$ echo 100 > /sys/devices/system/cpu/intel_pstate/max_perf_pct # restore DVS
 ```
 
 The overhead time itself has (1259.3 ± 6.6) - (1254.8 ± 6.2) = 4.5 ± 9.1[^7] or
