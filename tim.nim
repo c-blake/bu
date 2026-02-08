@@ -65,14 +65,14 @@ proc tim(warmup=1, n=6, k=1, m=4, ohead=6, save="", read="", cmds: seq[string],
   var paths: seq[string]        # Optional deep dives run cmds taking solo paths
   if ohead.abs > 0:                                   # Measure overhead
     for t in 1..warmup: discard "".get1(0)
-    e[0] = eMin(k, max(n,ohead.abs), m, get1="".get1(0)) # Measure&Report ohead
+    e[0] = eMin(max(n,ohead.abs), k, m, get1="".get1(0)) # Measure&Report ohead
     echo fmtUncertain(e[0].est, e[0].err)," ",timeunit,
            if ohead > 0: "\t(AlreadySubtracted)Overhead" else: "\tRawOverhead"
     if tseries.len > 0 or distrib.len > 0: writeFile 0, e[0], paths
   for i, cmd in cmds:                                 # Measure each cmd
     let j = i + 1
     for t in 1..warmup: discard cmd.get1(j)
-    e[j] = eMin(k, n, m, get1=cmd.get1(j))            # Below maybe -= oHd
+    e[j] = eMin(n, k, m, get1=cmd.get1(j))            # Below maybe -= oHd
     if ohead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
     echo fmtUncertain(e[j].est, e[j].err)," ",timeunit,"\t",cmd # Report AsWeGo
     if tseries.len > 0 or distrib.len > 0: writeFile j, e[j], paths

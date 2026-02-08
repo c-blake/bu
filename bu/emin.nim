@@ -2,7 +2,7 @@ import std/[stats, algorithm], bu/eve
 
 type MinEst* = tuple[est, err: float; all: seq[float]] ## Uncertain est of min
 
-template eMin*(k=2, n=7, m=3, get1): untyped =
+template eMin*(n=7, k=2, m=3, get1): untyped =
   ## This template takes as its final parameter any Nim code block giving one
   ## `float` (probably a delta time) and gives a `MinEst` by a best k/n m-times
   ## approach. `doc/tim.md` has details; `bu/tim.nim` is a CLI utility example.
@@ -38,7 +38,7 @@ when isMainModule:
       if x.len != warmup + n*m:
         quit "warmup, n, m mismatch given x[]; Run with --help for more.", 1
       var i = warmup - 1
-      let (est, err, _) = eMin(k, n, m, (inc i; x[i]))
+      let (est, err, _) = eMin(n, k, m, (inc i; x[i]))
       echo fmtUncertain(est, err, e0= -2..5)
     dispatch minE,cmdName="emin", help={"x":"x1 x2..", "warmup":"initial skip",
-      "k":"k for eLE", "n":"n for eLE", "m":"outer reps", "ohead":"ignored"}
+      "n":"n for eLE", "k":"k for eLE", "m":"outer reps", "ohead":"ignored"}
