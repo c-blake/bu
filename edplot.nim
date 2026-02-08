@@ -7,11 +7,12 @@ from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
 from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simultaneous, tube
 type TubeOpt* = enum pw="pointWise", sim="simultaneous", both
-type Fs = seq[float]; type Strs = seq[string]; let dbg = true   #XXX temporary
+type Fs = seq[float]; type Strs = seq[string]; var dbg = false
 var gEarly*, gLate*: string; var gPropAl* = Wilson
 
 proc ingest(p: string): seq[float] =
-  for f in lines(if p.len>0: p.open else: stdin): result.add f.strip.parseFloat
+  for f in lines(if p.len>0: p.open else: stdin):
+    if not f.startsWith('#'): result.add f.strip.parseFloat
 #XXX Test serial indep by spfun/studentT.ccPv,identical by fitl/gof k-sample A-D
   result.sort
 
@@ -136,12 +137,12 @@ plot """
 
 proc edplot*(band=pointWise, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed/", gplot="",
              xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
-             opt=both, propAl=Wilson, early="", late="", inputs: Strs) =
+             opt=both, propAl=Wilson, early="", late="", G=false,inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
   ## re-used for subsequent inputs, otherwise they match pair-wise.
   let inputs = if inputs.len > 0: inputs else: @[""]
-  gEarly = early; gLate = late; gPropAl = propAl
+  gEarly = early; gLate = late; gPropAl = propAl; dbg = G
   template setup(id, arg, default) =    # Ensure ok (wvls|vals|alphas)[i] ..
     var id = arg                        #.. for each inputs[i].
     if id.len == 0: id.add default
