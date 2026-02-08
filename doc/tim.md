@@ -80,11 +80,11 @@ Usage
   tim [optional-params] 'cmd1' 'cmd2' ..
 
 Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
-estimate.  doc/tim.md explains more.
+estimate, maybe running plots.  doc/tim.md explains more.
 
   -w=, --warmup=    int     1     number of warm-up runs to discard
-  -k=, --k=         int     2     number of best tail times to use/2
   -n=, --n=         int     7     number of inner trials; >=2k; 1/m total
+  -k=, --k=         int     2     number of best tail times to use/2
   -m=, --m=         int     3     number of outer trials
   -o=, --ohead=     int     7     number of "" overhead runs;  If > 0, value
                                   (measured same way) is taken from each time
@@ -94,8 +94,9 @@ estimate.  doc/tim.md explains more.
   -c=, --cleanup=   strings {}    cmd to run after each corresponding cmd<i>
   -u=, --time-unit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
                                   OR min[s] minute[s] { [s]=an optional 's' }
+  -d=, --distrib=   string  ""    command to plot distribution of durations
+  -t=, --tseries=   string  ""    command to plot time series of durations
   -v, --verbose     bool    false log parameters & some activity to stderr
-
 ```
 
 Example / Evaluation
