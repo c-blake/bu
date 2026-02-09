@@ -37,20 +37,20 @@ proc writeFile(ix: int; me: MinEst; paths: var seq[string]) =
   for t, dt in me.all: f.write $dt, '\n'
   f.close
 
-proc tim(warmup=1, n=6, k=1, m=4, ohead=6, save="", read="", cmds: seq[string],
-         prepare: seq[string]= @[], cleanup: seq[string] = @[], timeunit="ms",
-         distrib="", tseries="", verbose=false) =
+proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
+         prepare: seq[string]= @[], cleanup: seq[string] = @[], timeUnit="ms",
+         graph="", verbose=false) =
   ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
   ## time & error estimate, maybe running plots.  `doc/tim.md` explains more.
   let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
   if cmds.len == 0: Help !! "Need cmds; Full $HELP"
-  let dtScale = (try: timeScales[timeunit.timePrefix] except KeyError:
-                   Help !! &"Bad time unit '{timeunit}'; Full $HELP")
+  let dtScale = (try: timeScales[timeUnit.timePrefix] except KeyError:
+                   Help !! &"Bad time unit '{timeUnit}'; Full $HELP")
   let prepare = prepare.padWithLast(cmds.len)
   let cleanup = cleanup.padWithLast(cmds.len)
   if verbose:stderr.write &"tim: warmup  {warmup}\ntim: k       {k}\n",
                           &"tim: n       {n}\ntim: m       {m}\n",
-                          &"tim: ohead   {max(n,ohead)}\ntim: save    {save}\n",
+                          &"tim: oHead   {max(n,oHead)}\ntim: save    {save}\n",
                           &"tim: read    {read}\ntim: cmds    {cmds}\n",
                           &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n"
   let f = if save.len > 0: open(save, fmAppend) else: nil
@@ -63,21 +63,20 @@ proc tim(warmup=1, n=6, k=1, m=4, ohead=6, save="", read="", cmds: seq[string],
     result *= dtScale
   var e = newSeq[MinEst](cmds.len + 1)                # Auto-Inits to 0.0+-0.0
   var paths: seq[string]        # Optional deep dives run cmds taking solo paths
-  if ohead.abs > 0:                                   # Measure overhead
+  if oHead.abs > 0:                                   # Measure overhead
     for t in 1..warmup: discard "".get1(0)
-    e[0] = eMin(max(n,ohead.abs), k, m, get1="".get1(0)) # Measure&Report ohead
-    echo fmtUncertain(e[0].est, e[0].err)," ",timeunit,
-           if ohead > 0: "\t(AlreadySubtracted)Overhead" else: "\tRawOverhead"
-    if tseries.len > 0 or distrib.len > 0: writeFile 0, e[0], paths
+    e[0] = eMin(max(n,oHead.abs), k, m, get1="".get1(0)) # Measure&Report oHead
+    echo fmtUncertain(e[0].est, e[0].err)," ",timeUnit,
+           if oHead > 0: "\t(AlreadySubtracted)Overhead" else: "\tRawOverhead"
+    if graph.len > 0: writeFile 0, e[0], paths
   for i, cmd in cmds:                                 # Measure each cmd
     let j = i + 1
     for t in 1..warmup: discard cmd.get1(j)
     e[j] = eMin(n, k, m, get1=cmd.get1(j))            # Below maybe -= oHd
-    if ohead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
-    echo fmtUncertain(e[j].est, e[j].err)," ",timeunit,"\t",cmd # Report AsWeGo
-    if tseries.len > 0 or distrib.len > 0: writeFile j, e[j], paths
-  if distrib.len > 0: runOrQuit distrib % paths, 5
-  if tseries.len > 0: runOrQuit tseries % paths, 6
+    if oHead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
+    echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",cmd # Report AsWeGo
+    if graph.len > 0: writeFile j, e[j], paths
+  if graph.len > 0: runOrQuit graph % paths, 5
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "cmds"   : "'cmd1' 'cmd2' ..",
@@ -85,14 +84,14 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "n"      : "number of inner trials; `>=2k`; `1/m` total",
   "k"      : "number of best tail times to use/2",
   "m"      : "number of outer trials",
-  "ohead": """number of \"\" overhead runs;  If > 0, value
+  "oHead": """number of \"\" overhead runs;  If >0, value
 (measured same way) is taken from each time""",
   "save"   : "also save TIMES<TAB>CMD<NL>s to this file",
   "read"   : "read output of `save` instead of running",
   "prepare": "cmd run before each *corresponding* cmd<i>",
   "cleanup": "cmd run after each *corresponding* cmd<i>",
-  "time-unit": """(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
+"timeUnit":"""(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
 OR min[s] minute[s] { [s]=an optional 's' }""",
-  "distrib": "command to plot distribution of durations",
-  "tseries": "command to plot time series of durations",
-  "verbose": "log parameters & some activity to stderr"}, short={"timeunit":'u'}
+  "graph" :"""a command to plot durations/distributions;
+$1 $2 .. become dt0, dt1 parallel to cmds""",
+  "verbose": "log parameters & some activity to stderr"}, short={"timeUnit":'u'}

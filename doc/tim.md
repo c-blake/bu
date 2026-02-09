@@ -82,21 +82,21 @@ Usage
 Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
 estimate, maybe running plots.  doc/tim.md explains more.
 
-  -w=, --warmup=    int     1     number of warm-up runs to discard
-  -n=, --n=         int     7     number of inner trials; >=2k; 1/m total
-  -k=, --k=         int     2     number of best tail times to use/2
-  -m=, --m=         int     3     number of outer trials
-  -o=, --ohead=     int     7     number of "" overhead runs;  If > 0, value
-                                  (measured same way) is taken from each time
-  -s=, --save=      string  ""    also save TIMES<TAB>CMD<NL>s to this file
-  -r=, --read=      string  ""    read output of save instead of running
-  -p=, --prepare=   strings {}    cmd to run before each corresponding cmd<i>
-  -c=, --cleanup=   strings {}    cmd to run after each corresponding cmd<i>
-  -u=, --time-unit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
-                                  OR min[s] minute[s] { [s]=an optional 's' }
-  -d=, --distrib=   string  ""    command to plot distribution of durations
-  -t=, --tseries=   string  ""    command to plot time series of durations
-  -v, --verbose     bool    false log parameters & some activity to stderr
+  -w=, --warmup=   int     1     number of warm-up runs to discard
+  -n=, --n=        int     6     number of inner trials; >=2k; 1/m total
+  -k=, --k=        int     1     number of best tail times to use/2
+  -m=, --m=        int     4     number of outer trials
+  -o=, --oHead=    int     6     number of "" overhead runs;  If >0, value
+                                 (measured same way) is taken from each time
+  -s=, --save=     string  ""    also save TIMES<TAB>CMD<NL>s to this file
+  -r=, --read=     string  ""    read output of save instead of running
+  -p=, --prepare=  strings {}    cmd run before each corresponding cmd<i>
+  -c=, --cleanup=  strings {}    cmd run after each corresponding cmd<i>
+  -u=, --timeUnit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
+                                 OR min[s] minute[s] { [s]=an optional 's' }
+  -g=, --graph=    string  ""    a command to plot durations/distributions;
+                                 $1 $2 .. become dt0, dt1 parallel to cmds
+  -v, --verbose    bool    false log parameters & some activity to stderr
 ```
 
 Example / Evaluation
