@@ -5,8 +5,8 @@ from bu/eve      import a_ik, gNk0, gNk0Thresh, eLE, eRE
 from std/math    import ln, sqrt, copySign
 from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
 from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
-type ConfBand* = enum pointWise, simultaneous, tube
-type TubeOpt* = enum pw="pointWise", sim="simultaneous", both
+type ConfBand* = enum pointWise, simult, tube
+type TubeOpt* = enum pw="pointWise", sim="simult", both
 type Fs = seq[float]; type Strs = seq[string]; var dbg = false
 var gEarly*, gLate*: string; var gPropAl* = Wilson
 
@@ -135,28 +135,28 @@ plot """
       g.write &",\\\n     '{fp}/{p}E' u 1:4 lc rgb '#{alph}{cCB}'"
   g.write &"\n{gLate}\n"; g.close
 
-proc edplot*(band=pointWise, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed/", gplot="",
-             xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[],
-             opt=both, propAl=Wilson, early="", late="", G=false,inputs: Strs) =
+proc edplot*(band=tube, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed", gplot="",
+   xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[], opt=sim,
+   propAl=Wilson, early="", late="", debug=false, inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
   ## re-used for subsequent inputs, otherwise they match pair-wise.
   let inputs = if inputs.len > 0: inputs else: @[""]
-  gEarly = early; gLate = late; gPropAl = propAl; dbg = G
+  gEarly = early; gLate = late; gPropAl = propAl; dbg = debug
   template setup(id, arg, default) =    # Ensure ok (wvls|vals|alphas)[i] ..
     var id = arg                        #.. for each inputs[i].
     if id.len == 0: id.add default
     for i in 1 .. inputs.len - id.len: id.add id[^1]
   setup wvls, wvls, 0.87; setup vals, vals, 1.0; setup alphas, alphas, 0.5
   case band             # Stats Opts    Plot Opts                         Data
-  of pointWise   : blur pw, ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
-  of simultaneous: blur sim,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
-  of tube        : tube opt,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
+  of pointWise: blur pw, ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
+  of simult   : blur sim,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
+  of tube     : tube opt,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
 
 when isMainModule:
   import cligen; include cligen/mergeCfgEnv; dispatch edplot, help={
     "inputs": "input paths or \"\" for stdin",
-    "band"  : "bands: pointWise simultaneous tube",
+    "band"  : "bands: pointWise simult tube",
     "ci"    : "band CI level(0.95)|dP spacing(0.02)",
     "k"     : "amount of tails to use for EVE; 0 => no data range estimation",
     "tailA" : "tail finiteness alpha (smaller: less prone to decided +-inf)",
@@ -166,7 +166,8 @@ when isMainModule:
     "wvls"  : "cligen/colorScl HSV-based wvlens; 0.6",
     "vals"  : "values (V) of HSV fame; 0.8",
     "alphas": "alpha channel transparencies; 0.5",
-    "opt"   : "tube opts: pointWise simultaneous both",
+    "opt"   : "tube opts: pointWise simult both",
     "propAl": "binomial p CI estimate: Wilson, etc.",
-    "early" : "early text for gen script;Eg 'set term'",
-    "late"  : "late text for script;Eg 'pause -1'"}
+    "early" : "early text for gen script;Eg set term",
+    "late"  : "late text for script;Eg 'pause -1'",
+    "debug" : "print more debugging information"}
