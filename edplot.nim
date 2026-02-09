@@ -8,13 +8,31 @@ from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
 type ConfBand* = enum pointWise, simult, tube
 type TubeOpt* = enum pw="pointWise", sim="simult", both
 type Fs = seq[float]; type Strs = seq[string]; var dbg = false
-var gEarly*, gLate*: string; var gPropAl* = Wilson
+var gPropAl* = Wilson
 
-proc ingest(p: string): seq[float] =
+proc ingest(p: string): (seq[float], float, float) =
   for f in lines(if p.len>0: p.open else: stdin):
-    if not f.startsWith('#'): result.add f.strip.parseFloat
-#XXX Test serial indep by spfun/studentT.ccPv,identical by fitl/gof k-sample A-D
-  result.sort
+    if f.startsWith("# ") and " +- " in f: # Parse the format `tim` emits
+      let cs = f.split()
+      if cs.len == 4: result[1] = cs[1].parseFloat; result[2] = cs[3].parseFloat
+    else:
+      result[0].add f.strip.parseFloat
+  result[0].sort #XXX Test serial Indep w/various,identic by fitl/gof kSampleAD
+
+proc tseries*(g: File; xlabel: string; wvls, vals, alphas: Fs; ps: Strs) =
+  g.write &"""set key top right noautotitle  # EDFs go bot left->up right
+set style data linespoints; set ytics auto
+set yrange [*:*]; set ylabel "{xlabel}"
+set xrange [*:*]; set xlabel "Sample Index"
+plot """
+  for i, p in ps:
+    if i > 0: g.write ",\\\n     "
+    let cCB = rgb(wvls[i], sat=1.0, val=vals[i]).hex
+    let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
+    let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
+    let (_, est, err) = p.ingest
+    g.write &"'{p}' lc rgb '#{alph}{cCB}' t '{p}', {est-err} w filledc y1={est+err} fillc rgb '#{alph}{cIn}' notit"
+  g.write "\nprint ''\n"
 
 proc eLE[T](ts: seq[T], a_ik: seq[float], k: int, gNk0Thresh: float): float =
   result = ts.eLE(a_ik)
@@ -58,11 +76,11 @@ proc massartBand(c, n: int; ci=0.95): (float, float) =
   let eps = sqrt(ln(2.0/(1.0 - ci))/(2.0*n.float))
   (max(0.0, c.float/n.float - eps), min(1.0, c.float/n.float + eps))
 
-proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
+proc blur*(g: File; b=pw, ci=0.1, k=4, tailA=0.05; fp, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let nCI = int(0.5/ci - 0.5)   # + 1 gets added in divisor
   for p in ps:
-    let xs = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
+    let (xs, est, err) = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
     for (f, c) in edf(xs, k, tailA):
       e.write f," ",c.float/n.float
@@ -74,10 +92,7 @@ proc blur*(b=pw, ci=0.1, k=4, tailA=0.05; fp, gplot, xlabel: string;
         e.write " ",lo," ",hi
       e.write "\n"
     e.close
-  let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
-  g.write &"""#!/usr/bin/gnuplot
-{gEarly}
-set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
+  g.write &"""set key top left noautotitle  # EDFs go bot left->up right
 set style data steps; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]; set ytics 0.1; set grid
 plot """
@@ -91,13 +106,12 @@ plot """
       g.write &",\\\n     '{fp}/{p}E' u 1:{2*j+2} lw 2 lc rgb '#{alph}{cCI}'"
     let cEDF = rgb(wvls[i], sat=1.0, val=vals[i]).hex
     g.write &",\\\n     '{fp}/{p}E' u 1:2 lw 3 lc rgb '#{cEDF}' t '{lab}'"
-  g.write &"\n{glate}\n"; g.close
 
-proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
+proc tube*(g: File; b=pw, ci=0.95, k=4, tailA=0.05; fp, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let ci = if ci == 0.02: 0.95 else: ci
   for p in ps:
-    let xs = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
+    let (xs, est, err) = p.ingest; let n = xs.len # Make&emit EDF,ConfBand files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
     var (P, pPL, pPH, pSL, pSH) = (0.0, 0.0, 0.0, 0.0, 0.0)
     for (f, c) in edf(xs, k, tailA):    # Draw 2 lines:
@@ -112,10 +126,7 @@ proc tube*(b=pw, ci=0.95, k=4, tailA=0.05; fp, gplot, xlabel: string;
         let(l,h)=massartBand(c, n, ci)          ;e.write &" {l} {h}";pSL=l;pSH=h
       e.write "\n"
     e.close
-  let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
-  g.write &"""#!/usr/bin/gnuplot
-{gEarly}
-set key top left noautotitle    # EDFs go bot left->up right;Dot keys crowd plot
+  g.write &"""set key top left noautotitle  # EDFs go bot left->up right
 set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]; set ytics 0.1; set grid
 plot """
@@ -133,25 +144,28 @@ plot """
       g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:3 lc rgb '#{alph}{cCB}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:4 lc rgb '#{alph}{cCB}'"
-  g.write &"\n{gLate}\n"; g.close
 
 proc edplot*(band=tube, ci=0.02, k=4, tailA=0.05, fp="/tmp/ed", gplot="",
-   xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[], opt=sim,
-   propAl=Wilson, early="", late="", debug=false, inputs: Strs) =
+    xlabel="Samp Val", wvls:Fs= @[], vals:Fs= @[], alphas:Fs= @[], opt=sim,
+    propAl=Wilson, early="", late="", series=false, debug=false, inputs: Strs) =
   ## Generate files & gnuplot script to render CDF as confidence band blur|tube.
   ## If `.len < inputs.len` the final value of `wvls`, `vals`, or `alphas` is
   ## re-used for subsequent inputs, otherwise they match pair-wise.
   let inputs = if inputs.len > 0: inputs else: @[""]
-  gEarly = early; gLate = late; gPropAl = propAl; dbg = debug
+  gPropAl = propAl; dbg = debug
   template setup(id, arg, default) =    # Ensure ok (wvls|vals|alphas)[i] ..
     var id = arg                        #.. for each inputs[i].
     if id.len == 0: id.add default
     for i in 1 .. inputs.len - id.len: id.add id[^1]
   setup wvls, wvls, 0.87; setup vals, vals, 1.0; setup alphas, alphas, 0.5
-  case band             # Stats Opts    Plot Opts                         Data
-  of pointWise: blur pw, ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
-  of simult   : blur sim,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
-  of tube     : tube opt,ci,k,tailA, fp,gplot,xlabel,wvls,vals,alphas, inputs
+  let g = if gplot.len > 0: open(gplot, fmWrite) else: stdout
+  g.write &"#!/usr/bin/gnuplot\n{early}\n"
+  if series   : g.tseries xlabel, wvls, vals, alphas, inputs
+  case band            # Stats Opts    Plot Opts                   Data
+  of pointWise: g.blur pw, ci,k,tailA, fp,xlabel,wvls,vals,alphas, inputs
+  of simult   : g.blur sim,ci,k,tailA, fp,xlabel,wvls,vals,alphas, inputs
+  of tube     : g.tube opt,ci,k,tailA, fp,xlabel,wvls,vals,alphas, inputs
+  g.write &"\n{late}\nprint ''\n"; g.close
 
 when isMainModule:
   import cligen; include cligen/mergeCfgEnv; dispatch edplot, help={
@@ -170,4 +184,5 @@ when isMainModule:
     "propAl": "binomial p CI estimate: Wilson, etc.",
     "early" : "early text for gen script;Eg set term",
     "late"  : "late text for script;Eg 'pause -1'",
+    "series": "also plot time series of data",
     "debug" : "print more debugging information"}
