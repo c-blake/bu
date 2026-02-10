@@ -77,10 +77,11 @@ sense of costs should always be highlighted to readers somehow.
 Usage
 =====
 ```
-  tim [optional-params] 'cmd1' 'cmd2' ..
+  tim [optional-params] [label1:]'command1' [label2:]'command2' ..
 
-Time shell cmds. Finds best k/n m times.  Merge results for a final time & error
-estimate, maybe running plots.  doc/tim.md explains more.
+Time shell commands printing min time estimate += est.error-hardTAB-label.
+Merge results for a final time & error estimate, maybe running plots. doc/tim.md
+explains more.
 
   -w=, --warmup=   int     1     number of warm-up runs to discard
   -n=, --n=        int     6     number of inner trials; >=2k; 1/m total
@@ -94,6 +95,8 @@ estimate, maybe running plots.  doc/tim.md explains more.
   -c=, --cleanup=  strings {}    cmd run after each corresponding cmd<i>
   -u=, --timeUnit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
                                  OR min[s] minute[s] { [s]=an optional 's' }
+  -d=, --delim=    char    ':'   between each OPTIONAL label & command
+  -O=, --OHead=    string  ""    label for overhead itself (sh -c '')
   -g=, --graph=    string  ""    a command to plot durations/distributions;
                                  $1 $2 .. become dt0, dt1 parallel to cmds
   -v, --verbose    bool    false log parameters & some activity to stderr

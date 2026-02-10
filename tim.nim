@@ -30,18 +30,18 @@ proc padWithLast(xs: seq[string], n: int): seq[string] =
   result = xs; if xs.len == 0: result.add ""
   for i in xs.len ..< n: result.add result[^1]
 
-proc writeFile(ix: int; me: MinEst; paths: var seq[string]) =
-  let nm = "dt" & $ix; paths.add $nm
-  let f = open(nm, fmWrite)
+proc writeFile(name: string; me: MinEst) =
+  let f = open(name, fmWrite)
   f.write &"# {me.est} +- {me.err}\n"
   for t, dt in me.all: f.write $dt, '\n'
   f.close
 
 proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
          prepare: seq[string]= @[], cleanup: seq[string] = @[], timeUnit="ms",
-         graph="", verbose=false) =
-  ## Time shell cmds. Finds best `k/n` `m` times.  Merge results for a final
-  ## time & error estimate, maybe running plots.  `doc/tim.md` explains more.
+         delim=':', OHead="", graph="", verbose=false) =
+  ## Time shell commands printing min time estimate += est.error-hardTAB-label.
+  ## Merge results for a final time & error estimate, maybe running plots.
+  ## `doc/tim.md` explains more.
   let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
   if cmds.len == 0: Help !! "Need cmds; Full $HELP"
   let dtScale = (try: timeScales[timeUnit.timePrefix] except KeyError:
@@ -62,24 +62,27 @@ proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
       else: f.sample1 cmd, if i<0:"" else:prepare[i], if i<0:"" else:cleanup[i]
     result *= dtScale
   var e = newSeq[MinEst](cmds.len + 1)                # Auto-Inits to 0.0+-0.0
-  var paths: seq[string]        # Optional deep dives run cmds taking solo paths
+  var names: seq[string]        # Optional deep dives run cmds taking solo paths
   if oHead.abs > 0:                                   # Measure overhead
     for t in 1..warmup: discard "".get1(0)
     e[0] = eMin(max(n,oHead.abs), k, m, get1="".get1(0)) # Measure&Report oHead
-    echo fmtUncertain(e[0].est, e[0].err)," ",timeUnit,
-           if oHead > 0: "\t(AlreadySubtracted)Overhead" else: "\tRawOverhead"
-    if graph.len > 0: writeFile 0, e[0], paths
+    let OH = if OHead.len > 0: OHead elif oHead > 0: "AlreadySubtractedOverhead"
+             else: "RawOverhead"
+    echo fmtUncertain(e[0].est, e[0].err)," ",timeUnit,'\t',OH
+    if graph.len > 0: writeFile OH, e[0]; names.add OH
   for i, cmd in cmds:                                 # Measure each cmd
     let j = i + 1
+    let cols = cmd.split(delim, 1)
+    let name = cols[0]; let cmd = if cols.len > 1: cols[1] else: name
     for t in 1..warmup: discard cmd.get1(j)
     e[j] = eMin(n, k, m, get1=cmd.get1(j))            # Below maybe -= oHd
     if oHead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
     echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",cmd # Report AsWeGo
-    if graph.len > 0: writeFile j, e[j], paths
-  if graph.len > 0: runOrQuit graph % paths, 5
+    if graph.len > 0: writeFile name, e[j]; names.add name
+  if graph.len > 0: runOrQuit graph % names, 5
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
-  "cmds"   : "'cmd1' 'cmd2' ..",
+  "cmds"   : "[label1:]'command1' [label2:]'command2' ..",
   "warmup" : "number of warm-up runs to discard",
   "n"      : "number of inner trials; `>=2k`; `1/m` total",
   "k"      : "number of best tail times to use/2",
@@ -92,6 +95,8 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "cleanup": "cmd run after each *corresponding* cmd<i>",
 "timeUnit":"""(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
 OR min[s] minute[s] { [s]=an optional 's' }""",
+  "delim"  : "between each *OPTIONAL* `label` & `command`",
+  "OHead"  : "label for overhead itself (`sh -c ''`)",
   "graph" :"""a command to plot durations/distributions;
 $1 $2 .. become dt0, dt1 parallel to cmds""",
   "verbose": "log parameters & some activity to stderr"}, short={"timeUnit":'u'}
