@@ -30,8 +30,9 @@ plot """
     let cCB = rgb(wvls[i], sat=1.0, val=vals[i]).hex
     let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
     let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
-    let (_, est, err) = p.ingest
-    g.write &"'{p}' lc rgb '#{alph}{cCB}' t '{p}', {est-err} w filledc y1={est+err} fillc rgb '#{alph}{cIn}' notit"
+    let (_, est, err) = p.ingest; let (lo, hi) = (est - err, est + err)
+    g.write &"'{p}' lc rgb '#{alph}{cCB}' t '{p}', {lo} w filledc y1={hi} ",
+            &" fillc rgb '#{alph}{cIn}' notit"
   g.write "\nprint ''\n"
 
 proc eLE[T](ts: seq[T], a_ik: seq[float], k: int, gNk0Thresh: float): float =
@@ -80,7 +81,7 @@ proc blur*(g: File; b=pw, ci=0.1, k=4, tailA=0.05; fp, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let nCI = int(0.5/ci - 0.5)   # + 1 gets added in divisor
   for p in ps:
-    let (xs, est, err) = p.ingest; let n = xs.len   # Make, then emit EDF, Conf.Band files
+    let (xs, _, _) = p.ingest; let n=xs.len # Make,then emit EDF,Conf.Band files
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
     for (f, c) in edf(xs, k, tailA):
       e.write f," ",c.float/n.float
@@ -110,8 +111,10 @@ plot """
 proc tube*(g: File; b=pw, ci=0.95, k=4, tailA=0.05; fp, xlabel: string;
            wvls, vals, alphas: Fs; ps: Strs) =
   let ci = if ci == 0.02: 0.95 else: ci
+  var bounds: seq[tuple[lo, hi: float]]
   for p in ps:
     let (xs, est, err) = p.ingest; let n = xs.len # Make&emit EDF,ConfBand files
+    if est != 0 and err != 0: bounds.add (est - err, est + err)
     let e = mkdirOpen(&"{fp}/{p}E", fmWrite)
     var (P, pPL, pPH, pSL, pSH) = (0.0, 0.0, 0.0, 0.0, 0.0)
     for (f, c) in edf(xs, k, tailA):    # Draw 2 lines:
@@ -128,8 +131,14 @@ proc tube*(g: File; b=pw, ci=0.95, k=4, tailA=0.05; fp, xlabel: string;
     e.close
   g.write &"""set key top left noautotitle  # EDFs go bot left->up right
 set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
-set yrange [-0.03:1.03]; set ytics 0.1; set grid
-plot """
+set yrange [-0.03:1.03]; set ytics 0.1; set grid""", '\n'
+  if bounds.len > 0:
+    for i, (lo, hi) in bounds:
+      let cIn  = rgb(wvls[i], sat=0.5, val=vals[i]).hex
+      let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
+      g.write &"""set object {i+1} rect from first {lo}, graph 0 to first {hi},\
+    graph 1 fillc rgb "#{alph}{cIn}" fillst solid noborder behind""", '\n'
+  g.write "plot "
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
     let s = if i==0: "" else: ",\\\n     "
