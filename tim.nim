@@ -77,7 +77,7 @@ proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
     for t in 1..warmup: discard cmd.get1(j)
     e[j] = eMin(n, k, m, get1=cmd.get1(j))            # Below maybe -= oHd
     if oHead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
-    echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",cmd # Report AsWeGo
+    echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",name # Report AsWeGo
     if graph.len > 0: writeFile name, e[j]; names.add name
   if graph.len > 0: runOrQuit graph % names, 5
 
