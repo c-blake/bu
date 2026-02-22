@@ -1,5 +1,6 @@
 ##[ `vip` caches these answers for UI logic simplicity & efficiency.  Stale info
 can be displayed if FS changes fast relative to interactive pick sessions. ]##
+# nim c --app:lib -d:danger bu/testf.nim && put bu/libtestf.so in /usr/local/lib
 
 import std/posix        # .so source for use in `dirs|vip -k libtestf.so:cdable`
 
@@ -16,8 +17,8 @@ proc cdable(path: pointer, nPath: clong): cint {.noconv, exportc, dynlib.} =
 #      fail relative to the original parent process.
 
 #[ To cursor down, `vip` must test one at a time until a success.  To get more
-async/scalable needs a batch interface with forked kids which an ok idea since a
-hanging NFS mount can hang a kid process & we might want to kill it.  Laziness
+async/scalable needs a batch interface with forked kids which is an ok idea
+since hanging NFS mounts can hang kid procs & we may want to kill it.  Laziness
 of outer validation may mean only 0..3 timeouts in any given UI interaction.
 So, they could be made 50..100ms.  There may be a way to build a critbit tree,
 monitor /proc/mounts, and only time out once per mount prefix or etc.  Of
