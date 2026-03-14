@@ -18,9 +18,9 @@ proc get(times: var seq[Time], paths: seq[MSlice], keep=false) =
                  clong, size: clong): clong {.importc, nodecl.}
       let SYS_statx = 332 # {.importc: "__NR_statx", nodecl.}: cint #CodeGenBUG
       let nB = paths.len.culong
-      var ba = newSeq[SysCall](nB)
-      var sx = newSeq[Statx](nB)
-      var rv = newSeq[clong](nB)
+      var ba = newSeq[SysCall](nB.int)
+      var sx = newSeq[Statx](nB.int)
+      var rv = newSeq[clong](nB.int)
       for i in 0 ..< nB.int:
         ba[i].nr     = cshort(SYS_statx)
         ba[i].argc   = cchar(5)
@@ -31,7 +31,8 @@ proc get(times: var seq[Time], paths: seq[MSlice], keep=false) =
         ba[i].arg[4] = cast[clong](sx[i].addr)
       for i in 0 .. batch(rv[0].addr, ba[0].addr, nB, 0.clong, 0.clong):
         if rv[i] == 0:
-          times[i] = initTime(sx[i].stx_mtime.tv_sec, sx[i].stx_mtime.tv_nsec)
+          times[i] = initTime(sx[i].stx_mtime.tv_sec,
+                              sx[i].stx_mtime.tv_nsec.NanosecondRange)
         elif i mod 2 == 0 and not keep: return
     else:
       var stx: Statx

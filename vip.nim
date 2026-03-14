@@ -192,7 +192,7 @@ proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
   if doIs and low.len != data.len:
     low.setLen data.len
     for i in 0 ..< data.len:
-      low[i] = if data[i] in {'A'..'Z'}: chr(data[i].ord + 32) else: data[i]
+      low[i] = if data[i] in {'A'..'Z'}: char(data[i].ord + 32) else: data[i]
   let q = if doIs: q.toLowerAscii else: q
   var qs: seq[MSlice]; discard msplit(q, qs)    # Split maybeLower; initSep?
   for i in 0 ..< nIt:

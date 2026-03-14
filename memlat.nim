@@ -46,7 +46,7 @@ proc prepTrueRan(x: var seq[int], n: int) =
 proc runTrue(x: seq[int], nAcc: int): int =
   for i in 1..nAcc: result += x[tru[i]]
 
-proc fmt(x=0.0, n=3): auto = formatFloat(x, ffDecimal, n)
+proc fmt(x=0.0, n=3): auto = formatFloat(x, ffDecimal, range[-1..32](n))
 
 proc time(prep, run: auto; n, nAcc, avgN, minN: int) =
   var dtMins: RunningStat

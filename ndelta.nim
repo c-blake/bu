@@ -9,7 +9,7 @@ proc load(path: string): MSlice =
   else: path.readFile.toMSlice(keep=true)
 
 proc delta(num0, num1: float, kind: DKind, n: int): string =
-  template ffDec(x: float): untyped = formatFloat(x, ffDecimal, n)
+  template ffDec(x:float): untyped = formatFloat(x, ffDecimal, range[-1..32](n))
   case kind:
     of absolute: ffDec(num1 - num0)
     of ratio   : (if num0 != 0.0: ffDec(num1/num0) else: "INF")

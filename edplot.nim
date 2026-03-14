@@ -1,10 +1,11 @@
+# See: en.wikipedia.org/wiki/CDF-based_nonparametric_confidence_interval
 when not declared(stdin): import std/[syncio, formatfloat]
 import std/[strutils, strformat, algorithm]
 from spfun/binom import initBinomP, est, BinomPAlgo
 from bu/eve      import a_ik, gNk0, gNk0Thresh, eLE, eRE
 from std/math    import ln, sqrt, copySign
-from cligen/colorScl import rgb, hex # For details see: en.wikipedia.org/wiki/
-from cligen/osUt import mkdirOpen # CDF-based_nonparametric_confidence_interval
+from cligen/colorScl import UnitR, rgb, hex
+from cligen/osUt import mkdirOpen
 type ConfBand* = enum pointWise, simult, tube
 type TubeOpt* = enum pw="pointWise", sim="simult", both
 type Fs = seq[float]; type Strs = seq[string]; var dbg = false
@@ -27,8 +28,8 @@ set xrange [*:*]; set xlabel "Sample Index"
 plot """
   for i, p in ps:
     if i > 0: g.write ",\\\n     "
-    let cCB = rgb(wvls[i], sat=1.0, val=vals[i]).hex
-    let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
+    let cCB = rgb(wvls[i].UnitR, sat=1.UnitR, val=vals[i].UnitR).hex
+    let cIn = rgb(wvls[i].UnitR, sat=0.5.UnitR, val=vals[i].UnitR).hex
     let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
     let (_, est, err) = p.ingest; let (lo, hi) = (est - err, est + err)
     g.write &"'{p}' lc rgb '#{alph}{cCB}' t '{p}', {lo} w filledc y1={hi} ",
@@ -100,12 +101,12 @@ plot """
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
     for j in 1..nCI:
-      let cCI = rgb(wvls[i], sat=1.0 - j.float/float(nCI + 1), val=vals[i]).hex
+      let cCI = rgb(wvls[i].UnitR, sat=UnitR(1.0 - j.float/float(nCI + 1)), val=vals[i].UnitR).hex
       let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
       let s = if i==0 and j==1: "" else: ",\\\n     "
       g.write s, &"'{fp}/{p}E' u 1:{2*j+1} lw 2 lc rgb '#{alph}{cCI}'"
       g.write &",\\\n     '{fp}/{p}E' u 1:{2*j+2} lw 2 lc rgb '#{alph}{cCI}'"
-    let cEDF = rgb(wvls[i], sat=1.0, val=vals[i]).hex
+    let cEDF = rgb(wvls[i].UnitR, sat=1.UnitR, val=vals[i].UnitR).hex
     g.write &",\\\n     '{fp}/{p}E' u 1:2 lw 3 lc rgb '#{cEDF}' t '{lab}'"
 
 proc tube*(g: File; b=pw, ci=0.95, k=4, tailA=0.05; fp, xlabel: string;
@@ -134,7 +135,7 @@ set style data lines; set ylabel "Probability"; set xlabel "{xlabel}"
 set yrange [-0.03:1.03]; set ytics 0.1; set grid""", '\n'
   if bounds.len > 0:
     for i, (lo, hi) in bounds:
-      let cIn  = rgb(wvls[i], sat=0.5, val=vals[i]).hex
+      let cIn  = rgb(wvls[i].UnitR, sat=0.5.UnitR, val=vals[i].UnitR).hex
       let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
       g.write &"""set object {i+1} rect from first {lo}, graph 0 to first {hi},\
     graph 1 fillc rgb "#{alph}{cIn}" fillst solid noborder behind""", '\n'
@@ -142,8 +143,8 @@ set yrange [-0.03:1.03]; set ytics 0.1; set grid""", '\n'
   for i, p in ps:
     let lab = if p.len>0: p else: "stdin"
     let s = if i==0: "" else: ",\\\n     "
-    let cCB = rgb(wvls[i], sat=1.0, val=vals[i]).hex
-    let cIn = rgb(wvls[i], sat=0.5, val=vals[i]).hex
+    let cCB = rgb(wvls[i].UnitR, sat=1.UnitR, val=vals[i].UnitR).hex
+    let cIn = rgb(wvls[i].UnitR, sat=0.5.UnitR, val=vals[i].UnitR).hex
     let alph = if alphas[i] < 1.0: int(alphas[i]*256).toHex[^2..^1] else: ""
     if b == both:
       g.write s,&"'{fp}/{p}E' u 1:3:4 w filledc lc rgb '#{alph}{cIn}' t '{lab}'"
