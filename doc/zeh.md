@@ -23,7 +23,7 @@ basic things.  This is one.
 Check|Merge, de-duplicate&clean short cmds/trailing \n Zsh EXTENDEDHISTORY
 (format ": {t0%d}:{dur%d};CMD-LINES[\]"); Eg.: zeh -tm3 h1 h2 >H.  Zsh saves
 start & duration @FINISH TIME => with >1 shells in play, only brief cmds match
-the order of timestamps in the file => provide 3 more modes on to of --check:
+the order of timestamps in the file => provide 3 more modes on top of --check:
 --endT, --sort, --begT.
 
   -m=, --min= int  0     Minimum length of a command to keep

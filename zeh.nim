@@ -55,7 +55,7 @@ proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
   ## (format ": {t0%d}:{dur%d};CMD-LINES[\\]"); Eg.: `zeh -tm3 h1 h2 >H`.  Zsh
   ## saves start & duration *@FINISH TIME* => with >1 shells in play, only brief
   ## cmds match the order of timestamps in the file => provide 3 more modes on
-  ## to of `--check`: `--endT`, `--sort`, `--begT`.
+  ## top of `--check`: `--endT`, `--sort`, `--begT`.
   if paths.len < 1: Help !! "Need >= 1 path; Full $HELP"
   if reps > 0:  # Make large histories from a smaller sample (to measure stuff)
     var hes = collect(for he in paths[0].zHistEnts: he)
