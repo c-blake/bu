@@ -36,12 +36,13 @@ proc writeFile(name: string; me: MinEst) =
   for t, dt in me.all: f.write $dt, '\n'
   f.close
 
+type Rpt = enum diffs, ratios
 proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
          prepare: seq[string]= @[], cleanup: seq[string] = @[], timeUnit="ms",
-         delim=':', OHead="", graph="", verbose=false) =
+         delim=':', OHead="", Delim="",Report={diffs}, graph="", verbose=false)=
   ## Time shell commands printing min time estimate += est.error-hardTAB-label.
   ## Merge results for a final time & error estimate, maybe running plots.
-  ## `doc/tim.md` explains more.
+  ## `https://github.com/c-blake/bu/blob/main/doc/tim.md` explains more.
   let n = max(n, 2*k + 1)       # Adapt `n` rather than raise on too big `k`
   if cmds.len == 0: Help !! "Need cmds; Full $HELP"
   let dtScale = (try: timeScales[timeUnit.timePrefix] except KeyError:
@@ -50,9 +51,10 @@ proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
   let cleanup = cleanup.padWithLast(cmds.len)
   if verbose:stderr.write &"tim: warmup  {warmup}\ntim: k       {k}\n",
                           &"tim: n       {n}\ntim: m       {m}\n",
-                          &"tim: oHead   {max(n,oHead)}\ntim: save    {save}\n",
+                          &"tim: oHead   {oHead}\ntim: save    {save}\n",
                           &"tim: read    {read}\ntim: cmds    {cmds}\n",
-                          &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n"
+                          &"tim: prepare {prepare}\ntim: cleanup {cleanup}\n",
+                          &"tim: Report  {Report}\n"
   let f = if save.len > 0: open(save, fmAppend) else: nil
   var r = read.maybeRead
   proc get1(cmd: string, i = -1): float =             # Either use read times..
@@ -61,24 +63,42 @@ proc tim(warmup=1, n=6, k=1, m=4, oHead=6, save="", read="", cmds: seq[string],
         except: IO !! "`"&cmd&"`: undersampled in `read`"
       else: f.sample1 cmd, if i<0:"" else:prepare[i], if i<0:"" else:cleanup[i]
     result *= dtScale
-  var e = newSeq[MinEst](cmds.len + 1)                # Auto-Inits to 0.0+-0.0
+  var e = newSeq[MinEst](cmds.len + int(oHead > 0))   # Auto-Inits to 0.0+-0.0
   var names: seq[string]        # Optional deep dives run cmds taking solo paths
-  if oHead.abs > 0:                                   # Measure overhead
+  if oHead > 0:                                       # Measure overhead
     for t in 1..warmup: discard "".get1(0)
-    e[0] = eMin(max(n,oHead.abs), k, m, get1="".get1(0)) # Measure&Report oHead
-    let OH = if OHead.len > 0: OHead elif oHead > 0: "AlreadySubtractedOverhead"
-             else: "RawOverhead"
-    echo fmtUncertain(e[0].est, e[0].err)," ",timeUnit,'\t',OH
-    if graph.len > 0: writeFile OH, e[0]; names.add OH
+    e[0] = eMin(max(n, oHead), k, m, get1="".get1(0)) # Measure&Report oHead
+    names.add (if OHead.len > 0: OHead
+      elif card(Report) > 0: "AlreadySubtractedOverhead" else: "RawOverhead")
+    if Report != {ratios}:
+      echo fmtUncertain(e[0].est, e[0].err)," ",timeUnit,'\t',names[^1]
+    if graph.len > 0: writeFile names[^1], e[0]
+  var iMin = 0; var eMin = float.high
   for i, cmd in cmds:                                 # Measure each cmd
-    let j = i + 1
+    let j = i + int(oHead > 0)
     let cols = cmd.split(delim, 1)
     let name = cols[0]; let cmd = if cols.len > 1: cols[1] else: name
+    names.add name
     for t in 1..warmup: discard cmd.get1(j)
     e[j] = eMin(n, k, m, get1=cmd.get1(j))            # Below maybe -= oHd
-    if oHead > 0: e[j].est -= e[0].est; e[j].err = sqrt(e[j].err^2 + e[0].err^2)
-    echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",name # Report AsWeGo
-    if graph.len > 0: writeFile name, e[j]; names.add name
+    if oHead > 0 and (diffs in Report or ratios in Report):
+      e[j].est -= e[0].est
+      e[j].err = sqrt(e[j].err^2 + e[0].err^2)
+    if Report != {ratios}:
+      echo fmtUncertain(e[j].est, e[j].err)," ",timeUnit,"\t",name
+    if ratios in Report and e[j].est < eMin: eMin=e[j].est; iMin=j # Track min
+    if graph.len > 0: writeFile name, e[j]
+  if ratios in Report:
+    if Delim.len > 0: echo Delim
+    let ferrMin = e[iMin].err/e[iMin].est             # fractional err(min time)
+    for i, name in names:
+      if oHead > 0 and i==0: echo fmtUncertain(0.0, e[0].err/e[0].est),"\t",name
+      elif i == iMin: echo fmtUncertain(1.0, ferrMin),"\t*",name # min time
+      elif i > 0:                                     # (e[i] - e[0])/e[iMin]
+        e[i].err = sqrt(ferrMin^2 + (e[i].err/e[i].est)^2)
+        e[i].est = e[i].est/e[iMin].est
+        e[i].err *= e[i].est
+        echo fmtUncertain(e[i].est, e[i].err),"\t",name
   if graph.len > 0: runOrQuit graph % names, 5
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
@@ -87,15 +107,16 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch tim, help={
   "n"      : "number of inner trials; `>=2k`; `1/m` total",
   "k"      : "number of best tail times to use/2",
   "m"      : "number of outer trials",
-  "oHead": """number of \"\" overhead runs;  If >0, value
-(measured same way) is taken from each time""",
+  "oHead"  : "number of \"\" overhead runs",
   "save"   : "also save TIMES<TAB>CMD<NL>s to this file",
   "read"   : "read output of `save` instead of running",
+  "Report" : "Report flags: `diffs`, `ratios`; {}=raw",
   "prepare": "cmd run before each *corresponding* cmd<i>",
   "cleanup": "cmd run after each *corresponding* cmd<i>",
 "timeUnit":"""(n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
 OR min[s] minute[s] { [s]=an optional 's' }""",
   "delim"  : "between each *OPTIONAL* `label` & `command`",
+  "Delim"  : "line before ratio report, if any",
   "OHead"  : "label for overhead itself (`sh -c ''`)",
   "graph" :"""a command to plot durations/distributions;
 $1 $2 .. become dt0, dt1 parallel to cmds""",
