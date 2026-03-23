@@ -80,26 +80,26 @@ Usage
   tim [optional-params] [label1:]'command1' [label2:]'command2' ..
 
 Time shell commands printing min time estimate += est.error-hardTAB-label.
-Merge results for a final time & error estimate, maybe running plots. doc/tim.md
-explains more.
+Merge results for a final time & error estimate, maybe running plots.
 
-  -w=, --warmup=   int     1     number of warm-up runs to discard
-  -n=, --n=        int     6     number of inner trials; >=2k; 1/m total
-  -k=, --k=        int     1     number of best tail times to use/2
-  -m=, --m=        int     4     number of outer trials
-  -o=, --oHead=    int     6     number of "" overhead runs;  If >0, value
-                                 (measured same way) is taken from each time
-  -s=, --save=     string  ""    also save TIMES<TAB>CMD<NL>s to this file
-  -r=, --read=     string  ""    read output of save instead of running
-  -p=, --prepare=  strings {}    cmd run before each corresponding cmd<i>
-  -c=, --cleanup=  strings {}    cmd run after each corresponding cmd<i>
-  -u=, --timeUnit= string  "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
-                                 OR min[s] minute[s] { [s]=an optional 's' }
-  -d=, --delim=    char    ':'   between each OPTIONAL label & command
-  -O=, --OHead=    string  ""    label for overhead itself (sh -c '')
-  -g=, --graph=    string  ""    a command to plot durations/distributions;
-                                 $1 $2 .. become dt0, dt1 parallel to cmds
-  -v, --verbose    bool    false log parameters & some activity to stderr
+  -w=, --warmup=   int      1     number of warm-up runs to discard
+  -n=, --n=        int      6     number of inner trials; >=2k; 1/m total
+  -k=, --k=        int      1     number of best tail times to use/2
+  -m=, --m=        int      4     number of outer trials
+  -o=, --oHead=    int      6     number of "" overhead runs
+  -s=, --save=     string   ""    also save TIMES<TAB>CMD<NL>s to this file
+  -r=, --read=     string   ""    read output of save instead of running
+  -p=, --prepare=  strings  {}    cmd run before each corresponding cmd<i>
+  -c=, --cleanup=  strings  {}    cmd run after each corresponding cmd<i>
+  -u=, --timeUnit= string   "ms"  (n|nano|micro|μ|u|m|milli)(s|sec|second)[s]
+                                  OR min[s] minute[s] { [s]=an optional 's' }
+  -d=, --delim=    char     ':'   between each OPTIONAL label & command
+  -O=, --OHead=    string   ""    label for overhead itself (sh -c '')
+  -D=, --Delim=    string   ""    line before ratio report, if any
+  -R=, --Report=   set(Rpt) diffs Report flags: diffs, ratios; {}=raw
+  -g=, --graph=    string   ""    a command to plot durations/distributions;
+                                  $1 $2 .. become dt0, dt1 parallel to cmds
+  -v, --verbose    bool     false log parameters & some activity to stderr
 ```
 
 Example / Evaluation
@@ -127,37 +127,36 @@ $ echo 100 > /sys/devices/system/cpu/intel_pstate/max_perf_pct # restore DVS
 
 The overhead time itself has (1259.3 ± 6.6) - (1254.8 ± 6.2) = 4.5 ± 9.1[^7] or
 4.5/9.1 ~ 0.5σ.  Actual timings of programs reproduce quite reliably with
-"similar" error scale from trial to trial.  This can be made easier to more or
-less just read-off reproduction by grouping and adding some blanks:
+"similar" error scale from trial to trial.  This can be made easier to more|less
+just read-off reproduction by grouping and adding some blanks:
 ```
 1254.8 +- 6.2 μ (AlreadySubtracted)Overhead
 1259.3 +- 6.6 μ (AlreadySubtracted)Overhead
 
 1062 +- 14 μ    /bin/dash -c exit
 1061 +- 15 μ    /bin/dash -c exit
-
-2050 +- 12 μ    /bin/bash -c exit
-2023 +- 14 μ    /bin/bash -c exit
-
 1054 +- 15 μ    /bin/dash -c exit
 1055 +- 16 μ    /bin/dash -c exit
 
+2050 +- 12 μ    /bin/bash -c exit
+2023 +- 14 μ    /bin/bash -c exit
 2034 +- 13 μ    /bin/bash -c exit
 2042 +- 12 μ    /bin/bash -c exit
 ```
 If anything, current error estimates look big.  They are currently more an upper
-bound - sdev(estimate over all batches) - *unreduced* by count of batches which
-is an attempt to be conservative for more hostile, highly correlated durations
-which are generally more common in the wild.  Even so, the 2 first-bashes, 2050
-± 12 - 2023 ± 14 = 27 ± 18 are 1.5σ apart.  For this experiment errors are 5..15
-μ, 0.5%..1%, 0..1.5σ.  Had we assumed IID and reduced them by sqrt(9) this would
-become 4.5σ which is highly unlikely by chance alone.[^8]
+bound - sdev(estimate over all batches) - *unreduced* by count of batches (or
+more correctly Newey-West reduced).  This conservatism attempts to help for more
+hostile, highly correlated durations so common in the wild.  Even so, the 2
+first-bashes, 2050 ± 12 - 2023 ± 14 = 27 ± 18 are 1.5σ apart.  For that
+experiment, errors are 5..15 μ, 0.5%..1%, 0..1.5σ.  Had we assumed IID and
+reduced them by sqrt(9) this would become 4.5σ which is highly unlikely by
+chance alone.[^8]
 
 Large sigma (adjusted assuming IID against design to the contrary) distances
-suggest more careful study.  In general given the bumps/delays/side work kernels
-do, one *expects* wild positive tail events in durations, but it always depends
-on a lot like what else is running and for how long.  You can run experiments on
-your own Unix computers with a simple pipeline like this Zsh:
+suggest more careful study.  Given the bumps/delays/side work kernels do, one
+*expects* wild positive tail events in durations, but it always depends on a lot
+like what else is running and when.  You can run experiments on your own Unix
+computers with a simple pipeline like this Zsh:
 ```
 (repeat 1000 env -i CLIGEN=/n $lb/tim -w1 -k2 -n9 -m9 -o9 -uμ '') |
   awk '/[^d]$/{print $1/$3}' | cstats mn sd sk kt
@@ -169,11 +168,11 @@ negative!).  Such care is uncommon in the wild.  If repeat the experiment with
 CPU DVS reactivated and no chrt/taskset, I instead get much smaller times, but I
 *also* get errors of order 10% (vs ~0.5%) & whopping +7.3 excess kurtosis.
 
-Any leptokurtosis means one *cannot use sigmas alone* for comparison since the
+Non-zero higher moments mean one *cannot use sigmas alone* to compare since the
 distribution is not characterized by 1st & 2nd moment alone.  Wild distributions
 themselves are also likely irreproducible over time, across test machines, OS
-settings, etc.  Even with much fixed getting a small "error on the distribution
-itself" takes a great many samples beyond the patience of most OS researchers.
+settings, etc.  Even with much fixed, getting a small "error on the distribution
+itself" takes many samples - beyond the patience of most system researchers.
 
 So, we can answer the question "Does it work?" with "kinda - in well controlled
 circumstances!".  In less well controlled circumstances, 10σ devs without an
