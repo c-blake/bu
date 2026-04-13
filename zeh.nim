@@ -9,7 +9,7 @@ proc trimN*(c: var MSlice) = # Trim trailing junk ~ ": 1759392125:0;date\\\n\n"
     c.len -= 2 + int(c[c.len-3]=='\\') # 3 if usr put literal '\';2 if pasted \n
 
 type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
-proc `$`*(he: ZHistEnt): string = &": {he.tm}:{he.dur};{he.cmd}"
+proc `$`*(he: ZHistEnt): string = &": {he.tm}:{he.dur};{he.cmd}\n"
 
 iterator zHistEnts*(path=""): ZHistEnt = # Old i7 parses@~33ns/entry
   ## Parse large Zsh history files; Yield `ZHistEnt`s. `path` must be mmappable.
@@ -63,20 +63,20 @@ proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
       let span = hes[^1].tm - hes[0].tm + 1
       for r in 0..<reps:
         for hent in paths[0].zHistEnts:
-          var he = hent; he.tm += r*span; outu he,'\n'
+          var he = hent; he.tm += r*span; outu he
   elif begT:
     for he in paths[0].zHistEnts:
-      var he = he; he.tm -= he.dur; outu he,'\n'
+      var he = he; he.tm -= he.dur; outu he
   elif endT:
     for he in paths[0].zHistEnts:
-      var he = he; he.tm += he.dur; outu he,'\n'
+      var he = he; he.tm += he.dur; outu he
   elif sort:
     if paths.len != 1: Help !! "Need == 1 path; Full $HELP"
     var hes = collect(for he in paths[0].zHistEnts: he)
     hes.sort
     var last: ZHistEnt
     for he in hes:
-      if he != last: outu he,'\n'
+      if he != last: outu he
       last = he
   elif check:
     for path in paths:
@@ -91,7 +91,7 @@ proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
     var last: ZHistEnt
     for he in kWayMerge(its):
       if he.cmd.len > min:
-        if he != last: outu he,'\n'
+        if he != last: outu he
         else: last = he
 
 when isMainModule: include cligen/mergeCfgEnv; dispatch zeh, help={
