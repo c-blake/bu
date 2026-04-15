@@ -1,5 +1,5 @@
 when not declared(File): import std/syncio
-import std/[sugar, strformat, algorithm], adix/ways,
+import std/[sugar, strformat, algorithm, strutils], adix/ways,
        cligen, cligen/[sysUt, osUt, mfile, mslice]
 proc err(A:varargs[string,`$`]) = (for a in A: erru a); erru '\n'
 
@@ -9,7 +9,11 @@ proc trimN*(c: var MSlice) = # Trim trailing junk ~ ": 1759392125:0;date\\\n\n"
     c.len -= 2 + int(c[c.len-3]=='\\') # 3 if usr put literal '\';2 if pasted \n
 
 type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
-proc `$`*(he: ZHistEnt): string = &": {he.tm}:{he.dur};{he.cmd}\n"
+var zer = false
+proc `$`*(he: ZHistEnt): string =
+  let s = he.cmd.strip # stripTrailing # zshaddhistory admitted some ' '* cmds
+  if zer: &"{s.len} {he.tm} {he.dur} 0;{s}\0"
+  else  : &": {he.tm}:{he.dur};{he.cmd}\n"
 
 iterator zHistEnts*(path=""): ZHistEnt = # Old i7 parses@~33ns/entry
   ## Parse large Zsh history files; Yield `ZHistEnt`s. `path` must be mmappable.
@@ -50,13 +54,14 @@ proc mkZHistEntItr*(path: string, trim=false): iterator(): ZHistEnt =
       else: yield he
 
 proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
-         reps=0, paths: seq[string]) =
+         reps=0, zero=false, paths: seq[string]) =
   ## Check|Merge, de-duplicate&clean short cmds/trailing \\n Zsh EXTENDEDHISTORY
   ## (format ": {t0%d}:{dur%d};CMD-LINES[\\]"); Eg.: `zeh -tm3 h1 h2 >H`.  Zsh
   ## saves start & duration *@FINISH TIME* => with >1 shells in play, only brief
   ## cmds match the order of timestamps in the file => provide 3 more modes on
   ## top of `--check`: `--endT`, `--sort`, `--begT`.
   if paths.len < 1: Help !! "Need >= 1 path; Full $HELP"
+  zer = zero
   if reps > 0:  # Make large histories from a smaller sample (to measure stuff)
     var hes = collect(for he in paths[0].zHistEnts: he)
     if hes.len > 1:
@@ -101,4 +106,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch zeh, help={
   "sort" : "sort exactly 1 path by startTm,duration",
   "begT" : "add dur to take startTm,dur -> endTm,dur",
   "endT" : "sub dur to take endTm,dur -> startTm,dur",
-  "reps" : "make `reps` copies of $1 w/increasing tms"}
+  "reps" : "make `reps` copies of $1 w/increasing tms",
+  "zero" : "emit as \"{cmdLen} {t} {dt} {xt} {cmd}\\\\0\""}

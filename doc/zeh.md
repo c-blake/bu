@@ -24,14 +24,16 @@ Check|Merge, de-duplicate&clean short cmds/trailing \n Zsh EXTENDEDHISTORY
 (format ": {t0%d}:{dur%d};CMD-LINES[\]"); Eg.: zeh -tm3 h1 h2 >H.  Zsh saves
 start & duration @FINISH TIME => with >1 shells in play, only brief cmds match
 the order of timestamps in the file => provide 3 more modes on top of --check:
---endT, --sort, --begT.
 
-  -m=, --min= int  0     Minimum length of a command to keep
-  -t, --trim  bool false Trim trailing whitespace
-  -c, --check bool false Only check validity of each of paths
-  -s, --sort  bool false sort exactly 1 path by startTm,duration
-  -b, --begT  bool false add dur to take startTm,dur -> endTm,dur
-  -e, --endT  bool false sub dur to take endTm,dur -> startTm,dur
+--endT, --sort, --begT.
+  -m=, --min=  int  0     Minimum length of a command to keep
+  -t, --trim   bool false Trim trailing whitespace
+  -c, --check  bool false Only check validity of each of paths
+  -s, --sort   bool false sort exactly 1 path by startTm,duration
+  -b, --begT   bool false add dur to take startTm,dur -> endTm,dur
+  -e, --endT   bool false sub dur to take endTm,dur -> startTm,dur
+  -r=, --reps= int  0     make reps copies of $1 w/increasing tms
+  -z, --zero   bool false emit as "{cmdLen} {t} {dt} {xt} {cmd}\0"
 ```
 
 # Testing
