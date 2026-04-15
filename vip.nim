@@ -37,7 +37,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   its: seq[Item]        # Items
   q, den: string        # The running query, denom
   doSort,doIs,Rev: bool # Sort matches by match size fraction, InSensitive Mch
-  dlm: char             # Optional label-value delimiter; '\0' => none
+  trm, dlm: char        # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
   okx: ExtTest          # An external test function return 1 to for ok/keep
@@ -161,7 +161,7 @@ proc parseIn() =
   else: buf = stdin.readAll; data = MSlice(mem: buf.cstring, len: buf.len)
   var labIt: seq[MSlice]
   var i = 0
-  for line in mSlices(MSlice(mem: data.mem, len: data.len), sep='\n'):
+  for line in mSlices(MSlice(mem: data.mem, len: data.len), sep=trm):
     if line.len > int(dlm != '\0'):     # Do not admit an empty line & label
       if dlm != '\0':
         if line.msplit(labIt, dlm, n=2) == 2:
@@ -345,11 +345,12 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
     of NoBind: doHelp = true
 
-proc vip(n=9, alt=false, inSen=false, sort=false, delim='\0', label=0, digits=5,
-         quit="", keep="", rev=false, colors: seq[string] = @[],
+proc vip(n=9, alt=false, inSen=false, sort=false, term='\n', delim='\0',label=0,
+         digits=5, quit="", keep="", rev=false, colors: seq[string] = @[],
          color:seq[string] = @[], qs: seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  var i = -1;uH = n-1;q = qs.join(" ");doSort=sort;dlm=delim;doIs=inSen;Rev=rev
+  var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort
+  trm = term; dlm = delim; doIs = inSen; Rev = rev
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   parseIn(); den = "/"&alignLeft($its.len,digits)&" "   # Read input data
   if keep.len > 0: okx = cast[ExtTest](keep.loadSym)    # Maybe Load Plug-In
@@ -365,7 +366,8 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
   "sort"  : "sort by match score,not input order; Ctrl-O",
-  "delim" : "Before *THIS* =Context Label;After=AnItem",
+  "term"  : "input record terminator (vs. newline)",
+  "delim" : "Pre-1st-*THIS* = Context Label; Post=AnItem",
   "label" : "emit parsed label to this file descriptor",
   "digits": "num.digits for nMatch/nItem on query Line",
   "rev"   : "reverse default \"log file\" input order",

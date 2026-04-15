@@ -39,7 +39,8 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -a, --alt      bool    false  use the alternate screen buffer
   -i, --inSen    bool    false  match query case-insensitively; Ctrl-I
   -s, --sort     bool    false  sort by match score,not input order; Ctrl-O
-  -d=, --delim=  char    '\x00' Before THIS =Context Label;After=AnItem
+  -t=, --term=   char    '\n'   input record terminator (vs. newline)
+  -d=, --delim=  char    '\x00' Pre-1st-THIS = Context Label; Post=AnItem
   -l=, --label=  int     0      emit parsed label to this file descriptor
   -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
   -q=, --quit=   string  ""     value written upon quit (e.g. Ctrl-C)
