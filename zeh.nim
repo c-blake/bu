@@ -12,8 +12,11 @@ type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
 var zer = false
 proc `$`*(he: ZHistEnt): string =
   let s = he.cmd.strip # stripTrailing # zshaddhistory admitted some ' '* cmds
-  if zer: &"{s.len} {he.tm} {he.dur} 0;{s}\0"
-  else  : &": {he.tm}:{he.dur};{he.cmd}\n"
+  if zer:
+    var s = $s; s = s.replace("\\\n", "\n")
+    return &"{s.len} {he.tm} {he.dur} 0;{s}\0"
+  else:
+    return &": {he.tm}:{he.dur};{he.cmd}\n"
 
 iterator zHistEnts*(path=""): ZHistEnt = # Old i7 parses@~33ns/entry
   ## Parse large Zsh history files; Yield `ZHistEnt`s. `path` must be mmappable.
