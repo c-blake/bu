@@ -192,13 +192,13 @@ demand" (like [demand paging](https://en.wikipedia.org/wiki/Demand_paging) or
 other [lazy loading](https://en.wikipedia.org/wiki/Lazy_loading) systems) *just
 prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
 general and other arbitrary user entry validation can be expensive I thought a
-plug-in/shlib solution best.  So, installing a [testf plug-in](../bu/testf.nim)
+plug-in/shlib solution best. So, installing a [libvip plug-in](../bu/libvip.nim)
 ```sh
-nim c --app:lib -d:release bu/testf.nim &&
-  install -cm755 bu/libtestf.so /usr/local/lib.
+nim c --app:lib -d:release bu/libvip.nim &&
+  install -cm755 bu/libvip.so /usr/local/lib.
 ```
-lets you later do `lfreq...|vip -klibtestf.so:cdable` to only display items that
-the current user can `cd` into right now.  This may sound pedantic, but it can
+lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
+the current user can `cd` into "now".  This may sound pedantic, but it can
 elide a zillion stat()s some of which may even automount net FSes while also
 avoiding presenting the user with many "invalid right now" `cd` targets.
 
