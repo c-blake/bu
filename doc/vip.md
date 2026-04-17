@@ -194,7 +194,7 @@ prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
 general and other arbitrary user entry validation can be expensive I thought a
 plug-in/shlib solution best. So, installing a [libvip plug-in](../bu/libvip.nim)
 ```sh
-nim c --app:lib -d:release bu/libvip.nim &&
+nim c --app=lib -d=release -o=bu/libvip.so bu/libvip.nim &&
   install -cm755 bu/libvip.so /usr/local/lib.
 ```
 lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
