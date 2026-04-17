@@ -11,12 +11,13 @@ proc trimN*(c: var MSlice) = # Trim trailing junk ~ ": 1759392125:0;date\\\n\n"
 type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
 var zer = false
 proc `$`*(he: ZHistEnt): string =
-  let s = he.cmd.strip # stripTrailing # zshaddhistory admitted some ' '* cmds
-  if zer:
-    var s = $s; s = s.replace("\\\n", "\n")
-    return &"{s.len} {he.tm} {he.dur} 0;{s}\0"
-  else:
-    return &": {he.tm}:{he.dur};{he.cmd}\n"
+  let s = he.cmd.strip # stripTrailing, but zshaddhistory can admit ' '* cmds
+  if zer:                               # zer has extension field, exit^BPWD^B..
+    let s = replace($s, "\\\n", "\n")   #..backfilled here w/simply "0". Len=>Do
+    let t = &"{he.tm} {he.dur} 0\x01"   #..NOT need post-0 '^A', BUT delim CAN
+    return &"{t.len} {t}{s}\0"          #..still be nice, e.g.: grep -z '^A.*x'.
+  else: return &": {he.tm}:{he.dur};{he.cmd}\n" # Len($t.len) fewer bytes, but
+                                                #..much less general.
 
 iterator zHistEnts*(path=""): ZHistEnt = # Old i7 parses@~33ns/entry
   ## Parse large Zsh history files; Yield `ZHistEnt`s. `path` must be mmappable.
