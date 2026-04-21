@@ -122,7 +122,7 @@ proc track(fs: Files; bytes,doHeaders: bool; hdrs: seq[string]; slp: float) =
           if n<buf.len: break
       else:           #TODO select to see if ready, then like above, but only
         discard       #..loop until EWOULDBLOCK.
-    sleep int(slp*1000.0)
+    stdout.flushFile; sleep int(slp*1000.0)
 
 type NKind = enum doN=0, plusN, fitN
 type NRow = object
