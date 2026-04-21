@@ -30,6 +30,7 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
     PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
   Item = tuple[size: float; ix,ok:uint32; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
+  ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)ser
   tio: Termios          # Terminal IO State
@@ -41,6 +42,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
   okx: ExtTest          # An external test function return 1 to for ok/keep
+  prn: ExtPrint         # An external fn to format labels
 
 proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
   if i notin 0..<its.len: IndexDefect !! "in ok()"
@@ -267,12 +269,16 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   for j in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
   if hL: putp ats['c'][1]
 
+var ls = newStringOfCap(240)            # Label String buffer
 proc putN(yO, pick: int): int =         # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
-  for j in ixs:
-    let l = if dlm != '\0': ats['l'][0] & $its[j].lab & ats['l'][1] else: ""
-    put1 l, $its[j].it, j == pick, j
+  if dlm == '\0': (for j in ixs: put1 "", $its[j].it, j == pick, j)
+  else:                                 #XXX CLI param 2set label TERMINAL width
+    for j in ixs:
+      if prn.isNil: ls = $its[j].lab
+      else: ls.setLen prn(ls[0].addr, 240, its[j].lab.mem, its[j].lab.len).int
+      put1 ats['l'][0] & ls & ats['l'][1], $its[j].it, j == pick, j
   putp tparm1(parm_up_cursor, ixs.len.cint)
   return i
 
@@ -345,15 +351,17 @@ proc tui(alt=false, d=5): int =    # 10) MAIN TERMINAL USER-INTERFACE
     of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
     of NoBind: doHelp = true
 
+const ess: seq[string] = @[]
 proc vip(n=9, alt=false, inSen=false, sort=false, term='\n', delim='\0',label=0,
-         digits=5, quit="", keep="", rev=false, colors: seq[string] = @[],
-         color:seq[string] = @[], qs: seq[string]):int=
+         digits=5, quit="", keep="", print="", rev=false,
+         colors=ess, color=ess, qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort
   trm = term; dlm = delim; doIs = inSen; Rev = rev
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
+  if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
+  if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
   parseIn(); den = "/"&alignLeft($its.len,digits)&" "   # Read input data
-  if keep.len > 0: okx = cast[ExtTest](keep.loadSym)    # Maybe Load Plug-In
   try    : tInit alt; i = tui(alt, digits)              # Run the TUI
   finally: tRestore alt
   if i < 0: echo (if quit.len>0: quit else: qs.join(" ")); return 1 # Exit|Emit
@@ -372,7 +380,8 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "digits": "num.digits for nMatch/nItem on query Line",
   "rev"   : "reverse default \"log file\" input order",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
-  "keep"  : "eg. `-kfoo.so:Ok==1` ptr,len->cint==1=>keep",
+  "keep"  : "Eg `-klibvip.so:cdable` ptr,len->cint==1",
+  "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
   qtext choice match label"""}, short={"color": 'c', "digits": 'D'}
