@@ -1,11 +1,13 @@
-##[ `vip` caches these answers for UI logic simplicity & efficiency.  Stale info
-can be displayed if FS changes fast relative to interactive pick sessions. ]##
-# nim c --app:lib -d:danger bu/testf.nim && put bu/libtestf.so in /usr/local/lib
+##[ Since any dir/path component can be renamed/removed/re-permissioned at any
+time, the very idea of `cdable` itself is a race condition.  `vip` caches return
+for UI logic simplicity & efficiency.  So even more stale info can be displayed
+if FS changes fast relative to interactive pick sessions - hopefully rare. ]##
 
-import std/posix        # .so source for use in `dirs|vip -k libtestf.so:cdable`
+#nim c --app=lib -d=danger -o=bu/libvip.so bu/libvip.nim && install bu/libvip.so
+import std/posix        # .so source for use in `dirs|vip -k libvip.so:cdable`
 
 var cpath = ""                            # Reused path buffer to be NUL/\0-term
-proc cdable(path: pointer, nPath: clong): cint {.noconv, exportc, dynlib.} =
+proc cdableP*(path: pointer, nPath: clong): cint {.noconv, exportc, dynlib.} =
   if nPath == 0 or path.isNil:
     return 0
   cpath.setLen nPath    # `vip` does not open any files post `parseIn()`
@@ -33,3 +35,16 @@ whatever validation work), they are at least fast-ish pipe-IO calls.
 
 This module could grow a large family of `bu/ft`-like tests.  PRs welcome if
 this would help your specific application setting. ]#
+
+const O_DIRECTORY = 0x10000 #[ No words for how lame std/posix support is
+                               to have O_PATH but NOT have O_DIRECTORY. ]#
+proc cdable*(path: pointer, nPath: clong): cint {.noconv,exportc,dynlib.} =
+  ##[ Needs extra read access on final path component on BSDs & 2 syscalls, but
+  said calls are cheap in combination & global state (PWD) isn't altered. ]##
+  if nPath == 0 or path.isNil: return 0
+  let flags = when defined linux: O_PATH or O_DIRECTORY else: O_DIRECTORY
+  cpath.setLen nPath #^^ illumos O_SEARCH?
+  copyMem cpath[0].addr, path, nPath
+  let fd = open(cast[cstring](cpath[0].addr), flags.int32)
+  discard close(fd)
+  cint(fd != -1)
