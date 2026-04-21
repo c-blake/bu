@@ -86,6 +86,8 @@ only tools, but some may be more cross-platform.
 
 [adorn - Add prefix &| suffix to various text file/stream columns](doc/adorn.md)
 
+[k1st - De-duplicate records by a delimited key field](doc/k1st.md)
+
 [rp - A row processor program-generator maybe replacement for AWK](doc/rp.md)
 
 [crp - C row processor program-generator port of `rp`](doc/crp.md)

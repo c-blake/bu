@@ -43,6 +43,7 @@ when defined(Windows):
   "tails",      # Terminal-friendly & generalized head & tail
   "cols",       # Extract just some columns from a text file/stream
   "adorn",      # Add prefix &| suffix to various text file/stream columns
+  "k1st",       # De-duplicate records by a delimited key field
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
   "bu/colSort", # Sort *within* the columns of rows
@@ -126,6 +127,7 @@ else:
   "tails",      # Terminal-friendly & generalized head & tail
   "cols",       # Extract just some columns from a text file/stream
   "adorn",      # Add prefix &| suffix to various text file/stream columns
+  "k1st",       # De-duplicate records by a delimited key field
   "rp",         # A row processor program-generator maybe replacement for AWK
   "crp",        # C row processor program-generator port of `rp`
   "bu/colSort", # Sort *within* the columns of rows
