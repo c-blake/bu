@@ -154,10 +154,22 @@ proc getKey(ik: var string): Key =              # partial key
     ik.add getc()                               #..Num(MSBs in 1st byte).
   return Normal
 
-const badSlc = Slice[int](a: -1, b: -1) # 6) PARSE INPUT DATA
+const badSlc = Slice[int](a: -1, b: -1) # 6) MATCH INPUT DATA
 const emptyS = MSlice(mem: nil, len: 0)
 var clean = false
-var buf: string                         # Must have program lifetime
+var buf, low: string                    # Data&Its Lowercase; Program lifetime
+proc match(s: MSlice, qs: seq[MSlice]): Slice[int] =
+  result.a = s.len + 1; result.b = -1
+  let s = if doIs and low.len>0: s.rebase(data.mem, low[0].addr) else: s
+  for q in qs:
+    if (let j = s.find(q, start=result.b + 1); j >= 0):
+      result.a = min(result.a, j)
+      result.b = j + q.len - 1
+    else: return badSlc
+
+proc bySizeInpOrder(a, b: Item): int =  # 7) READ-FILTER-SORT
+  let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
+
 proc parseIn() =
   if (let mf = mopen(0); mf.mem != nil): data = mf.mslc
   else: buf = stdin.readAll; data = MSlice(mem: buf.cstring, len: buf.len)
@@ -172,19 +184,6 @@ proc parseIn() =
           its.add (1.0, i.uint32, 0u32, line    , emptyS  , badSlc)
       inc i
   clean = true
-
-var low: string
-proc match(s: MSlice, qs: seq[MSlice]): Slice[int] = # 7) FILTERING, SORTING
-  result.a = s.len + 1; result.b = -1
-  let s = if doIs and low.len>0: s.rebase(data.mem, low[0].addr) else: s
-  for q in qs:
-    if (let j = s.find(q, start=result.b + 1); j >= 0):
-      result.a = min(result.a, j)
-      result.b = j + q.len - 1
-    else: return badSlc
-
-proc bySizeInpOrder(a, b: Item): int =
-  let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
 
 proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
   var pfd = TPollfd(fd: tFd)
