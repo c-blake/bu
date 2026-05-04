@@ -27,7 +27,7 @@ proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key=enum CtrlO,CtrlI,CtrlT,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
-    PgDn, Home,End, CtrlA,CtrlE,CtrlU,CtrlK, Right,Left,Del,BkSpc, Normal,NoBind
+   PgDn,Home,End,CtrlA,CtrlE,CtrlU,CtrlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
   Item = tuple[size: float; ix,ok:uint32; it,lab: MSlice; mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
   ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
@@ -37,7 +37,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
   q, den: string        # The running query, denom
-  doSort, doIs: bool    # Sort matches by match size fraction, InSensitive Mch
+  doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
   trm, dlm: char        # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   data: MSlice          # All user-data, either mmap read-only/buffers
@@ -77,8 +77,7 @@ proc putp(capability: string; fatal=true) = putp capability.cstring
 proc getc(): char =                     # 4) TERMINAL INPUT,SIGNALS,INIT,RESTORE
   if read(tFd, result.addr, 1) < 0 and sigWinCh==0.Sig_atomic: quit "getc", 1
 
-proc handle_sigwinch(sig: cint) {.noconv.} =
-  sigWinCh = Sig_atomic(sig == SIGWINCH)
+proc handle_sigwinch(sig: cint){.noconv.} = sigWinCh = Sig_atomic(sig==SIGWINCH)
 proc setSigWinCh(enable: bool) =        # SIGNALS
   var sa = Sigaction(sa_handler: (if enable: handle_sigwinch else: SIG_IGN))
   discard sigemptyset(sa.sa_mask)
@@ -120,8 +119,8 @@ var Ks = [Kay(CtrlO, "\x0F"), Kay(CtrlI, "\t"), Kay(CtrlL, "\f"),
   Kay(CtrlA ,"\x01" ),Kay(CtrlE ,"\x05"),Kay(CtrlU ,"\x15"),Kay(CtrlK, "\v" ),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
-  Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del   ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(CtrlT ,"\x14" ),Kay(NoBind,""    )]
+  Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
+  Kay(CtrlT ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[GMQSWXY\]^_]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -159,10 +158,11 @@ const emptyS = MSlice(mem: nil, len: 0)
 var clean = false
 var buf, low: string                    # Data&Its Lowercase; Program lifetime
 proc match(s: MSlice, qs: seq[MSlice]): Slice[int] =
-  result.a = s.len + 1; result.b = -1
+  result.a = s.len + 1; result.b = -1   # Encodes no match
   let s = if doIs and low.len>0: s.rebase(data.mem, low[0].addr) else: s
-  for q in qs:
+  for i, q in qs:
     if (let j = s.find(q, start=result.b + 1); j >= 0):
+      if doRoot and i == 0 and j != 0: return badSlc
       result.a = min(result.a, j)
       result.b = j + q.len - 1
     else: return badSlc
@@ -282,7 +282,7 @@ proc putN(yO, pick: int): int =         # put1 pH times from `its`
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
   parseIn()                             # Read input data TODO mvIn/extend poll
-  var den = "/" & $its.len & " "
+  var den = "/" & $its.len & "  "
   var nIt, nMch, pick, yO, visIx: int   # O = Origin/Offset
   var (doFilt, doPicks, qGrew, doHelp) = (true, false, false, false)
   var jC = q.len                        # cursor as byte index into q[]
@@ -297,14 +297,15 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
     den[0]  = if doSort: '%' else: '/'
-    den[^1] = if doIs  : '-' else: ' '
+    den[^2] = if doIs  : '-' else: ' '
+    den[^1] = if doRoot: '^' else: ' '
     let hdr = ats['h'][0] & align($nMch, den.len - 2) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
     if doHelp:
       doHelp = false
       if h >= 7: # Stay <= 46 col for narrow terminal windows
-        put1 "", "^O toggleOrder ^T      toggleInsen  ^L Refresh"
-        put1 "", "ENTER Pick     Alt-ENT PickLabel   ^C/^Z Usual"
+        put1 "", "^O OrdMchOrInp ^T      ToggleInsen  ^L Refresh"
+        put1 "", "^R RootedMchs  Alt-ENT PickLabel   ^C/^Z Usual"
         put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
         put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
         put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
@@ -320,6 +321,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     case iK.getKey  # Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
     of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
+    of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-rooting/anchor
     of CtrlL:  getTermSize()                      # Viewport parameter
     of Enter:  return (if nIt>0: pick else: -1)   # Exits..
     of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
@@ -351,11 +353,11 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     of NoBind: doHelp = true
 
 const ess: seq[string] = @[]
-proc vip(n=9, alt=false, inSen=false, sort=false, term='\n', delim='\0',label=0,
-         quit="", keep="", print="", colors=ess, color=ess, qs:seq[string]):int=
+proc vip(n=9,alt=false,inSen=false,root=false,sort=false,term='\n',delim='\0',
+ label=0,quit="", keep="",print="", colors=ess,color=ess, qs: seq[string]): int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort
-  trm = term; dlm = delim; doIs = inSen
+  trm = term; dlm = delim; doIs = inSen; doRoot = root
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
@@ -370,6 +372,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "n"     : "max number of terminal rows to use",
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
+  "root"  : "root/anchor/^ match to record starts; Ctrl-R",
   "sort"  : "sort by match score,not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* = Context Label; Post=AnItem",
