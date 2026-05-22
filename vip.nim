@@ -1,5 +1,5 @@
 import std/[syncio, posix, terminal, strutils, algorithm, sets], posix/termios
-import cligen/[sysUt, osUt, mfile, mslice, textUt, humanUt] # ~Erlandsson pick
+import cligen/[sysUt, osUt, mslice, textUt, humanUt] # ~Erlandsson pick
 {.passl: "-lncurses".}                  # 0) C-LEVEL CURSES SET UP
 when defined linux: {.passl: "-ltinfo".}
 proc tigetstr(capCode: cstring): cstring                  {.header:"curses.h".}
@@ -28,7 +28,7 @@ proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key=enum CtrlO,CtrlI,CtrlT,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
    PgDn,Home,End,CtrlA,CtrlE,CtrlU,CtrlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
-  Item = tuple[size: float; ix,ok:uint32; it,lab: MSlice; mch: Slice[int]] # 64B
+  Item = tuple[size: float; ix, ok: uint32; it, lab, mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
   ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
@@ -36,18 +36,17 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
-  q, den: string        # The running query, denom
+  q, D: string          # The running query; User Data Buffer
   doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
   trm, dlm: char        # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
-  data: MSlice          # All user-data, either mmap read-only/buffers
   okx: ExtTest          # An external test function return 1 to for ok/keep
   prn: ExtPrint         # An external fn to format labels
 
 proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
   if i notin 0..<its.len: IndexDefect !! "in ok()"
   if its[i].ok == 0:
-    its[i].ok = 1 + uint32(okx.isNil or okx(its[i].it.mem, its[i].it.len) == 1)
+    its[i].ok = 1+uint32(okx.isNil or okx(D[its[i].it.a].addr,its[i].it.len)==1)
   bool(its[i].ok - 1)
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
@@ -153,56 +152,56 @@ proc getKey(ik: var string): Key =              # partial key
     ik.add getc()                               #..Num(MSBs in 1st byte).
   return Normal
 
-const badSlc = Slice[int](a: -1, b: -1) # 6) MATCH INPUT DATA
-const emptyS = MSlice(mem: nil, len: 0)
+func findIs(s, sub: string; start: Natural = 0; last: int = -1): int =
+  let last = if last < 0: s.high else: last # Just a dumb placeholder.
+  let nlen = sub.len          # Faster idea: memchr/find both cases IF even diff
+  let hlen = last - start + 1 # Then start @min(two indices) & cmp char-by-char.
+  if nlen == 0: return start  # But really a case-folding Boyer-Moore-Horspool..
+  if nlen > hlen: return -1   #..with a pre-computed shift table is best.  BUT..
+  let n0 = sub[0].toLowerAscii # REALLY a bi/tri-gram index is best of all.
+  let limit = last - nlen + 1   # last position where sub can start
+  for i in start .. limit:
+    if s[i].toLowerAscii == n0:
+      var j = 1; (while j < nlen and s[i+j].toLowerAscii == sub[j]: inc j)
+      if j == nlen: return i
+  return -1
+template finda(q,a,b): untyped = (if doIs:D.findIs(q,a,b)else:D.find(q,a,b))
+
+proc bySizeInpOrder(a, b: Item): int =  # 6) SORTER - MATCH SIZE, THEN INP IDX
+  let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
+const badSlc = -1 .. -1                 # 7) MATCH INPUT DATA
 var clean = false
-var buf, low: string                    # Data&Its Lowercase; Program lifetime
-proc match(s: MSlice, qs: seq[MSlice]): Slice[int] =
+
+proc match(s: Slice[int], qs: seq[string]): Slice[int] =
   result.a = s.len + 1; result.b = -1   # Encodes no match
-  let s = if doIs and low.len>0: s.rebase(data.mem, low[0].addr) else: s
   for i, q in qs:
-    if (let j = s.find(q, start=result.b + 1); j >= 0):
-      if doRoot and i == 0 and j != 0: return badSlc
-      result.a = min(result.a, j)
-      result.b = j + q.len - 1
+    if (let j = q.finda(s.a + result.b + 1, s.b); j >= 0):
+      if doRoot and i == 0 and j != s.a: return badSlc
+      result.a = min(result.a, j - s.a)
+      result.b = j - s.a + q.len - 1
     else: return badSlc
 
-proc bySizeInpOrder(a, b: Item): int =  # 7) READ-FILTER-SORT
-  let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
-
-proc parseIn() =
-  if (let mf = mopen(0); mf.mem != nil): data = mf.mslc
-  else: buf = stdin.readAll; data = MSlice(mem: buf.cstring, len: buf.len)
-  var labIt: seq[MSlice]
-  var i = 0
-  for line in mSlices(MSlice(mem: data.mem, len: data.len), sep=trm):
-    if line.len > int(dlm != '\0'):     # Do not admit an empty line & label
+proc parseIn =
+  for (row, nR) in stdin.getDelims(trm):
+    let nR = nR - int(row[nR-1] == trm) # Chop terminator, if present
+    let O = D.len                       # Offset of new data
+    D.setLen D.len + nR; copyMem D[^nR].addr, row, nR
+    if nR > int(dlm != '\0'):           # Do not admit an empty row & label
       if dlm != '\0':
-        if line.msplit(labIt, dlm, n=2) == 2:
-          its.add (1.0, i.uint32, 0u32, labIt[1], labIt[0], badSlc)
-      else:
-          its.add (1.0, i.uint32, 0u32, line    , emptyS  , badSlc)
-      inc i
+        if (let p = cmemchr(row.pointer, dlm, nR.csize_t); p != nil):
+          let d = p -! row              # offset(delimiter char) within new data
+          its.add (1.0,its.len.uint32,0u32, O+d+1 ..< D.len, O ..< O+d, badSlc)
+      else:                                                        
+          its.add (1.0,its.len.uint32,0u32, O     ..< O+nR , 0 ..< 0  , badSlc)
   clean = true
 
 proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
-  var pfd = TPollfd(fd: tFd)
   if q.len == 0 and clean: return its.len
-  if doIs and (let nLow = low.len; nLow < data.len):
-    low.setLen data.len
-    for i in nLow ..< data.len:
-      low[i] = if data[i] in {'A'..'Z'}: char(data[i].ord + 32) else: data[i]
-  let q = if doIs: q.toLowerAscii else: q
-  var qs: seq[MSlice]; discard msplit(q, qs)    # Split maybeLower; initSep?
+  let qs = (if doIs: q.toLowerAscii else: q).split
   for i in 0 ..< nIt:
     let s = its[i].it; let m = match(s, qs); its[i].mch = m # Save for highlight
     result += (m.b >= 0).int    # Report number of matches to caller
     its[i].size = if m.b < 0: 0 elif not doSort: 1 else: m.len.float/s.len.float
-    if (i + 1) mod 1024 == 0:   # Routinely poll for user input to maybe abort
-      pfd.events = POLLIN
-      if (let nReady = poll(pfd.addr, 1, 0); nReady != -1):
-        if nReady == 1 and (pfd.revents and (POLLIN or POLLHUP)) != 0: return -1
-      else: quit "poll", 1
   its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
   clean = false
 
@@ -224,7 +223,7 @@ proc prev(i,nIt: int): int = (if i in +1 .. nIt: last(i - 1) else: -2)
 
 template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
 
-proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
+template goDn(h, nIt: int; wrap=false) =
   if nIt == 0: return
   let nxt = pick.next(nIt)      # Move pick to next ok|wrap;Maybe Shift viewport
   if nxt == -2: (if wrap: goHm); return
@@ -234,7 +233,7 @@ proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
     if newYO != -2: yO = newYO
   else: visIx += 1
 
-proc goUp(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
+template goUp(h, nIt: int; wrap=false) =
   if nIt == 0: return
   let prv = pick.prev(nIt)      # Move pick to prev ok|wrap;Maybe Shift viewport
   if prv == -2:
@@ -263,26 +262,36 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
     for j in slc: putc s[j]             # Handle hard-tab & NUL?
     used += w
   if mOn: putp ats['m'][1]
-  for j in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
+  for _ in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
   if hL: putp ats['c'][1]
 
-var ls = newStringOfCap(240)            # Label String buffer
+var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
 proc putN(yO, pick: int): int =         # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
-  if dlm == '\0': (for j in ixs: put1 "", $its[j].it, j == pick, j)
+  if dlm == '\0': (for j in ixs: put1 "", D[its[j].it], j == pick, j)
   else:                                 #XXX CLI param 2set label TERMINAL width
     for j in ixs:
-      if prn.isNil: ls = $its[j].lab
-      else: ls.setLen prn(ls[0].addr, 240, its[j].lab.mem, its[j].lab.len).int
-      put1 ats['l'][0] & ls & ats['l'][1], $its[j].it, j == pick, j
+      if prn.isNil: ls = D[its[j].lab]
+      else:ls.setLen prn(ls.cstring,640,D[its[j].lab.a].addr,its[j].lab.len).int
+      put1 ats['l'][0] & ls & ats['l'][1], D[its[j].it], j == pick, j
   putp tparm1(parm_up_cursor, ixs.len.cint)
   return i
+
+proc putH(h: int) =
+  if h >= 7: # Stay <= 46 col for narrow terminal windows
+    put1 "", "^O OrdMchOrInp ^T      ToggleInsen  ^L Refresh"
+    put1 "", "^R RootedMchs  Alt-ENT PickLabel   ^C/^Z Usual"
+    put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
+    put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
+    put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
+    put1 "", "               ^A Beg ^E End ^U LKill ^K RKill"
+    put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
+  else: put1 "", "No Room For Help"
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
   parseIn()                             # Read input data TODO mvIn/extend poll
-  var den = "/" & $its.len & "  "
   var nIt, nMch, pick, yO, visIx: int   # O = Origin/Offset
   var (doFilt, doPicks, qGrew, doHelp) = (true, false, false, false)
   var jC = q.len                        # cursor as byte index into q[]
@@ -296,32 +305,20 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       if doPicks: doFilt = false; pick = first(0, nIt); yO = pick; visIx = 0
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
-    den[0]  = if doSort: '%' else: '/'
-    den[^2] = if doIs  : '-' else: ' '
-    den[^1] = if doRoot: '^' else: ' '
-    let hdr = ats['h'][0] & align($nMch, den.len - 2) & den & ats['h'][1]
+    let den = (if doSort: "%" else: "/") & $its.len & # /x denominator w/status
+              (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
+    let hdr = ats['h'][0] & align($nMch, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
-    if doHelp:
-      doHelp = false
-      if h >= 7: # Stay <= 46 col for narrow terminal windows
-        put1 "", "^O OrdMchOrInp ^T      ToggleInsen  ^L Refresh"
-        put1 "", "^R RootedMchs  Alt-ENT PickLabel   ^C/^Z Usual"
-        put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
-        put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
-        put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
-        put1 "", "               ^A Beg ^E End ^U LKill ^K RKill"
-        put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
-      else: put1 "", "No Room For Help"
-      discard iK.getKey
+    if doHelp: doHelp = false; putH(h); discard iK.getKey; continue
     elif doPicks and yO >= 0: nIt = putN(yO, pick)
-    putp carriage_return
+    putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
     putp cursor_normal, fatal=false; oFlush()
-    case iK.getKey  # Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
+    case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
     of CtrlO:  doSort = not doSort; doFilt = true # List parameter
-    of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitive match
-    of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-rooting/anchor
+    of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
+    of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
     of CtrlL:  getTermSize()                      # Viewport parameter
     of Enter:  return (if nIt>0: pick else: -1)   # Exits..
     of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
@@ -329,21 +326,21 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
                 else: return -1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp:       goUp yO,pick,visIx, h,nIt,true         # LIST NAVIGATION (
-    of LineDn,CtrlI: goDn yO,pick,visIx, h,nIt,true
-    of PgUp:   (for r in 1..h: goUp yO,pick,visIx, h,nIt,false) # Ok to mv visIx
-    of PgDn:   (for r in 1..h: goDn yO,pick,visIx, h,nIt,false) #..to top/bot??
+    of LineUp:       goUp h, nIt, true  # LIST NAVIGATION (
+    of LineDn,CtrlI: goDn h, nIt, true
+    of PgUp:   (for _ in 1..h: goUp h, nIt, false) # Ok to mv visIx
+    of PgDn:   (for _ in 1..h: goDn h, nIt, false) #..to top/bot?
     of Home:   goHm
-    of End:    goHm; goUp yO,pick,visIx, h,nIt,true         # LIST NAVIGATION )
-    of CtrlA:  jC = 0                   # Qry Bulk NavEdit: Start,End,Right,Left
-    of CtrlE:  jC = q.len               # Ensure jC byte idx ends @End Of UChar
-    of CtrlK:  q.delete jC ..< q.len; doFilt = true
-    of CtrlU:  q.delete 0 ..< jC; jC = 0; doFilt = true
+    of End:    goHm; goUp h, nIt, true  # LIST NAVIGATION )
+    of CtrlA:  jC = 0                   # Qry Bulk NavEdit: ^A=Start,^E=End
+    of CtrlE:  jC = q.len               # Ensure jC byte idx ends @EndOf UChar
+    of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
+    of CtrlU:  q.delete 0 ..< jC; jC = 0; doFilt = true     # ^U=Kill LHS
     of Right:  (while jC < q.len:
                   inc jC; if jC == q.len or not q[jC].isContin: break)
     of Left:   (while jC > 0 and q[(dec jC; jC)].isContin: discard)
     of Del:    (if jC < q.len:          # 1@Time Edit DEL-(Right|Left), put
-                  var n = 1; while jC + n < q.len and q[jC + n].isContin: inc n
+                  var n=1; while jC + n < q.len and q[jC + n].isContin: inc n
                   q.delete jC ..< jC + n; doFilt = true)
     of BkSpc:  (if jC > 0:
                   var n = 1; while jC >= n and q[jC - n].isContin: inc n
@@ -363,9 +360,9 @@ proc vip(n=9,alt=false,inSen=false,root=false,sort=false,term='\n',delim='\0',
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
   try    : tInit alt; i = tui(alt)                      # Run the TUI
   finally: tRestore alt
-  if i < 0: echo (if quit.len>0: quit else: qs.join(" ")); return 1 # Exit|Emit
-  echo $its[i].it
-  if label != 0: write label.cint, $its[i].lab
+  if i < 0: echo (if quit.len>0: quit else: q); return 1 # Exit|Emit
+  echo D[its[i].it]
+  if label != 0: write label.cint, D[its[i].lab]
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "initial query strings to interactively edit",
