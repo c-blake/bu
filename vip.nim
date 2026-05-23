@@ -223,7 +223,7 @@ proc prev(i,nIt: int): int = (if i in +1 .. nIt: last(i - 1) else: -2)
 
 template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
 
-template goDn(h, nIt: int; wrap=false) =
+proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
   if nIt == 0: return
   let nxt = pick.next(nIt)      # Move pick to next ok|wrap;Maybe Shift viewport
   if nxt == -2: (if wrap: goHm); return
@@ -233,7 +233,7 @@ template goDn(h, nIt: int; wrap=false) =
     if newYO != -2: yO = newYO
   else: visIx += 1
 
-template goUp(h, nIt: int; wrap=false) =
+proc goUp(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
   if nIt == 0: return
   let prv = pick.prev(nIt)      # Move pick to prev ok|wrap;Maybe Shift viewport
   if prv == -2:
@@ -326,12 +326,12 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
                 else: return -1)
     of CtrlC:  return -1                # & below exit-like suspend
     of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp:       goUp h, nIt, true  # LIST NAVIGATION (
-    of LineDn,CtrlI: goDn h, nIt, true
-    of PgUp:   (for _ in 1..h: goUp h, nIt, false) # Ok to mv visIx
-    of PgDn:   (for _ in 1..h: goDn h, nIt, false) #..to top/bot?
+    of LineUp:       goUp yO,pick,visIx, h,nIt,true   # LIST NAVIGATION (
+    of LineDn,CtrlI: goDn yO,pick,visIx, h,nIt,true
+    of PgUp:   (for _ in 1..h:goUp yO,pick,visIx, h,nIt,false) #Ok to mv visIx
+    of PgDn:   (for _ in 1..h:goDn yO,pick,visIx, h,nIt,false) #..to top/bot?
     of Home:   goHm
-    of End:    goHm; goUp h, nIt, true  # LIST NAVIGATION )
+    of End:    goHm; goUp yO,pick,visIx, h, nIt, true # LIST NAVIGATION )
     of CtrlA:  jC = 0                   # Qry Bulk NavEdit: ^A=Start,^E=End
     of CtrlE:  jC = q.len               # Ensure jC byte idx ends @EndOf UChar
     of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
