@@ -275,7 +275,7 @@ proc putN(yO, pick: int): int =         # put1 pH times from `its`
       if prn.isNil: ls = D[its[j].lab]
       else:ls.setLen prn(ls.cstring,640,D[its[j].lab.a].addr,its[j].lab.len).int
       put1 ats['l'][0] & ls & ats['l'][1], D[its[j].it], j == pick, j
-  putp tparm1(parm_up_cursor, ixs.len.cint)
+  if ixs.len > 0: putp tparm1(parm_up_cursor, ixs.len.cint)
   return i
 
 proc putH(h: int) =
