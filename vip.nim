@@ -309,7 +309,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
               (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
     let hdr = ats['h'][0] & align($nMch, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
-    if doHelp: doHelp = false; putH(h); discard iK.getKey; continue
+    if doHelp: doHelp = false; putH(h); oFlush(); discard iK.getKey; continue
     elif doPicks and yO >= 0: nIt = putN(yO, pick)
     putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
