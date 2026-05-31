@@ -32,16 +32,19 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
   ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
-  tW, tH, pH, uH: int   # T)erminal W)idth, H)eight, P)ick=avail-QryLine, U)seH
+  tW,tH,pH,uH,want: int # T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,toFill
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   its: seq[Item]        # Items
   q, D: string          # The running query; User Data Buffer
+  iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
   doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
   trm, dlm: char        # Optional label-value delimiter; '\0' => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   okx: ExtTest          # An external test function return 1 to for ok/keep
   prn: ExtPrint         # An external fn to format labels
+  Buf = 4096  # Stdin Buffer Size; Lets user balance produce-consume aggression
+  tmOut = Timeval(tv_sec: 0.Time, tv_usec: 40_000.Suseconds) # UI timeout
 
 proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
   if i notin 0..<its.len: IndexDefect !! "in ok()"
@@ -172,44 +175,74 @@ proc bySizeInpOrder(a, b: Item): int =  # 6) SORTER - MATCH SIZE, THEN INP IDX
 const badSlc = -1 .. -1                 # 7) MATCH INPUT DATA
 var clean = false
 
-proc match(s: Slice[int], qs: seq[string]): Slice[int] =
-  result.a = s.len + 1; result.b = -1   # Encodes no match
+proc match(k: int, qs: seq[string]): bool =
+  let s = its[k].it
+  its[k].mch.a = s.a + 1; its[k].mch.b = -1 # Encodes no match
   for i, q in qs:
-    if (let j = q.finda(s.a + result.b + 1, s.b); j >= 0):
-      if doRoot and i == 0 and j != s.a: return badSlc
-      result.a = min(result.a, j - s.a)
-      result.b = j - s.a + q.len - 1
-    else: return badSlc
+    if (let j = q.finda(s.a + its[k].mch.b + 1, s.b); j >= 0):
+      if doRoot and i==0 and j!=s.a:its[k].mch=badSlc;its[k].size=0;return false
+      its[k].mch.a = min(its[k].mch.a, j - s.a)
+      its[k].mch.b = j - s.a + q.len - 1
+    else: its[k].mch = badSlc; its[k].size = 0; return false
+  its[k].size = if doSort: its[k].mch.len.float/s.len.float else: 1
+  true
 
-proc parseIn =
-  for (row, nR) in stdin.getDelims(trm):
-    let nR = nR - int(row[nR-1] == trm) # Chop terminator, if present
-    let O = D.len                       # Offset of new data
-    D.setLen D.len + nR; copyMem D[^nR].addr, row, nR
-    if nR > int(dlm != '\0'):           # Do not admit an empty row & label
-      if dlm != '\0':
-        if (let p = cmemchr(row.pointer, dlm, nR.csize_t); p != nil):
-          let d = p -! row              # offset(delimiter char) within new data
-          its.add (1.0,its.len.uint32,0u32, O+d+1 ..< D.len, O ..< O+d, badSlc)
-      else:                                                        
-          its.add (1.0,its.len.uint32,0u32, O     ..< O+nR , 0 ..< 0  , badSlc)
-  clean = true
+proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
+  var rfds: TFdSet; FD_ZERO rfds; FD_SET(tFd, rfds) # rfds.incl tFd 
+  let wake = want>0 and iFd>=0          # wake up only if user types
+  if wake: FD_SET(iFd, rfds)            # Only include `iFd` if should
+  let nfds = (if wake: max(tFd, iFd) else: tFd) + 1
+  setSigWinCh true
+  let nReady = select(nfds, rfds.addr, nil, nil, if wake: tmOut.addr else: nil)
+  setSigWinCh false
+  if sigWinCh.bool: return (true, false, false)
+  result[1] = nReady > 0 and FD_ISSET(tFd, rfds) != 0
+  result[2] = nReady > 0 and want > 0 and iFd >= 0 and FD_ISSET(iFd, rfds) != 0
+
+var O = 0                               # Offset in D of current row
+proc getData =                          # Read, Parse rows, Match & maybe Sort
+  let qs = (if doIs: q.toLowerAscii else: q).split # Split buf to lines w/carry
+  var nMch = 0
+  template maybeFrameAndAdd(nR: int) =
+    if nR > int(dlm != '\0'):           # Do not admit empty `label&row`
+      if dlm != '\0':                   # Maybe split line into (label, thing)
+        if (let p = cmemchr(D[O].addr, dlm, nR.csize_t); p != nil):
+          let d = p -! D[O].addr        # Offset(delim char within new data)
+          its.add (1.0, its.len.uint32, 0u32, O+d+1 ..< O+nR, O ..< O+d, badSlc)
+      else:
+          its.add (1.0, its.len.uint32, 0u32, O     ..< O+nR, 0 ..< 0  , badSlc)
+      if q.len==0 or match(its.len - 1, qs):
+        inc nMch; clean = false #[= doSort? TODO]#
+  var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
+  let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
+  if n > 0:                             # EOF: flush carry then close
+    D.setLen N + n; let m = N + n       # Parse rows
+    while (O < m and (let p = cmemchr(D[O].addr, trm, csize_t(m - O)); p!=nil)):
+      maybeFrameAndAdd(p -! D[O].addr); O = p -! D[0].addr + 1
+  else:                                 # True EOF; Handle any trailing data
+    iFd = -1
+    if N > O:                           # At most 1 row by construction
+      D.setLen N                        # Right-size D[]
+      if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
+      maybeFrameAndAdd(D.len - O)
+    else: D.setLen N                    # Nothing to do but right-size D[]
+  if nMch > 0:
+    its.sort bySizeInpOrder, order=Descending; clean = false; want -= nMch
 
 proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
   if q.len == 0 and clean: return its.len
   let qs = (if doIs: q.toLowerAscii else: q).split
-  for i in 0 ..< nIt:
-    let s = its[i].it; let m = match(s, qs); its[i].mch = m # Save for highlight
-    result += (m.b >= 0).int    # Report number of matches to caller
-    its[i].size = if m.b < 0: 0 elif not doSort: 1 else: m.len.float/s.len.float
+  for i in 0 ..< nIt: result += match(i, qs).int # Return number of matches
   its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
   clean = false
 
 proc collect(yO, h: int): (int, seq[int]) = # 8) NAVIGATION OVER VALID/OK SYSTEM
   for i in yO ..< its.len:      # Collect up to `h` indices from `yO` to show
     if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
-    if result[1].len < h and i.ok: result[1].add i
-    result[0] = i + 1
+    if result[1].len < h:
+      if i.ok: result[1].add i
+      result[0] = i + 1
+    else: return
 
 proc first(i0, nIt: int): int = # Get index of first valid >= i0 or -2
   for i in i0 ..< nIt: (if i.ok: return i)
@@ -269,6 +302,8 @@ var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
 proc putN(yO, pick: int): int =         # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
+  want = h - ixs.len
+  if want == 0 and i >= its.len: want = 1 # full pg but hit EO its[]: need more
   if dlm == '\0': (for j in ixs: put1 "", D[its[j].it], j == pick, j)
   else:                                 #XXX CLI param 2set label TERMINAL width
     for j in ixs:
@@ -291,70 +326,76 @@ proc putH(h: int) =
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
-  parseIn()                             # Read input data TODO mvIn/extend poll
   var nIt, nMch, pick, yO, visIx: int   # O = Origin/Offset
-  var (doFilt, doPicks, qGrew, doHelp) = (true, false, false, false)
+  var (doFilt, doPicks, qGrew) = (true, false, false)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
+  want = min(uH, pH)
   while true:
     let h = min(uH, pH)
     if not qGrew: nIt = its.len         # If q grew, then filterQuit can only..
     qGrew = false                       #..be MORE restrictive => Use last nIt.
     if doFilt:
-      nMch = filterQuit(nIt); doPicks = nMch >= 0
-      if doPicks: doFilt = false; pick = first(0, nIt); yO = pick; visIx = 0
+      nMch = filterQuit(nIt); doPicks = nMch >= 0; want = max(want, h - nMch)
+      if doPicks: doFilt = false; pick = first(0,nIt); yO = 0.max pick; visIx=0
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
     let den = (if doSort: "%" else: "/") & $its.len & # /x denominator w/status
               (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
     let hdr = ats['h'][0] & align($nMch, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
-    if doHelp: doHelp = false; putH(h); oFlush(); discard iK.getKey; continue
-    elif doPicks and yO >= 0: nIt = putN(yO, pick)
+    if yO >= 0: discard putN(yO, pick)
     putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
     putp cursor_normal, fatal=false; oFlush()
-    case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
-    of CtrlO:  doSort = not doSort; doFilt = true # List parameter
-    of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
-    of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
-    of CtrlL:  getTermSize()                      # Viewport parameter
-    of Enter:  return (if nIt>0: pick else: -1)   # Exits..
-    of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
-                                    its[pick].it, badSlc); return its.len - 1)
-                else: return -1)
-    of CtrlC:  return -1                # & below exit-like suspend
-    of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-    of LineUp:       goUp yO,pick,visIx, h,nIt,true   # LIST NAVIGATION (
-    of LineDn,CtrlI: goDn yO,pick,visIx, h,nIt,true
-    of PgUp:   (for _ in 1..h:goUp yO,pick,visIx, h,nIt,false) #Ok to mv visIx
-    of PgDn:   (for _ in 1..h:goDn yO,pick,visIx, h,nIt,false) #..to top/bot?
-    of Home:   goHm
-    of End:    goHm; goUp yO,pick,visIx, h, nIt, true # LIST NAVIGATION )
-    of CtrlA:  jC = 0                   # Qry Bulk NavEdit: ^A=Start,^E=End
-    of CtrlE:  jC = q.len               # Ensure jC byte idx ends @EndOf UChar
-    of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
-    of CtrlU:  q.delete 0 ..< jC; jC = 0; doFilt = true     # ^U=Kill LHS
-    of Right:  (while jC < q.len:
-                  inc jC; if jC == q.len or not q[jC].isContin: break)
-    of Left:   (while jC > 0 and q[(dec jC; jC)].isContin: discard)
-    of Del:    (if jC < q.len:          # 1@Time Edit DEL-(Right|Left), put
-                  var n=1; while jC + n < q.len and q[jC + n].isContin: inc n
-                  q.delete jC ..< jC + n; doFilt = true)
-    of BkSpc:  (if jC > 0:
-                  var n = 1; while jC >= n and q[jC - n].isContin: inc n
-                  let slice = max(0, jC - n) ..< jC
-                  q.delete slice; jC -= slice.len; doFilt = true)
-    of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
-    of NoBind: doHelp = true
+    let (winch, tReady, dReady) = ioCheck()
+    if winch: sigWinCh = 0; getTermSize(); continue
+    if tReady:                          # terminal input (priority)
+      let nNv = if q.len > 0: nMch else: nIt        # For navigation
+      case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
+      of CtrlO:  doSort = not doSort; doFilt = true # List parameter
+      of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
+      of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
+      of CtrlL:  getTermSize()                      # Viewport parameter
+      of Enter:  return (if nIt>0: pick else: -1)   # Exits..
+      of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
+                                      its[pick].it, badSlc); return its.len - 1)
+                  else: return -1)
+      of CtrlC:  return -1              # & below exit-like suspend
+      of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
+      of LineUp:       goUp yO,pick,visIx, h,nNv,true   # LIST NAVIGATION (
+      of LineDn,CtrlI: goDn yO,pick,visIx, h,nNv,true
+      of PgUp:   (for _ in 1..h:goUp yO,pick,visIx, h,nNv,false) #Ok to mv visIx
+      of PgDn:   (for _ in 1..h:goDn yO,pick,visIx, h,nNv,false) #..to top/bot?
+      of Home:   goHm
+      of End:    goHm; goUp yO,pick,visIx, h,nNv,true   # LIST NAVIGATION )
+      of CtrlA:  jC = 0                 # Qry Bulk NavEdit: ^A=Start,^E=End
+      of CtrlE:  jC = q.len             # Ensure jC byte idx ends @EndOf UChar
+      of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
+      of CtrlU:  q.delete 0 ..< jC; jC = 0; doFilt = true     # ^U=Kill LHS
+      of Right:  (while jC < q.len:
+                    inc jC; if jC == q.len or not q[jC].isContin: break)
+      of Left:   (while jC > 0 and q[(dec jC; jC)].isContin: discard)
+      of Del:    (if jC < q.len:        # 1@Time Edit DEL-(Right|Left), put
+                    var n=1; while jC + n < q.len and q[jC + n].isContin: inc n
+                    q.delete jC ..< jC + n; doFilt = true)
+      of BkSpc:  (if jC > 0:
+                    var n = 1; while jC >= n and q[jC - n].isContin: inc n
+                    let slice = max(0, jC - n) ..< jC
+                    q.delete slice; jC -= slice.len; doFilt = true)
+      of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
+      of NoBind: putH(h); oFlush(); discard iK.getKey
+    elif dReady:                        # data input (not done if viewport full)
+      getData(); doFilt = pick < 0 and its.len > 0 or q.len > 0
 
-const ess: seq[string] = @[]
-proc vip(n=9,alt=false,inSen=false,root=false,sort=false,term='\n',delim='\0',
- label=0,quit="", keep="",print="", colors=ess,color=ess, qs: seq[string]): int=
+proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
+    delim='\0', label=0, quit="", buf=4096, TmOut=50, keep="", print="",
+    colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort
+  var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort; Buf = buf
   trm = term; dlm = delim; doIs = inSen; doRoot = root
+  tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
@@ -375,6 +416,8 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "delim" : "Pre-1st-*THIS* = Context Label; Post=AnItem",
   "label" : "emit parsed label to this file descriptor",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
+  "buf"   : "bytes for stdin read buffer",
+  "TmOut" : "UI timeout in milliseconds (50ms=~20fps)",
   "keep"  : "Eg `-klibvip.so:cdable` ptr,len->cint==1",
   "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
