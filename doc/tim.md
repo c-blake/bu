@@ -110,18 +110,18 @@ to "/dev/null" for brevity; Both command lines need super-user to run and are
 designed to maximize relative accuracy, not maximize speed:
 ```
 $ cd /sys/devices/system/cpu/intel_pstate; cat min_perf_pct > max_perf_pct
-$ chrt 99 taskset -c 3 env -i CLIGEN=/n $lb/tim -w1 -k2 -n9 -m9 -o9 -uμ "/bin/dash -c exit" "/bin/bash -c exit" "/bin/dash -c exit" "/bin/bash -c exit"
-1254.8 +- 6.2 μ (AlreadySubtracted)Overhead
-1062 +- 14 μ    /bin/dash -c exit
-2050 +- 12 μ    /bin/bash -c exit
-1054 +- 15 μ    /bin/dash -c exit
-2034 +- 13 μ    /bin/bash -c exit
+$ chrt 99 taskset -c 3 env -i LC_PM=" ± " CLIGEN=/n $lb/tim -w1 -k2 -n9 -m9 -o9 -uμ "/bin/dash -c exit" "/bin/bash -c exit" "/bin/dash -c exit" "/bin/bash -c exit"
+1254.8 ± 6.2 μ (AlreadySubtracted)Overhead
+1062 ± 14 μ    /bin/dash -c exit
+2050 ± 12 μ    /bin/bash -c exit
+1054 ± 15 μ    /bin/dash -c exit
+2034 ± 13 μ    /bin/bash -c exit
 $ !!
-1259.3 +- 6.6 μ (AlreadySubtracted)Overhead
-1061 +- 15 μ    /bin/dash -c exit
-2023 +- 14 μ    /bin/bash -c exit
-1055 +- 16 μ    /bin/dash -c exit
-2042 +- 12 μ    /bin/bash -c exit
+1259.3 ± 6.6 μ (AlreadySubtracted)Overhead
+1061 ± 15 μ    /bin/dash -c exit
+2023 ± 14 μ    /bin/bash -c exit
+1055 ± 16 μ    /bin/dash -c exit
+2042 ± 12 μ    /bin/bash -c exit
 $ echo 100 > /sys/devices/system/cpu/intel_pstate/max_perf_pct # restore DVS
 ```
 
@@ -130,18 +130,18 @@ The overhead time itself has (1259.3 ± 6.6) - (1254.8 ± 6.2) = 4.5 ± 9.1[^7] 
 "similar" error scale from trial to trial.  This can be made easier to more|less
 just read-off reproduction by grouping and adding some blanks:
 ```
-1254.8 +- 6.2 μ (AlreadySubtracted)Overhead
-1259.3 +- 6.6 μ (AlreadySubtracted)Overhead
+1254.8 ± 6.2 μ (AlreadySubtracted)Overhead
+1259.3 ± 6.6 μ (AlreadySubtracted)Overhead
 
-1062 +- 14 μ    /bin/dash -c exit
-1061 +- 15 μ    /bin/dash -c exit
-1054 +- 15 μ    /bin/dash -c exit
-1055 +- 16 μ    /bin/dash -c exit
+1062 ± 14 μ    /bin/dash -c exit
+1061 ± 15 μ    /bin/dash -c exit
+1054 ± 15 μ    /bin/dash -c exit
+1055 ± 16 μ    /bin/dash -c exit
 
-2050 +- 12 μ    /bin/bash -c exit
-2023 +- 14 μ    /bin/bash -c exit
-2034 +- 13 μ    /bin/bash -c exit
-2042 +- 12 μ    /bin/bash -c exit
+2050 ± 12 μ    /bin/bash -c exit
+2023 ± 14 μ    /bin/bash -c exit
+2034 ± 13 μ    /bin/bash -c exit
+2042 ± 12 μ    /bin/bash -c exit
 ```
 If anything, current error estimates look big.  They are currently more an upper
 bound - sdev(estimate over all batches) - *unreduced* by count of batches (or
@@ -258,7 +258,7 @@ dispatch overhead or want 3.21x faster "ratios".
 [^8]: Particle physics has "5 sigma" rules of thumb to declare results.  5 seems
 too small for a hostile noise context.  10..15 is more about right, but again
 leptokurtosis makes sigma alone inadequate.  I am not against conf.ival reports,
-but since so few developers already understand +- / hypothesis testing, this
+but since so few developers already understand ± / hypothesis testing, this
 would probably need to be a (`~/.config/tim`-tunable) option not on by default.
 
 [^9]: `tim` may soon grow some kind of [2-sample or K-sample Anderson Darling](
