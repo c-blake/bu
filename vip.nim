@@ -188,7 +188,7 @@ proc match(k: int, qs: seq[string]): bool =
   true
 
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
-  var rfds: TFdSet; FD_ZERO rfds; FD_SET(tFd, rfds) # rfds.incl tFd 
+  var rfds: TFdSet; FD_ZERO rfds; FD_SET(tFd, rfds) # rfds.incl tFd
   let wake = want>0 and iFd>=0          # wake up only if user types
   if wake: FD_SET(iFd, rfds)            # Only include `iFd` if should
   let nfds = (if wake: max(tFd, iFd) else: tFd) + 1
@@ -299,7 +299,7 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   if hL: putp ats['c'][1]
 
 var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
-proc putN(yO, pick: int): int =         # put1 pH times from `its`
+proc putN(yO, pick: int) =              # put1 pH times from `its`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
   want = h - ixs.len
@@ -311,7 +311,6 @@ proc putN(yO, pick: int): int =         # put1 pH times from `its`
       else:ls.setLen prn(ls.cstring,640,D[its[j].lab.a].addr,its[j].lab.len).int
       put1 ats['l'][0] & ls & ats['l'][1], D[its[j].it], j == pick, j
   if ixs.len > 0: putp tparm1(parm_up_cursor, ixs.len.cint)
-  return i
 
 proc putH(h: int) =
   if h >= 7: # Stay <= 46 col for narrow terminal windows
@@ -344,7 +343,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
               (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
     let hdr = ats['h'][0] & align($nMch, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
-    if yO >= 0: discard putN(yO, pick)
+    if yO >= 0: putN(yO, pick)
     putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
