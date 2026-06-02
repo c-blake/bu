@@ -31,6 +31,7 @@ type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Item = tuple[size: float; ix, ok: uint32; it, lab, mch: Slice[int]] # 64B
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
   ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
+const dlm0 = 'a'        # a)bsent delim spec & pretty useless `char` for that
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tW,tH,pH,uH,want: int # T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,toFill
   tio: Termios          # Terminal IO State
@@ -39,7 +40,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   q, D: string          # The running query; User Data Buffer
   iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
   doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
-  trm, dlm: char        # Optional label-value delimiter; '\0' => none
+  trm, dlm: char        # Optional label-value delimiter; dlm0 => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   okx: ExtTest          # An external test function return 1 to for ok/keep
   prn: ExtPrint         # An external fn to format labels
@@ -204,8 +205,8 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
   let qs = (if doIs: q.toLowerAscii else: q).split # Split buf to lines w/carry
   var nMch = 0
   template maybeFrameAndAdd(nR: int) =
-    if nR > int(dlm != '\0'):           # Do not admit empty `label&row`
-      if dlm != '\0':                   # Maybe split line into (label, thing)
+    if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
+      if dlm != dlm0:                   # Maybe split line into (label, thing)
         if (let p = cmemchr(D[O].addr, dlm, nR.csize_t); p != nil):
           let d = p -! D[O].addr        # Offset(delim char within new data)
           its.add (1.0, its.len.uint32, 0u32, O+d+1 ..< O+nR, O ..< O+d, badSlc)
@@ -282,7 +283,7 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
   let m = if i >= 0: its[i].mch else: badSlc    # `m` sez underline extent
   if hL: putp ats['c'][0]
-  if dlm != '\0' or l.len > 0:
+  if dlm != dlm0 or l.len > 0:
     for (slc, w) in l.printedChars:
       if used + w > tW div 2: break     # Do not use more than tW/2 for label
       for j in slc: putc l[j]           # Handle hard-tab?
@@ -304,7 +305,7 @@ proc putN(yO, pick: int) =              # put1 pH times from `its`
   let (i, ixs) = collect(yO, h)
   want = h - ixs.len
   if want == 0 and i >= its.len: want = 1 # full pg but hit EO its[]: need more
-  if dlm == '\0': (for j in ixs: put1 "", D[its[j].it], j == pick, j)
+  if dlm == dlm0: (for j in ixs: put1 "", D[its[j].it], j == pick, j)
   else:                                 #XXX CLI param 2set label TERMINAL width
     for j in ixs:
       if prn.isNil: ls = D[its[j].lab]
@@ -389,7 +390,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       getData(); doFilt = pick < 0 and its.len > 0 or q.len > 0
 
 proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
-    delim='\0', label=0, quit="", buf=4096, TmOut=50, keep="", print="",
+    delim=dlm0, label=0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort; Buf = buf
@@ -412,7 +413,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
   "sort"  : "sort by match score,not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
-  "delim" : "Pre-1st-*THIS* = Context Label; Post=AnItem",
+  "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "label" : "emit parsed label to this file descriptor",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
   "buf"   : "bytes for stdin read buffer",
