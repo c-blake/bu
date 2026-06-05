@@ -28,15 +28,27 @@ proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key=enum CtrlO,CtrlI,CtrlT,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
    PgDn,Home,End,CtrlA,CtrlE,CtrlU,CtrlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
-  Item = tuple[size: float; ix, ok: uint32; it, lab, mch: Slice[int]] # 64B
+  Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
+  Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
   ExtPrint = proc(o: pointer,nO: clong; i: pointer,nI: clong): clong {.noconv.}
+proc `+`(a, b: Mix): Mix {.borrow.}     # Somewhat verbose borrowing to help..
+proc `-`(a, b: Mix): Mix {.borrow.}     #..check 1 of 4..6 coordinate styles..
+proc `==`(a, b: Mix): bool {.borrow.}   #..in play in various places: x,y term,
+proc `<`(a, b: Mix): bool {.borrow.}    #..unfiltered,filtered items,viewport,
+proc `<=`(a, b: Mix): bool {.borrow.}   #..and ok-validated.
+proc `[]`(x: seq[Match], j: Mix): Match = x[j.int]
+proc `[]=`(x: var seq[Match], j: Mix, m: Match) = x[j.int] = m
 const dlm0 = 'a'        # a)bsent delim spec & pretty useless `char` for that
+const nD=1; const nT=1  # Delimiter & Terminator always 1 byte for now
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
-  tW,tH,pH,uH,want: int # T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,toFill
+  tW,tH,pH,uH,want,Dused:int #T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,need
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
-  its: seq[Item]        # Items
+  itA: seq[int]         # 3 Parallel arrays: Item offs into D[]; len() for .len
+  okS: seq[uint8]       #   Status of item
+  labA: seq[int]        #   Label offs into D[] (label.b = itA[] - nD)
+  ms: seq[Match]        # Matches against current query (of what has been read)
   q, D: string          # The running query; User Data Buffer
   iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
   doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
@@ -46,12 +58,19 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   prn: ExtPrint         # An external fn to format labels
   Buf = 4096  # Stdin Buffer Size; Lets user balance produce-consume aggression
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 40_000.Suseconds) # UI timeout
+when defined bench:
+  import std/times; var t0, t1: float
+proc itB(i: int): int =
+  if i==itA.len-1: Dused-nT-1 elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
+proc labB(i: int): int   = itA[i]-nD-1
+proc it(i: int): string  = D[itA[i]..itB(i)]
+proc lab(i: int): string = D[labA[i]..labB(i)]
 
 proc ok(i: int): bool = # validation caching system: 0 untested, 1 bad, 2 good
-  if i notin 0..<its.len: IndexDefect !! "in ok()"
-  if its[i].ok == 0:
-    its[i].ok = 1+uint32(okx.isNil or okx(D[its[i].it.a].addr,its[i].it.len)==1)
-  bool(its[i].ok - 1)
+  if i notin 0..<itA.len: IndexDefect !! "in ok()"
+  if okS[i] == 0:
+    okS[i] = 1 + uint8(okx.isNil or okx(D[itA[i]].addr, i.itB - itA[i] + 1)==1)
+  bool(okS[i] - 1)
 
 proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
   const def = @["h bold;-bold", "q WHITE on_blue;-bg -fg", "c inverse;-inverse",
@@ -171,22 +190,23 @@ func findIs(s, sub: string; start: Natural = 0; last: int = -1): int =
   return -1
 template finda(q,a,b): untyped = (if doIs:D.findIs(q,a,b)else:D.find(q,a,b))
 
-proc bySizeInpOrder(a, b: Item): int =  # 6) SORTER - MATCH SIZE, THEN INP IDX
+proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
   let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
-const badSlc = -1 .. -1                 # 7) MATCH INPUT DATA
+const badIx = uint32.high               # 7) MATCH INPUT DATA
 var clean = false
 
-proc match(k: int, qs: seq[string]): bool =
-  let s = its[k].it
-  its[k].mch.a = s.a + 1; its[k].mch.b = -1 # Encodes no match
+proc match(k: int, qs: seq[string]): Match =
+  result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
+  if q.len == 0: result.ix = k.uint32; return #TODO .size?
+  var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
   for i, q in qs:
-    if (let j = q.finda(s.a + its[k].mch.b + 1, s.b); j >= 0):
-      if doRoot and i==0 and j!=s.a:its[k].mch=badSlc;its[k].size=0;return false
-      its[k].mch.a = min(its[k].mch.a, j - s.a)
-      its[k].mch.b = j - s.a + q.len - 1
-    else: its[k].mch = badSlc; its[k].size = 0; return false
-  its[k].size = if doSort: its[k].mch.len.float/s.len.float else: 1
-  true
+    let j = q.finda(s.a, s.b)
+    if j < 0 or (doRoot and i==0 and j != s.a): return
+    result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
+    result.mch.b = uint32(j - itA[k] + q.len - 1)
+    s.a = j + q.len
+  result.size = if doSort: result.mch.len.float32/sLen else: 1
+  result.ix = k.uint32
 
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   var rfds: TFdSet; FD_ZERO rfds; FD_SET(tFd, rfds) # rfds.incl tFd
@@ -203,17 +223,17 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
 var O = 0                               # Offset in D of current row
 proc getData =                          # Read, Parse rows, Match & maybe Sort
   let qs = (if doIs: q.toLowerAscii else: q).split # Split buf to lines w/carry
-  var nMch = 0
+  let msLen0 = ms.len
   template maybeFrameAndAdd(nR: int) =
     if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
       if dlm != dlm0:                   # Maybe split line into (label, thing)
         if (let p = cmemchr(D[O].addr, dlm, nR.csize_t); p != nil):
-          let d = p -! D[O].addr        # Offset(delim char within new data)
-          its.add (1.0, its.len.uint32, 0u32, O+d+1 ..< O+nR, O ..< O+d, badSlc)
+          okS.add 0u8; itA.add O + (p -! D[O].addr) + nD; labA.add O
       else:
-          its.add (1.0, its.len.uint32, 0u32, O     ..< O+nR, 0 ..< 0  , badSlc)
-      if q.len==0 or match(its.len - 1, qs):
-        inc nMch; clean = false #[= doSort? TODO]#
+        okS.add 0u8; itA.add O
+      Dused = O + nR - 1
+      let m=if q.len>0: match(itA.len-1,qs)else:(1,uint32(itA.len-1),1u32..0u32)
+      if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
   let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
   if n > 0:                             # EOF: flush carry then close
@@ -227,71 +247,77 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  if nMch > 0:
-    its.sort bySizeInpOrder, order=Descending; clean = false; want -= nMch
+  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder, Descending; clean=false
 
-proc filterQuit(nIt=0): int =   # Filter 1st `nIt` using current query `q`
-  if q.len == 0 and clean: return its.len
+proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
   let qs = (if doIs: q.toLowerAscii else: q).split
-  for i in 0 ..< nIt: result += match(i, qs).int # Return number of matches
-  its.sort bySizeInpOrder, order=Descending # order couples w/`result` calc.
-  clean = false
+  if qGrew:                             # Can optimize by only re-filtering..
+    var j=0.Mix; while j < ms.len.Mix:  #..the short(er) list of matches.
+      let m = match(ms[j].ix.int, qs)
+      if m.ix == badIx: ms.del j.int
+      else            : ms[j] = m; j = j + 1.Mix
+  else:                                 # query shrank: filter all `it()`
+    ms.setLen 0
+    for i in 0 ..< itA.len:
+      let m = match(i, qs)
+      if m.ix != badIx: ms.add m
+  if doSort: ms.sort bySizeInpOrder, order=Descending
 
-proc collect(yO, h: int): (int, seq[int]) = # 8) NAVIGATION OVER VALID/OK SYSTEM
-  for i in yO ..< its.len:      # Collect up to `h` indices from `yO` to show
-    if q.len>0 and its[i].size==0: return   # Have a query & at end of matches
+proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 8) OK MATCH NAVIGATION
+  for j in yO.int ..< ms.len:   # Collect up to `h` indices from `yO` to show
     if result[1].len < h:
-      if i.ok: result[1].add i
-      result[0] = i + 1
+      let ix = ms[j].ix.int
+      if ix.ok: result[1].add (j.Mix, ix)
+      result[0] = ix + 1
     else: return
 
-proc first(i0, nIt: int): int = # Get index of first valid >= i0 or -2
-  for i in i0 ..< nIt: (if i.ok: return i)
-  return -2
-proc next(i,nIt: int): int = (if i in -1 .. nIt - 2: first(i + 1, nIt) else: -2)
+proc first(j0: Mix): Mix =      # Get index of first valid >= i0 or -2
+  for j in j0.int ..< ms.len: (if ms[j].ix.int.ok: return j.Mix)
+  return Mix(-2)
+proc next(j:Mix): Mix = (if j.int in -1..ms.len-2: first(j+1.Mix) else: Mix(-2))
 
-proc last(i0: int): int =       # Get index of last valid <= i0 or -2
-  for i in countdown(i0, 0, 1): (if i.ok: return i)
-  return -2
-proc prev(i,nIt: int): int = (if i in +1 .. nIt: last(i - 1) else: -2)
+proc last(j0: Mix): Mix =       # Get index of last valid <= i0 or -2
+  for j in countdown(j0.int, 0, 1): (if ms[j].ix.int.ok: return j.Mix)
+  return Mix(-2)
+proc prev(j:Mix): Mix = (if j.int in +1..ms.len: last(j-1.Mix) else: Mix(-2))
 
-template goHm = (if nIt > 0: (pick = first(0, nIt); yO = pick; visIx = 0))
+template goHm = (if ms.len > 0: (pick = first(0.Mix); yO = pick; visIx = 0))
 
-proc goDn(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
-  if nIt == 0: return
-  let nxt = pick.next(nIt)      # Move pick to next ok|wrap;Maybe Shift viewport
-  if nxt == -2: (if wrap: goHm); return
+proc goDn(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
+  if ms.len == 0: return
+  let nxt = pick.next           # Move pick to next ok|wrap;Maybe Shift viewport
+  if nxt == Mix(-2): (if wrap: goHm); return
   pick = nxt
-  if visIx == min(h, nIt) - 1:
-    let newYO = yO.next(nIt)    # Shift yO down one ok step
-    if newYO != -2: yO = newYO
+  if visIx == min(h, ms.len) - 1:
+    let newYO = yO.next         # Shift yO down one ok step
+    if newYO != Mix(-2): yO = newYO
   else: visIx += 1
 
-proc goUp(yO, pick, visIx: var int; h, nIt: int; wrap=false) =
-  if nIt == 0: return
-  let prv = pick.prev(nIt)      # Move pick to prev ok|wrap;Maybe Shift viewport
-  if prv == -2:
+proc goUp(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
+  if ms.len == 0: return
+  let prv = pick.prev           # Move pick to prev ok|wrap;Maybe Shift viewport
+  if prv == Mix(-2):
     if wrap:
-      pick = last(nIt - 1); visIx = min(h, nIt) - 1; yO = pick
-      for r in 1..<h: (let newYO = yO.prev(nIt); if newYO != -2: yO = newYO)
+      pick = last(Mix(ms.len - 1)); visIx = min(h, ms.len) - 1; yO = pick
+      for _ in 1..<h: (let newYO = yO.prev; if newYO != Mix(-2): yO = newYO)
+      want = 0 # suppress getData post wrap; User is navigating, not following
     return
   pick = prv
   if visIx > 0: visIx -= 1
   else: yO = pick
 
-proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
+proc put1(l,s:string; hL=false,j=Mix(-1))= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
-  let m = if i >= 0: its[i].mch else: badSlc    # `m` sez underline extent
   if hL: putp ats['c'][0]
   if dlm != dlm0 or l.len > 0:
     for (slc, w) in l.printedChars:
       if used + w > tW div 2: break     # Do not use more than tW/2 for label
-      for j in slc: putc l[j]           # Handle hard-tab?
+      for c in slc: putc l[c]           # Handle hard-tab?
       used += w
   for (slc, w) in s.printedChars:
-    if m.b >= 0:
-      if slc.b >= m.a and not mOn: putp ats['m'][0]; mOn = true
-      if slc.a >  m.b            : putp ats['m'][1]; mOn = false
+    if j >= 0.Mix and ms[j].ix != badIx:
+      if slc.b >= ms[j].mch.a.int and not mOn: putp ats['m'][0]; mOn = true
+      if slc.a >  ms[j].mch.b.int            : putp ats['m'][1]; mOn = false
     if used + w > tW: break             # Do not use more than tW
     for j in slc: putc s[j]             # Handle hard-tab & NUL?
     used += w
@@ -300,17 +326,17 @@ proc put1(l,s: string; hL=false,i= -1)= # 9) RENDERING
   if hL: putp ats['c'][1]
 
 var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
-proc putN(yO, pick: int) =              # put1 pH times from `its`
+proc putN(yO, pick: Mix) =              # put1 pH times from `itA`
   let h = min(uH, pH)
   let (i, ixs) = collect(yO, h)
   want = h - ixs.len
-  if want == 0 and i >= its.len: want = 1 # full pg but hit EO its[]: need more
-  if dlm == dlm0: (for j in ixs: put1 "", D[its[j].it], j == pick, j)
+  if want == 0 and i >= itA.len: want = 1 # full pg but hit EO its[]: need more
+  if dlm == dlm0: (for (j, i) in ixs: put1 "", it(i), j == pick, j)
   else:                                 #XXX CLI param 2set label TERMINAL width
-    for j in ixs:
-      if prn.isNil: ls = D[its[j].lab]
-      else:ls.setLen prn(ls.cstring,640,D[its[j].lab.a].addr,its[j].lab.len).int
-      put1 ats['l'][0] & ls & ats['l'][1], D[its[j].it], j == pick, j
+    for (j, i) in ixs:
+      if prn.isNil: ls = lab(i)
+      else:ls.setLen prn(ls.cstring,640, D[labA[i]].addr, labB(i)-labA[i]+1).int
+      put1 ats['l'][0] & ls & ats['l'][1], it(i), j == pick, j
   if ixs.len > 0: putp tparm1(parm_up_cursor, ixs.len.cint)
 
 proc putH(h: int) =
@@ -326,50 +352,48 @@ proc putH(h: int) =
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
-  var nIt, nMch, pick, yO, visIx: int   # O = Origin/Offset
-  var (doFilt, doPicks, qGrew) = (true, false, false)
+  var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
+  var (doFilt, qGrew) = (true, false)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
   want = min(uH, pH)
   while true:
     let h = min(uH, pH)
-    if not qGrew: nIt = its.len         # If q grew, then filterQuit can only..
-    qGrew = false                       #..be MORE restrictive => Use last nIt.
     if doFilt:
-      nMch = filterQuit(nIt); doPicks = nMch >= 0; want = max(want, h - nMch)
-      if doPicks: doFilt = false; pick = first(0,nIt); yO = 0.max pick; visIx=0
+      filterQuit(qGrew); qGrew = false; want = want.max(h - ms.len)
+      if ms.len>0: doFilt=false; pick=0.Mix.first; yO=0.Mix.max(pick); visIx=0
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
-    let den = (if doSort: "%" else: "/") & $its.len & # /x denominator w/status
+    let den = (if doSort: "%" else: "/") & $itA.len & # /x denominator w/status
               (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
-    let hdr = ats['h'][0] & align($nMch, den.len - 3) & den & ats['h'][1]
+    let hdr = ats['h'][0] & align($ms.len, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
-    if yO >= 0: putN(yO, pick)
+    putN(yO, pick)
     putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
     putp cursor_normal, fatal=false; oFlush()
+    when defined bench: (if t1==0 and (iFd < 0 or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; getTermSize(); continue
     if tReady:                          # terminal input (priority)
-      let nNv = if q.len > 0: nMch else: nIt        # For navigation
       case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
       of CtrlO:  doSort = not doSort; doFilt = true # List parameter
       of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtrlL:  getTermSize()                      # Viewport parameter
-      of Enter:  return (if nIt>0: pick else: -1)   # Exits..
-      of AltEnt: (if nIt>0: (its.add (1.0, its.len.uint32, 2u32, its[pick].lab,
-                                      its[pick].it, badSlc); return its.len - 1)
-                  else: return -1)
+      of Enter:  return(if ms.len>0: ms[pick].ix.int else: -1) # 2exits;Basic&..
+      of AltEnt: (if ms.len==0: return -1 else: (   #..itLab swapped row return.
+        labA.add D.len; D.add it(ms[pick].ix.int); D.add dlm; itA.add D.len;
+        D.add lab(ms[pick].ix.int); D.add trm; return itA.len - 1) )
       of CtrlC:  return -1              # & below exit-like suspend
       of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-      of LineUp:       goUp yO,pick,visIx, h,nNv,true   # LIST NAVIGATION (
-      of LineDn,CtrlI: goDn yO,pick,visIx, h,nNv,true
-      of PgUp:   (for _ in 1..h:goUp yO,pick,visIx, h,nNv,false) #Ok to mv visIx
-      of PgDn:   (for _ in 1..h:goDn yO,pick,visIx, h,nNv,false) #..to top/bot?
+      of LineUp:       goUp yO,pick,visIx, h,true   # LIST NAVIGATION (
+      of LineDn,CtrlI: goDn yO,pick,visIx, h,true
+      of PgUp:   (for _ in 1..h: goUp yO,pick,visIx, h,false) #Ok to mv visIx to
+      of PgDn:   (for _ in 1..h: goDn yO,pick,visIx, h,false) #..top/bot(page)?
       of Home:   goHm
-      of End:    goHm; goUp yO,pick,visIx, h,nNv,true   # LIST NAVIGATION )
+      of End:    goHm; goUp yO,pick,visIx, h,true   # LIST NAVIGATION )
       of CtrlA:  jC = 0                 # Qry Bulk NavEdit: ^A=Start,^E=End
       of CtrlE:  jC = q.len             # Ensure jC byte idx ends @EndOf UChar
       of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
@@ -387,12 +411,13 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
     elif dReady:                        # data input (not done if viewport full)
-      getData(); doFilt = pick < 0 and its.len > 0 or q.len > 0
+      getData(); doFilt = pick.int < 0 and itA.len > 0
 
 proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
     delim=dlm0, label=0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
+  when defined bench: t0 = epochTime()
   var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort; Buf = buf
   trm = term; dlm = delim; doIs = inSen; doRoot = root
   tmOut.tv_usec = Suseconds(TmOut*1000)
@@ -401,9 +426,10 @@ proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
   try    : tInit alt; i = tui(alt)                      # Run the TUI
   finally: tRestore alt
+  when defined bench: tFd.write $int((t1 - t0)*1e6)&" usec to EOF"&"\n"
   if i < 0: echo (if quit.len>0: quit else: q); return 1 # Exit|Emit
-  echo D[its[i].it]
-  if label != 0: write label.cint, D[its[i].lab]
+  echo it(i)
+  if label != 0: write label.cint, lab(i)
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "initial query strings to interactively edit",
