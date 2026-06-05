@@ -49,7 +49,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   okS: seq[uint8]       #   Status of item
   labA: seq[int]        #   Label offs into D[] (label.b = itA[] - nD)
   ms: seq[Match]        # Matches against current query (of what has been read)
-  q, D: string          # The running query; User Data Buffer
+  q, D, Di: string      # Running query, user data, maybe .lowerAscii user data
   iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
   doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
   trm, dlm: char        # Optional label-value delimiter; dlm0 => none
@@ -175,33 +175,33 @@ proc getKey(ik: var string): Key =              # partial key
     ik.add getc()                               #..Num(MSBs in 1st byte).
   return Normal
 
-func findIs(s, sub: string; start: Natural = 0; last: int = -1): int =
-  let last = if last < 0: s.high else: last # Just a dumb placeholder.
-  let nlen = sub.len          # Faster idea: memchr/find both cases IF even diff
-  let hlen = last - start + 1 # Then start @min(two indices) & cmp char-by-char.
-  if nlen == 0: return start  # But really a case-folding Boyer-Moore-Horspool..
-  if nlen > hlen: return -1   #..with a pre-computed shift table is best.  BUT..
-  let n0 = sub[0].toLowerAscii # REALLY a bi/tri-gram index is best of all.
-  let limit = last - nlen + 1   # last position where sub can start
-  for i in start .. limit:
-    if s[i].toLowerAscii == n0:
-      var j = 1; (while j < nlen and s[i+j].toLowerAscii == sub[j]: inc j)
-      if j == nlen: return i
-  return -1
-template finda(q,a,b): untyped = (if doIs:D.findIs(q,a,b)else:D.find(q,a,b))
+var qs, qis: seq[string]      # A tri-gram idx might be better, but this..
+var sqs, sqi: seq[SkipTable]  #..is ok up to a few million items.
+var everIs = false    # Let insens-finders be fast w/sens not pay double D[] mem
+proc qUp =
+  qs = q.split; qis = q.toLowerAscii.split
+  sqs.setLen 0; for q in qs: sqs.add q.initSkipTable
+  sqi.setLen 0; for q in qis: sqi.add q.initSkipTable
+proc DiUp = # Could be "more bulk"/have longer loops but this isolates code.
+  if (let DiLen0 = Di.len; everIs and DiLen0 < D.len):
+    Di.setLen D.len; copyMem Di[DiLen0].addr, D[DiLen0].addr, D.len - DiLen0
+    for c in DiLen0 ..< Di.len: Di[c] = Di[c].toLowerAscii
+template finda(c, a, b): untyped =
+  if doIs: (DiUp(); sqi[c].find(Di, qis[c], a, b))
+  else: sqs[c].find(D, qs[c], a, b)
 
 proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
   let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
 const badIx = uint32.high               # 7) MATCH INPUT DATA
 var clean = false
 
-proc match(k: int, qs: seq[string]): Match =
+proc match(k: int): Match =
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
   if q.len == 0: result.ix = k.uint32; return #TODO .size?
   var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
-  for i, q in qs:
-    let j = q.finda(s.a, s.b)
-    if j < 0 or (doRoot and i==0 and j != s.a): return
+  for c, q in qs:
+    let j = c.finda(s.a, s.b)
+    if j < 0 or (doRoot and c==0 and j != s.a): return
     result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
     result.mch.b = uint32(j - itA[k] + q.len - 1)
     s.a = j + q.len
@@ -222,8 +222,7 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
 
 var O = 0                               # Offset in D of current row
 proc getData =                          # Read, Parse rows, Match & maybe Sort
-  let qs = (if doIs: q.toLowerAscii else: q).split # Split buf to lines w/carry
-  let msLen0 = ms.len
+  let msLen0 = ms.len                   # Split buf to lines w/carry & update ms
   template maybeFrameAndAdd(nR: int) =
     if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
       if dlm != dlm0:                   # Maybe split line into (label, thing)
@@ -232,7 +231,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
       else:
         okS.add 0u8; itA.add O
       Dused = O + nR - 1
-      let m=if q.len>0: match(itA.len-1,qs)else:(1,uint32(itA.len-1),1u32..0u32)
+      let m = if q.len>0: match(itA.len-1) else:(1,uint32(itA.len-1),1u32..0u32)
       if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
   let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
@@ -250,16 +249,15 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
   if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder, Descending; clean=false
 
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
-  let qs = (if doIs: q.toLowerAscii else: q).split
   if qGrew:                             # Can optimize by only re-filtering..
     var j=0.Mix; while j < ms.len.Mix:  #..the short(er) list of matches.
-      let m = match(ms[j].ix.int, qs)
+      let m = match(ms[j].ix.int)
       if m.ix == badIx: ms.del j.int
       else            : ms[j] = m; j = j + 1.Mix
   else:                                 # query shrank: filter all `it()`
     ms.setLen 0
     for i in 0 ..< itA.len:
-      let m = match(i, qs)
+      let m = match(i)
       if m.ix != badIx: ms.add m
   if doSort: ms.sort bySizeInpOrder, order=Descending
 
@@ -376,6 +374,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     when defined bench: (if t1==0 and (iFd < 0 or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; getTermSize(); continue
+    let q0 = q
     if tReady:                          # terminal input (priority)
       case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
       of CtrlO:  doSort = not doSort; doFilt = true # List parameter
@@ -412,14 +411,15 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       of NoBind: putH(h); oFlush(); discard iK.getKey
     elif dReady:                        # data input (not done if viewport full)
       getData(); doFilt = pick.int < 0 and itA.len > 0
+    (if doIs: everIs = true); if q != q0: qUp()
 
 proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
     delim=dlm0, label=0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
-  var i = -1; uH = n - 1; q = qs.join(" "); doSort = sort; Buf = buf
-  trm = term; dlm = delim; doIs = inSen; doRoot = root
+  var i = -1; uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf
+  trm = term; dlm = delim; doIs = inSen; doRoot = root; if doIs: everIs = true
   tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
