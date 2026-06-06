@@ -8,10 +8,25 @@ proc trimN*(c: var MSlice) = # Trim trailing junk ~ ": 1759392125:0;date\\\n\n"
   while c.len>2 and c[c.len-2]=='\\' and c[c.len-1]=='\n': # Bare single-\ =>
     c.len -= 2 + int(c[c.len-3]=='\\') # 3 if usr put literal '\';2 if pasted \n
 
+var UnMeta = false
+proc unmetafy(src: MSlice): string =
+  if UnMeta:
+    result = newStringOfCap(src.len)
+    var i = 0
+    while i < src.len:
+      if src[i].uint8 == 0x83'u8:
+        if i + 1 >= src.len: IOError !! "trailing Meta byte"
+        result.add chr(src[i + 1].uint8 xor 0x20'u8)
+        inc i, 2
+      else: result.add(src[i]); inc i
+  else:
+    result.setLen src.len
+    copyMem result.cstring, src.toCStr, src.len
+
 type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
 var zer = false
 proc `$`*(he: ZHistEnt): string =
-  let s = he.cmd.strip # stripTrailing, but zshaddhistory can admit ' '* cmds
+  let s = he.cmd.unmetafy.strip # stripTrailing, but zshaddhistory can admit ' '* cmds
   if zer:                               # zer has extension field, exit^BPWD^B..
     let s = replace($s, "\\\n", "\n")   #..backfilled here w/simply "0". Len=>Do
     let t = &"{he.tm} {he.dur} 0\x01"   #..NOT need post-0 '^A', BUT delim CAN
@@ -58,14 +73,14 @@ proc mkZHistEntItr*(path: string, trim=false): iterator(): ZHistEnt =
       else: yield he
 
 proc zeh(min=0, trim=false, check=false, sort=false, begT=false, endT=false,
-         reps=0, zero=false, paths: seq[string]) =
+         reps=0, unmeta=false, zero=false, paths: seq[string]) =
   ## Check|Merge, de-duplicate&clean short cmds/trailing \\n Zsh EXTENDEDHISTORY
   ## (format ": {t0%d}:{dur%d};CMD-LINES[\\]"); Eg.: `zeh -tm3 h1 h2 >H`.  Zsh
   ## saves start & duration *@FINISH TIME* => with >1 shells in play, only brief
   ## cmds match the order of timestamps in the file => provide 3 more modes on
   ## top of `--check`: `--endT`, `--sort`, `--begT`.
   if paths.len < 1: Help !! "Need >= 1 path; Full $HELP"
-  zer = zero
+  zer = zero; UnMeta = unmeta
   if reps > 0:  # Make large histories from a smaller sample (to measure stuff)
     var hes = collect(for he in paths[0].zHistEnts: he)
     if hes.len > 1:
@@ -111,4 +126,5 @@ when isMainModule: include cligen/mergeCfgEnv; dispatch zeh, help={
   "begT" : "add dur to take startTm,dur -> endTm,dur",
   "endT" : "sub dur to take endTm,dur -> startTm,dur",
   "reps" : "make `reps` copies of $1 w/increasing tms",
+  "unmeta":"unmetafy `cmd` for emit (for non-zsh reads)",
   "zero" : "emit as \"{cmdLen} {t} {dt} {xt} {cmd}\\\\0\""}
