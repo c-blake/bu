@@ -304,20 +304,29 @@ proc goUp(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
   if visIx > 0: visIx -= 1
   else: yO = pick
 
+const esc: array[char, char] = block:
+  var a: array[char, char]; a['\a']='a'; a['\b']='b'; a['\t']='t'; a['\n']='n'
+  a['\v']='v'; a['\f']='f'; a['\r']='r'; a['\\']='\\'; a # Leave Esc-seqs alone
 proc put1(l,s:string; hL=false,j=Mix(-1))= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
   if hL: putp ats['c'][0]
   if dlm != dlm0 or l.len > 0:
-    for (slc, w) in l.printedChars:
+    for (slc, w) in l.printedChars:     # printedChars presently counts \n as 0
+      var w=w; for c in slc: w += int(esc[l[c]] != '\0') + int(l[c].ord < 27)
       if used + w > tW div 2: break     # Do not use more than tW/2 for label
-      for c in slc: putc l[c]           # Handle hard-tab?
+      for c in slc:
+        if esc[l[c]] != '\0': putc '\\'; putc esc[l[c]]
+        else: putc l[c]
       used += w
-  for (slc, w) in s.printedChars:
+  for (slc, w) in s.printedChars:       # printedChars presently counts \n as 0
     if j >= 0.Mix and ms[j].ix != badIx:
       if slc.b >= ms[j].mch.a.int and not mOn: putp ats['m'][0]; mOn = true
       if slc.a >  ms[j].mch.b.int            : putp ats['m'][1]; mOn = false
+    var w=w; for c in slc: w += int(esc[s[c]] != '\0') + int(s[c].ord < 27)
     if used + w > tW: break             # Do not use more than tW
-    for j in slc: putc s[j]             # Handle hard-tab & NUL?
+    for c in slc:
+      if esc[s[c]] != '\0': putc '\\'; putc esc[s[c]]
+      else: putc s[c]
     used += w
   if mOn: putp ats['m'][1]
   for _ in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
