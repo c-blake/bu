@@ -191,7 +191,7 @@ template finda(c, a, b): untyped =
   else: sqs[c].find(D, qs[c], a, b)
 
 proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
-  let c = cmp(a.size, b.size); (if c == 0: cmp(b.ix, a.ix) else: c)
+  let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
 const badIx = uint32.high               # 7) MATCH INPUT DATA
 var clean = false
 
@@ -246,7 +246,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder, Descending; clean=false
+  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder; clean=false
 
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
   if qGrew:                             # Thin already matched list for speed
@@ -259,7 +259,7 @@ proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
     for i in 0 ..< itA.len:
       let m = match(i)
       if m.ix != badIx: ms.add m
-  if doSort: ms.sort bySizeInpOrder, order=Descending
+  if doSort: ms.sort bySizeInpOrder
 
 proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 8) OK MATCH NAVIGATION
   for j in yO.int ..< ms.len:   # Collect up to `h` indices from `yO` to show
