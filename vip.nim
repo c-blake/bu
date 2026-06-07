@@ -61,7 +61,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
 when defined bench:
   import std/times; var t0, t1: float
 proc itB(i: int): int =
-  if i==itA.len-1: Dused-nT-1 elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
+  if i==itA.len-1: Dused-nT elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
 proc labB(i: int): int   = itA[i]-nD-1
 proc it(i: int): string  = D[itA[i]..itB(i)]
 proc lab(i: int): string = D[labA[i]..labB(i)]
@@ -230,7 +230,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
           okS.add 0u8; itA.add O + (p -! D[O].addr) + nD; labA.add O
       else:
         okS.add 0u8; itA.add O
-      Dused = O + nR - 1
+      Dused = O + nR
       let m = if q.len>0: match(itA.len-1) else:(1,uint32(itA.len-1),1u32..0u32)
       if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
