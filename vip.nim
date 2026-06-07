@@ -26,8 +26,8 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key=enum CtrlO,CtrlI,CtrlT,CtrlL,Enter,AltEnt,CtrlC,CtrlZ,LineUp,LineDn,PgUp,
-   PgDn,Home,End,CtrlA,CtrlE,CtrlU,CtrlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
+  Key=enum CtlO,CtlI,CtlT,CtlL,Enter,AltEnt,CtlC,CtlZ,LineUp,LineDn,PgUp,
+   PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
   Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
   Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
@@ -131,18 +131,18 @@ type K = tuple[key: Key; cap,str: string; tio: cint] # 5) KEY PRESS HANDLING
 proc Cap(k: Key, s: string): K = result.key = k; result.cap = s; result.tio = -1
 proc Kay(k: Key, s: string): K = result.key = k; result.str = s; result.tio = -1
 proc Tio(k: Key, i: cint)  : K = result.key = k; result.tio = i
-var Ks = [Kay(CtrlO, "\x0F"), Kay(CtrlI, "\t"), Kay(CtrlL, "\f"),
-  Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtrlC ,VINTR ),Tio(CtrlZ,VSUSP),
+var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
+  Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtlC  ,VINTR ),Tio(CtlZ,VSUSP),
   Cap(LineUp,"kcuu1"),Kay(LineUp,"\x10"),Kay(LineUp,"\eOA"),
   Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"),
   Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\eu" ),   # v<--- Alternate Dn,Hm,End bindings
   Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\ed" ),
   Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End  , "\ee"),
-  Kay(CtrlA ,"\x01" ),Kay(CtrlE ,"\x05"),Kay(CtrlU ,"\x15"),Kay(CtrlK, "\v" ),
+  Kay(CtlA  ,"\x01" ),Kay(CtlE  ,"\x05"),Kay(CtlU  ,"\x15"),Kay(CtlK, "\v" ),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(CtrlT ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[GMQSWXY\]^_]
+  Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[GMQSWXY\]^_]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -151,7 +151,7 @@ proc getKey(ik: var string): Key =              # partial key
   setSigWinCh true                              # Allow SIGWINCH on 1st read.
   ik.add getc()
   setSigWinCh false
-  if sigWinCh.bool: sigWinCh = 0; return CtrlL  # Should trigger getTermSize()
+  if sigWinCh.bool: sigWinCh = 0; return CtlL   # Should trigger getTermSize()
   while true:           # This is kinda messy logic to match `ik` against..
     var i = -1          #..`Ks[]` while also building `ik` at the same time.
     while i+1 < Ks.len: #..Should probably just `import std/critbits` instead.
@@ -377,36 +377,36 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     let q0 = q
     if tReady:                          # terminal input (priority)
       case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
-      of CtrlO:  doSort = not doSort; doFilt = true # List parameter
-      of CtrlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
-      of CtlR:   doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
-      of CtrlL:  getTermSize()                      # Viewport parameter
+      of CtlO:  doSort = not doSort; doFilt = true # List parameter
+      of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
+      of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
+      of CtlL:  getTermSize()                      # Viewport parameter
       of Enter:  return(if ms.len>0: ms[pick].ix.int else: -1) # 2exits;Basic&..
       of AltEnt: (if ms.len==0: return -1 else: (   #..itLab swapped row return.
         labA.add D.len; D.add it(ms[pick].ix.int); D.add dlm; itA.add D.len;
         D.add lab(ms[pick].ix.int); D.add trm; return itA.len - 1) )
-      of CtrlC:  return -1              # & below exit-like suspend
-      of CtrlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
+      of CtlC:  return -1               # & below exit-like suspend
+      of CtlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
       of LineUp:       goUp yO,pick,visIx, h,true   # LIST NAVIGATION (
-      of LineDn,CtrlI: goDn yO,pick,visIx, h,true
-      of PgUp:   (for _ in 1..h: goUp yO,pick,visIx, h,false) #Ok to mv visIx to
-      of PgDn:   (for _ in 1..h: goDn yO,pick,visIx, h,false) #..top/bot(page)?
-      of Home:   goHm
-      of End:    goHm; goUp yO,pick,visIx, h,true   # LIST NAVIGATION )
-      of CtrlA:  jC = 0                 # Qry Bulk NavEdit: ^A=Start,^E=End
-      of CtrlE:  jC = q.len             # Ensure jC byte idx ends @EndOf UChar
-      of CtrlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
-      of CtrlU:  q.delete 0 ..< jC; jC = 0; doFilt = true     # ^U=Kill LHS
-      of Right:  (while jC < q.len:
-                    inc jC; if jC == q.len or not q[jC].isContin: break)
-      of Left:   (while jC > 0 and q[(dec jC; jC)].isContin: discard)
-      of Del:    (if jC < q.len:        # 1@Time Edit DEL-(Right|Left), put
-                    var n=1; while jC + n < q.len and q[jC + n].isContin: inc n
-                    q.delete jC ..< jC + n; doFilt = true)
-      of BkSpc:  (if jC > 0:
-                    var n = 1; while jC >= n and q[jC - n].isContin: inc n
-                    let slice = max(0, jC - n) ..< jC
-                    q.delete slice; jC -= slice.len; doFilt = true)
+      of LineDn,CtlI: goDn yO,pick,visIx, h,true
+      of PgUp:  (for _ in 1..h: goUp yO,pick,visIx, h,false) #Ok to mv visIx to
+      of PgDn:  (for _ in 1..h: goDn yO,pick,visIx, h,false) #..top/bot(page)?
+      of Home:  goHm
+      of End:   goHm; goUp yO,pick,visIx, h,true   # LIST NAVIGATION )
+      of CtlA:  jC = 0                  # Qry Bulk NavEdit: ^A=Start,^E=End
+      of CtlE:  jC = q.len              # Ensure jC byte idx ends @EndOf UChar
+      of CtlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
+      of CtlU:  q.delete 0 ..< jC; jC = 0; doFilt = true     # ^U=Kill LHS
+      of Right: (while jC < q.len:
+                   inc jC; if jC == q.len or not q[jC].isContin: break)
+      of Left:  (while jC > 0 and q[(dec jC; jC)].isContin: discard)
+      of Del:   (if jC < q.len:         # 1@Time Edit DEL-(Right|Left), put
+                   var n=1; while jC + n < q.len and q[jC + n].isContin: inc n
+                   q.delete jC ..< jC + n; doFilt = true)
+      of BkSpc: (if jC > 0:
+                   var n = 1; while jC >= n and q[jC - n].isContin: inc n
+                   let slice = max(0, jC - n) ..< jC
+                   q.delete slice; jC -= slice.len; doFilt = true)
       of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
     elif dReady:                        # data input (not done if viewport full)
