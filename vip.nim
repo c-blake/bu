@@ -26,7 +26,7 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key=enum CtlO,CtlI,CtlT,CtlL,Enter,AltEnt,CtlC,CtlZ,LineUp,LineDn,PgUp,
+  Key=enum CtlO,CtlI,CtlT,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LineUp,LineDn,PgUp,
    PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
   Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
   Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
@@ -134,7 +134,7 @@ proc Tio(k: Key, i: cint)  : K = result.key = k; result.tio = i
 var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtlC  ,VINTR ),Tio(CtlZ,VSUSP),
   Cap(LineUp,"kcuu1"),Kay(LineUp,"\x10"),Kay(LineUp,"\eOA"),
-  Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"),
+  Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"), Kay(CtlG, "\x07"),
   Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\eu" ),   # v<--- Alternate Dn,Hm,End bindings
   Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\ed" ),
   Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End  , "\ee"),
@@ -142,7 +142,7 @@ var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[GMQSWXY\]^_]
+  Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[QSMWXY\]^_]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -344,7 +344,7 @@ proc putH(h: int) =
     put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
     put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
     put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
-    put1 "", "               ^A Beg ^E End ^U LKill ^K RKill"
+    put1 "", " ^G ->EOF      ^A Beg ^E End ^U LKill ^K RKill"
     put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
   else: put1 "", "No Room For Help"
 
@@ -380,6 +380,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       of CtlO:  doSort = not doSort; doFilt = true # List parameter
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
+      of CtlG:  (while iFd >= 0: getData())
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter:  return(if ms.len>0: ms[pick].ix.int else: -1) # 2exits;Basic&..
       of AltEnt: (if ms.len==0: return -1 else: (   #..itLab swapped row return.
