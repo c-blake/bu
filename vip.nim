@@ -249,11 +249,11 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
   if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder, Descending; clean=false
 
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
-  if qGrew:                             # Can optimize by only re-filtering..
-    var j=0.Mix; while j < ms.len.Mix:  #..the short(er) list of matches.
-      let m = match(ms[j].ix.int)
-      if m.ix == badIx: ms.del j.int
-      else            : ms[j] = m; j = j + 1.Mix
+  if qGrew:                             # Thin already matched list for speed
+    var w=0.Mix; for j in 0.Mix ..< ms.len.Mix:
+      if (let m = match(ms[j].ix.int); m.ix != badIx):
+        ms[w] = m; w = w + 1.Mix
+    ms.setLen w.int
   else:                                 # query shrank: filter all `it()`
     ms.setLen 0
     for i in 0 ..< itA.len:
