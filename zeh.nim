@@ -21,7 +21,7 @@ proc unmetafy(src: MSlice): string =
       else: result.add(src[i]); inc i
   else:
     result.setLen src.len
-    copyMem result.cstring, src.toCStr, src.len
+    copyMem result.cstring, src.toCstr, src.len
 
 type ZHistEnt* = tuple[tm, dur: int; cmd: MSlice]
 var zer = false
