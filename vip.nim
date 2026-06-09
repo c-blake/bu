@@ -27,7 +27,7 @@ proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
   Key=enum CtlO,CtlI,CtlT,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LineUp,LineDn,PgUp,
-   PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,Normal,NoBind
+   PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,CtlX,Norm,NoBind
   Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
   Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
   ExtTest = proc(mem: pointer, len: clong): cint {.noconv.}
@@ -51,7 +51,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   ms: seq[Match]        # Matches against current query (of what has been read)
   q, D, Di: string      # Running query, user data, maybe .lowerAscii user data
   iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
-  doSort,doIs,doRoot:bool # Sort matches by match size frac, InSensitive|Beg Mch
+  doSort, doIs, doRoot, doXact: bool # SortBy MchSzFrac,InSensitive/Beg/Xact Mch
   trm, dlm: char        # Optional label-value delimiter; dlm0 => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   okx: ExtTest          # An external test function return 1 to for ok/keep
@@ -134,15 +134,15 @@ proc Tio(k: Key, i: cint)  : K = result.key = k; result.tio = i
 var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtlC  ,VINTR ),Tio(CtlZ,VSUSP),
   Cap(LineUp,"kcuu1"),Kay(LineUp,"\x10"),Kay(LineUp,"\eOA"),
-  Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"), Kay(CtlG, "\x07"),
+  Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"),Kay(CtlG, "\x07"),
   Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\eu" ),   # v<--- Alternate Dn,Hm,End bindings
   Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\ed" ),
-  Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End  , "\ee"),
+  Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End , "\ee"),
   Kay(CtlA  ,"\x01" ),Kay(CtlE  ,"\x05"),Kay(CtlU  ,"\x15"),Kay(CtlK, "\v" ),
   Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
-  Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"),
+  Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"), # Ctl[QSMWY\]^_]
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
-  Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(NoBind,""    )] # Ctl[QSMWXY\]^_]
+  Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(CtlX  ,"\x18"),Kay(NoBind, "")]
 for k in mitems Ks:     # Populate Cp capability slots
   if k.str.len == 0 and k.cap.len > 0: k.str = tcap(k.cap)
 
@@ -170,10 +170,10 @@ proc getKey(ik: var string): Key =              # partial key
     while c < '@' or c > '~': c = getc()
     return NoBind
   if (ik[0].uint and 0xC0) != 0xC0:             # NOT start of UTF8
-    return if ik[0] >= ' ' and ik[0] <= '~': Normal else: NoBind
+    return if ik[0] >= ' ' and ik[0] <= '~': Norm else: NoBind
   while ((ik[0].int shl ik.len) and 0x80) != 0: # Finish 1 whole UTF8 char len==
     ik.add getc()                               #..Num(MSBs in 1st byte).
-  return Normal
+  return Norm
 
 var qs, qis: seq[string]      # A tri-gram idx might be better, but this..
 var sqs, sqi: seq[SkipTable]  #..is ok up to a few million items.
@@ -308,7 +308,7 @@ proc goUp(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
 const esc: array[char, char] = block:
   var a: array[char, char]; a['\a']='a'; a['\b']='b'; a['\t']='t'; a['\n']='n'
   a['\v']='v'; a['\f']='f'; a['\r']='r'; a['\\']='\\'; a # Leave Esc-seqs alone
-proc put1(l,s:string; hL=false,j=Mix(-1))= # 9) RENDERING
+proc put1(l,s:string; hL=false,j=Mix(-1),eol=true)= # 9) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
   if hL: putp ats['c'][0]
   if dlm != dlm0 or l.len > 0:
@@ -330,7 +330,7 @@ proc put1(l,s:string; hL=false,j=Mix(-1))= # 9) RENDERING
       else: putc s[c]
     used += w
   if mOn: putp ats['m'][1]
-  for _ in 1 .. tW - used: putc ' '     # Want a whole terminal row highlit
+  if eol: (for _ in 1 .. tW - used: putc ' ') # Want whole terminal row highlit
   if hL: putp ats['c'][1]
 
 var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
@@ -348,15 +348,15 @@ proc putN(yO, pick: Mix) =              # put1 pH times from `itA`
   if ixs.len > 0: putp tparm1(parm_up_cursor, ixs.len.cint)
 
 proc putH(h: int) =
-  if h >= 7: # Stay <= 46 col for narrow terminal windows
-    put1 "", "^O OrdMchOrInp ^T      ToggleInsen  ^L Refresh"
-    put1 "", "^R RootedMchs  Alt-ENT PickLabel   ^C/^Z Usual"
-    put1 "", "ListNavigate   TAB(Arrow|Pg)(Up|Dn)Home|End"
+  if h >= 6: # Stay <= 45 col for small terminal windows like phones
+    put1 "", "^O OrdMch,Inp ^T      ToggleInsen  ^X eXact"
+    put1 "", "^R RootedMchs Alt-ENT WholeRowX2  ^C/^Z Usual"
+    put1 "", "ListNavigate  TAB(Arrow|Pg)(Up|Dn)Home|End"
     put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
-    put1 "", "QueryEdit     ArrowLeft/Right Backspace Delete"
-    put1 "", " ^G ->EOF      ^A Beg ^E End ^U LKill ^K RKill"
-    put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md."
-  else: put1 "", "No Room For Help"
+    put1 "", "QueryEdit    ArrowLeft/Right Backspace Delete"
+    put1 "", "^G EOF ^L Redo ^A Beg ^E End ^K RKill ^U LNix"
+    put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md.", eol=false
+  else: put1 "", "No Room For Help", eol=false
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
@@ -390,6 +390,7 @@ proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
       of CtlO:  doSort = not doSort; doFilt = true # List parameter
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
+      of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
       of CtlG:  (while iFd >= 0: getData())
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
@@ -416,20 +417,20 @@ proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
                    var n = 1; while jC >= n and q[jC - n].isContin: inc n
                    let slice = max(0, jC - n) ..< jC
                    q.delete slice; jC -= slice.len; doFilt = true)
-      of Normal: q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
+      of Norm:   q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
     elif dReady:                        # data input (not done if viewport full)
       getData(); doFilt = pick.int < 0 and itA.len > 0
     (if doIs: everIs = true); if q != q0: qUp()
 
-proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
-    delim=dlm0, quit="", buf=4096, TmOut=50, keep="", print="",
+proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
+    term='\n', delim=dlm0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
   var i: int; var ex = false
-  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf
-  trm = term; dlm = delim; doIs = inSen; doRoot = root; if doIs: everIs = true
+  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
+  dlm = delim; doIs=inSen; doRoot=root; doXact=exact; if doIs: everIs = true
   tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
@@ -448,6 +449,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
+  "exact" : "exact substring (vs. 'space is wild'); Ctrl-X",
   "sort"  : "sort by match score,not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
