@@ -424,7 +424,7 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
     (if doIs: everIs = true); if q != q0: qUp()
 
 proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
-    delim=dlm0, label=0, quit="", buf=4096, TmOut=50, keep="", print="",
+    delim=dlm0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
@@ -439,7 +439,6 @@ proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
   when defined bench: tFd.write $int((t1 - t0)*1e6)&" usec to EOF"&"\n"
   if i < 0: echo (if quit.len>0: quit else: q); return 1 # Exit|Emit
   echo it(i)
-  if label != 0: write label.cint, lab(i)
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "initial query strings to interactively edit",
@@ -450,7 +449,6 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "sort"  : "sort by match score,not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
-  "label" : "emit parsed label to this file descriptor",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
   "buf"   : "bytes for stdin read buffer",
   "TmOut" : "UI timeout in milliseconds (50ms=~20fps)",
