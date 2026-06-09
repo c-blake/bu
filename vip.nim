@@ -175,14 +175,14 @@ proc getKey(ik: var string): Key =              # partial key
     ik.add getc()                               #..Num(MSBs in 1st byte).
   return Norm
 
-var qs, qis: seq[string]      # A tri-gram idx might be better, but this..
-var sqs, sqi: seq[SkipTable]  #..is ok up to a few million items.
+var qi: string   ; var qs, qis: seq[string]     # Tri-gram idx may be better
+var sx, si: SkipTable; var sqs, sqi: seq[SkipTable]
 var everIs = false    # Let insens-finders be fast w/sens not pay double D[] mem
 const badIx = uint32.high
 proc qUp =
-  qs = q.split; qis = q.toLowerAscii.split
-  sqs.setLen 0; for q in qs: sqs.add q.initSkipTable
-  sqi.setLen 0; for q in qis: sqi.add q.initSkipTable
+  sx = q.initSkipTable; qi = q.toLowerAscii; si = qi.initSkipTable
+  qs = q.split  ; sqs.setLen 0; for Q in qs : sqs.add Q.initSkipTable
+  qis = qi.split; sqi.setLen 0; for Q in qis: sqi.add Q.initSkipTable
 proc DiUp =                             # Update case-folded version if everIs
   if everIs and (let DiLen0 = Di.len; DiLen0 < D.len):
     Di.setLen D.len; copyMem Di[DiLen0].addr, D[DiLen0].addr, D.len - DiLen0
@@ -195,13 +195,20 @@ proc match(k: int): Match =             # 7) MATCH INPUT DATA
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
   if q.len == 0: result.ix = k.uint32; return #TODO .size?
   var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
-  for c, q in qs:
-    let j = if doIs: sqi[c].find(Di, qis[c], s.a, s.b)
-            else   : sqs[c].find(D , qs[c] , s.a, s.b)
-    if j < 0 or (doRoot and c==0 and j != s.a): return
-    result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
-    result.mch.b = uint32(j - itA[k] + q.len - 1)
-    s.a = j + q.len
+  if doXact:
+      let j = if doIs: si.find(Di, qi, s.a, s.b)
+              else   : sx.find(D , q , s.a, s.b)
+      if j < 0 or (doRoot and j != s.a): return # Not found | not @start
+      result.mch.a = min(result.mch.a.int, j - itA[k]).uint32 # j - itA?
+      result.mch.b = uint32(j - itA[k] + q.len - 1)
+  else:
+    for c, q in qs:
+      let j = if doIs: sqi[c].find(Di, qis[c], s.a, s.b)
+              else   : sqs[c].find(D , qs[c] , s.a, s.b)
+      if j < 0 or (doRoot and c==0 and j != s.a): return
+      result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
+      result.mch.b = uint32(j - itA[k] + q.len - 1)
+      s.a = j + q.len
   result.size = if doSort: result.mch.len.float32/sLen else: 1
   result.ix = k.uint32
 
@@ -371,7 +378,7 @@ proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
     putp cursor_invisible, fatal=false
     putp carriage_return; putp clr_eos
     let den = (if doSort: "%" else: "/") & $itA.len & # /x denominator w/status
-              (if doIs: "-" else: " ") & (if doRoot: "^" else: " ")
+      (if doIs:"-" else:" ")&(if doXact:"x" else:" ")&(if doRoot:"^" else:" ")
     let hdr = ats['h'][0] & align($ms.len, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
     putN(yO, pick)
