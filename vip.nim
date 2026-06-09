@@ -182,13 +182,13 @@ proc qUp =
   qs = q.split; qis = q.toLowerAscii.split
   sqs.setLen 0; for q in qs: sqs.add q.initSkipTable
   sqi.setLen 0; for q in qis: sqi.add q.initSkipTable
-proc DiUp = # Could be "more bulk"/have longer loops but this isolates code.
-  if (let DiLen0 = Di.len; everIs and DiLen0 < D.len):
+proc DiUp =                             # Update case-folded version if everIs
+  if everIs and (let DiLen0 = Di.len; DiLen0 < D.len):
     Di.setLen D.len; copyMem Di[DiLen0].addr, D[DiLen0].addr, D.len - DiLen0
     for c in DiLen0 ..< Di.len: Di[c] = Di[c].toLowerAscii
 template finda(c, a, b): untyped =
-  if doIs: (DiUp(); sqi[c].find(Di, qis[c], a, b))
-  else: sqs[c].find(D, qs[c], a, b)
+  if doIs: sqi[c].find(Di, qis[c], a, b)
+  else   : sqs[c].find(D , qs[c] , a, b)
 
 proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
   let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
@@ -221,6 +221,7 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
 
 var O = 0                               # Offset in D of current row
 proc getData =                          # Read, Parse rows, Match & maybe Sort
+  DiUp()                                # Need before any loop of match() calls
   let msLen0 = ms.len                   # Split buf to lines w/carry & update ms
   template maybeFrameAndAdd(nR: int) =
     if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
@@ -248,6 +249,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
   if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder
 
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
+  DiUp()                                # Need before any loop of match() calls
   if qGrew:                             # Thin already matched list for speed
     var w=0.Mix; for j in 0.Mix ..< ms.len.Mix:
       if (let m = match(ms[j].ix.int); m.ix != badIx):
