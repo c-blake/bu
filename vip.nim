@@ -358,7 +358,7 @@ proc putH(h: int) =
   else: put1 "", "No Room For Help"
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
-proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
+proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
   var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
   var (doFilt, qGrew) = (true, false)
   var jC = q.len                        # cursor as byte index into q[]
@@ -391,13 +391,11 @@ proc tui(alt=false): int =         # 10) MAIN TERMINAL USER-INTERFACE
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlG:  (while iFd >= 0: getData())
       of CtlL:  getTermSize()                      # Viewport parameter
-      of Enter:  return(if ms.len>0: ms[pick].ix.int else: -1) # 2exits;Basic&..
-      of AltEnt: (if ms.len==0: return -1 else: (   #..itLab swapped row return.
-        labA.add D.len; D.add it(ms[pick].ix.int); D.add dlm; itA.add D.len;
-        D.add lab(ms[pick].ix.int); D.add trm; return itA.len - 1) )
-      of CtlC:  return -1               # & below exit-like suspend
+      of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
+      of AltEnt:return (true , (if ms.len>0: ms[pick].ix.int else: -1))
+      of CtlC:  return (true , -1)
       of CtlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-      of LineUp:       goUp yO,pick,visIx, h,true   # LIST NAVIGATION (
+      of LineUp:      goUp yO,pick,visIx, h,true   # LIST NAVIGATION (
       of LineDn,CtlI: goDn yO,pick,visIx, h,true
       of PgUp:  (for _ in 1..h: goUp yO,pick,visIx, h,false) #Ok to mv visIx to
       of PgDn:  (for _ in 1..h: goDn yO,pick,visIx, h,false) #..top/bot(page)?
@@ -428,17 +426,20 @@ proc vip(n=9, alt=false, inSen=false, root=false, sort=false, term='\n',
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
-  var i = -1; uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf
+  var i: int; var ex = false
+  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf
   trm = term; dlm = delim; doIs = inSen; doRoot = root; if doIs: everIs = true
   tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
-  try    : tInit alt; i = tui(alt)                      # Run the TUI
+  try    : tInit alt; (ex, i) = tui(alt)                # Run the TUI
   finally: tRestore alt
   when defined bench: tFd.write $int((t1 - t0)*1e6)&" usec to EOF"&"\n"
-  if i < 0: echo (if quit.len>0: quit else: q); return 1 # Exit|Emit
-  echo it(i)
+  if not ex: echo it(i)                                 # Exit: Normal, ^C, alt
+  elif i == -1: echo (if quit.len>0: quit else: q); return 1 # ^C
+  elif dlm==dlm0: echo it(i); return 2      # No inner row structure
+  else: echo D[labA[i]..itB(i)]; return 2   # Caller can ${out#*$dlm} or etc.
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "initial query strings to interactively edit",
