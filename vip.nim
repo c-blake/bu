@@ -193,7 +193,6 @@ template finda(c, a, b): untyped =
 proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
   let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
 const badIx = uint32.high               # 7) MATCH INPUT DATA
-var clean = false
 
 proc match(k: int): Match =
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
@@ -246,7 +245,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder; clean=false
+  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder
 
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
   if qGrew:                             # Thin already matched list for speed
