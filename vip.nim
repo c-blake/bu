@@ -178,6 +178,7 @@ proc getKey(ik: var string): Key =              # partial key
 var qs, qis: seq[string]      # A tri-gram idx might be better, but this..
 var sqs, sqi: seq[SkipTable]  #..is ok up to a few million items.
 var everIs = false    # Let insens-finders be fast w/sens not pay double D[] mem
+const badIx = uint32.high
 proc qUp =
   qs = q.split; qis = q.toLowerAscii.split
   sqs.setLen 0; for q in qs: sqs.add q.initSkipTable
@@ -186,20 +187,17 @@ proc DiUp =                             # Update case-folded version if everIs
   if everIs and (let DiLen0 = Di.len; DiLen0 < D.len):
     Di.setLen D.len; copyMem Di[DiLen0].addr, D[DiLen0].addr, D.len - DiLen0
     for c in DiLen0 ..< Di.len: Di[c] = Di[c].toLowerAscii
-template finda(c, a, b): untyped =
-  if doIs: sqi[c].find(Di, qis[c], a, b)
-  else   : sqs[c].find(D , qs[c] , a, b)
 
 proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
   let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
-const badIx = uint32.high               # 7) MATCH INPUT DATA
 
-proc match(k: int): Match =
+proc match(k: int): Match =             # 7) MATCH INPUT DATA
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
   if q.len == 0: result.ix = k.uint32; return #TODO .size?
   var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
   for c, q in qs:
-    let j = c.finda(s.a, s.b)
+    let j = if doIs: sqi[c].find(Di, qis[c], s.a, s.b)
+            else   : sqs[c].find(D , qs[c] , s.a, s.b)
     if j < 0 or (doRoot and c==0 and j != s.a): return
     result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
     result.mch.b = uint32(j - itA[k] + q.len - 1)
