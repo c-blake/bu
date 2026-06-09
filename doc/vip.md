@@ -35,20 +35,22 @@ Command-Line Interface:
 
 vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 
-  -n=, --n=      int     9      max number of terminal rows to use
-  -a, --alt      bool    false  use the alternate screen buffer
-  -i, --inSen    bool    false  match query case-insensitively; Ctrl-I
-  -s, --sort     bool    false  sort by match score,not input order; Ctrl-O
-  -t=, --term=   char    '\n'   input record terminator (vs. newline)
-  -d=, --delim=  char    '\x00' Pre-1st-THIS = Context Label; Post=AnItem
-  -l=, --label=  int     0      emit parsed label to this file descriptor
-  -D=, --digits= int     5      num.digits for nMatch/nItem on query Line
-  -q=, --quit=   string  ""     value written upon quit (e.g. Ctrl-C)
-  -k=, --keep=   string  ""     eg. -kfoo.so:Ok==1 ptr,len->cint==1=>keep
-  -r, --rev      bool    false  reverse default "log file" input order
-  --colors=      strings {}     colorAliases;Syntax: NAME = ATTR1 ATTR2..
-  -c=, --color=  strings {}     ;-separated on/off attrs for UI elements:
-                                  qtext choice match label
+  -n=, --n=     int     9     max number of terminal rows to use
+  -a, --alt     bool    false use the alternate screen buffer
+  -i, --inSen   bool    false match query case-insensitively; Ctrl-I
+  -r, --root    bool    false root/anchor/^ match to record starts; Ctrl-R
+  -e, --exact   bool    false exact substring (vs. 'space is wild'); Ctrl-X
+  -s, --sort    bool    false sort by match score,not input order; Ctrl-O
+  -t=, --term=  char    '\n'  input record terminator (vs. newline)
+  -d=, --delim= char    'a'   Pre-1st-THIS =Label; Post=AnItem;'a'=>absent
+  -q=, --quit=  string  ""    value written upon quit (e.g. Ctrl-C)
+  -b=, --buf=   int     4096  bytes for stdin read buffer
+  -T=, --TmOut= int     50    UI timeout in milliseconds (50ms=~20fps)
+  -k=, --keep=  string  ""    Eg -klibvip.so:cdable ptr,len->cint==1
+  -p=, --print= string  ""    Eg -plibvip.so:zxhPrint (ou,mxOu,i,nI)->nO
+  --colors=     strings {}    colorAliases;Syntax: NAME = ATTR1 ATTR2..
+  -c=, --color= strings {}    ;-separated on/off attrs for UI elements:
+                                qtext choice match label
 ```
 Like most other [`cligen`](https://github.com/c-blake/cligen) apps, you can
 set all those things in a config file|config directory like `~/.config/vip`.
