@@ -213,16 +213,16 @@ proc match(k: int): Match =             # 7) MATCH INPUT DATA
   result.ix = k.uint32
 
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
-  var rfds: TFdSet; FD_ZERO rfds; FD_SET(tFd, rfds) # rfds.incl tFd
-  let wake = want>0 and iFd>=0          # wake up only if user types
-  if wake: FD_SET(iFd, rfds)            # Only include `iFd` if should
-  let nfds = (if wake: max(tFd, iFd) else: tFd) + 1
+  let wake = want>0 and iFd>=0
+  var fds = [TPollfd(fd: tFd, events: POLLIN.cshort),
+             TPollfd(fd: (if wake: iFd else: -1), events: POLLIN.cshort)]
+  let tmo = if wake: cint(tmOut.tv_usec div 1000) else: -1.cint
   setSigWinCh true
-  let nReady = select(nfds, rfds.addr, nil, nil, if wake: tmOut.addr else: nil)
+  let nReady = poll(fds[0].addr, 2, tmo)
   setSigWinCh false
   if sigWinCh.bool: return (true, false, false)
-  result[1] = nReady > 0 and FD_ISSET(tFd, rfds) != 0
-  result[2] = nReady > 0 and want > 0 and iFd >= 0 and FD_ISSET(iFd, rfds) != 0
+  result[1] = nReady > 0 and (fds[0].revents and POLLIN.cshort) != 0
+  result[2] = nReady > 0 and wake and (fds[1].revents and POLLIN.cshort) != 0
 
 var O = 0                               # Offset in D of current row
 proc getData =                          # Read, Parse rows, Match & maybe Sort
@@ -253,16 +253,24 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
     else: D.setLen N                    # Nothing to do but right-size D[]
   if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder
 
+const PollRate = 8192 #[ This is a PLACE HOLDER. To conserve CPU in syscall
+overhead, should call epochTime, estimate match checking rate..somehow (EWMA,
+bu/etr-way,..) for *this particular* `q` in current specific mode &then divide
+that into vip-user provided `tmOut.tv_usec` responsiveness target. ]#
+
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
   DiUp()                                # Need before any loop of match() calls
+  let pfd = TPollfd(fd: tFd, events: POLLIN.cshort)
   if qGrew:                             # Thin already matched list for speed
-    var w=0.Mix; for j in 0.Mix ..< ms.len.Mix:
+    var w = 0.Mix; for j in 0.Mix ..< ms.len.Mix:
+      if j.int mod PollRate == 0 and poll(pfd.addr, 1, 0) == 1: return
       if (let m = match(ms[j].ix.int); m.ix != badIx):
         ms[w] = m; w = w + 1.Mix
     ms.setLen w.int
   else:                                 # query shrank: filter all `it()`
     ms.setLen 0
     for i in 0 ..< itA.len:
+      if i mod PollRate == 0 and poll(pfd.addr, 1, 0) == 1: return
       let m = match(i)
       if m.ix != badIx: ms.add m
   if doSort: ms.sort bySizeInpOrder
