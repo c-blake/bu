@@ -221,7 +221,7 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   let nReady = poll(fds[0].addr, 2, tmo)
   if nReady < 0:
     if errno == EINTR: return (false, false, false)
-    else: quit "poll", 1
+    else: quit "poll errno (" & $errno & ")", 1
   setSigWinCh false
   if sigWinCh.bool: return (true, false, false)
   result[1] = nReady > 0 and (fds[0].revents and POLLIN.cshort) != 0
