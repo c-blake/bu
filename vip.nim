@@ -219,10 +219,14 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   let tmo = if wake: cint(tmOut.tv_usec div 1000) else: -1.cint
   setSigWinCh true
   let nReady = poll(fds[0].addr, 2, tmo)
+  if nReady < 0:
+    if errno == EINTR: return (false, false, false)
+    else: quit "poll", 1
   setSigWinCh false
   if sigWinCh.bool: return (true, false, false)
   result[1] = nReady > 0 and (fds[0].revents and POLLIN.cshort) != 0
-  result[2] = nReady > 0 and wake and (fds[1].revents and POLLIN.cshort) != 0
+  result[2] = nReady > 0 and wake and
+    (fds[1].revents and (POLLIN.cshort or POLLHUP.cshort or POLLERR.cshort))!=0
 
 var O = 0                               # Offset in D of current row
 proc getData =                          # Read, Parse rows, Match & maybe Sort
