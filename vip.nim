@@ -453,7 +453,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
 proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
-    term='\n', delim=dlm0, quit="", buf=4096, TmOut=16, keep="", print="",
+    term='\n', delim=dlm0, quit="", buf=16384, TmOut=16, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
