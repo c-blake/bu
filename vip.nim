@@ -58,6 +58,8 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   prn: ExtPrint         # An external fn to format labels
   Buf = 4096  # Stdin Buffer Size; Lets user balance produce-consume aggression
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 40_000.Suseconds) # UI timeout
+  scr: seq[Key]
+  sk = 0                # index into above `scr`
 when defined bench:
   import std/times; var t0, t1: float
 proc itB(i: int): int =
@@ -219,7 +221,7 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   let wake = want>0 and iFd>=0          # 8) IO/Filter Engine(to EndOf filterQuit
   var fds = [TPollfd(fd: tFd, events: POLLIN.cshort),
              TPollfd(fd: (if wake: iFd else: -1), events: POLLIN.cshort)]
-  let tmo = if wake: cint(tmOut.tv_usec div 1000) else: -1.cint
+  let tmo = cint(if wake: tmOut.tv_usec div 1000 elif sk < scr.len: 0 else: -1)
   setSigWinCh true
   let nReady = poll(fds[0].addr, 2, tmo)
   setSigWinCh false
@@ -392,7 +394,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var iK: string
   want = min(uH, pH)
   while true:
-    let h = min(uH, pH)
+    let h = min(uH, pH); iK.setLen 0
     if doFilt:
       filterQuit(qGrew); qGrew = false; want = want.max(h - ms.len)
       if ms.len>0: doFilt=false; pick=0.Mix.first; yO=0.Mix.max(pick); visIx=0
@@ -411,8 +413,11 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; getTermSize(); continue
     let q0 = q
-    if tReady:                          # terminal input (priority)
-      case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
+    let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
+              elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
+              else: NoBind              # Nim needs a value; Really no-op here.
+    if key != NoBind or iK.len > 0:     # terminal input (priority)
+      case key       #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
       of CtlO: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
@@ -420,7 +425,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlG: (while iFd >= 0:         # Let user halt ingest w/^C | another ^G
                   getData(); let p = TPollfd(fd: tFd, events: POLLIN.cshort)
                   if (poll(p.addr,1,0)==1)and(let k=iK.getKey;k in {CtlG,CtlC}):
-                    break)              # All other keys are *ignored*
+                    break)              # Other keys ignored; Human must halt!
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
       of AltEnt:return (true , (if ms.len>0: ms[pick].ix.int else: -1))
@@ -452,15 +457,15 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       getData(); doFilt = pick.int < 0 and itA.len > 0
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
-proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
-    term='\n', delim=dlm0, quit="", buf=16384, TmOut=16, keep="", print="",
-    colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
+proc vip(n=9,alt=false,inSen=false,root=false,exact=false,sort=false,term='\n',
+ delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",print="",
+ colors: seq[string] = @[], color: seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
   var i: int; var ex = false
   uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
   dlm = delim; doIs=inSen; doRoot=root; doXact=exact; if doIs: everIs = true
-  tmOut.tv_usec = Suseconds(TmOut*1000)
+  scr = script; tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
@@ -473,7 +478,7 @@ proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
   else: echo D[labA[i]..itB(i)]; return 2   # Caller can ${out#*$dlm} or etc.
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
-  "qs"    : "initial query strings to interactively edit",
+  "qs"    : "*initial query strings to interactively edit*",
   "n"     : "max number of terminal rows to use",
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
@@ -483,10 +488,11 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
+  "script": "initial script of key enums; E.g. `CtlG`",
   "buf"   : "bytes for stdin read buffer",
   "TmOut" : "UI timeout in milliseconds (16 ms =~ 60fps)",
   "keep"  : "Eg `-klibvip.so:cdable` ptr,len->cint==1",
   "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
-  qtext choice match label"""}, short={"color": 'c'}
+  qtext choice match label"""}, short={"color": 'c', "script": 'S'}
