@@ -260,24 +260,30 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
     else: D.setLen N                    # Nothing to do but right-size D[]
   if ms.len > msLen0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
 
-const PollRate = 8192 #[ This is a PLACE HOLDER. To conserve CPU in syscall
-overhead, should call epochTime, estimate match checking rate..somehow (EWMA,
-bu/etr-way,..) for *this particular* `q` in current specific mode &then divide
-that into vip-user provided `tmOut.tv_usec` responsiveness target. ]#
-
+when not declared epochTime: import std/times #Here since posix.Time also exists
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
   DiUp()                                # Need before any loop of match() calls
+  var pollRate = 128                    # Self-calibrate: start small, grow up
+  var t0 = epochTime()
   let pfd = TPollfd(fd: tFd, events: POLLIN.cshort)
+  template checkAndAdapt(j: int) =
+    if j mod pollRate == 0 and j > 0:
+      if poll(pfd.addr, 1, 0) == 1: return  # Keypress: abandon, will redo
+      let t1 = epochTime()
+      let rate = pollRate.float/((t1 - t0)*1e6)       # <item/usec> *from start*
+      pollRate = int(rate*tmOut.tv_usec.float/2)      # target tmOut/2
+      pollRate = max(128, min(pollRate, 1 shl 16))    # clamp to sane range
+      t0 = t1
   if qGrew:                             # Thin already matched list for speed
     var w = 0.Mix; for j in 0.Mix ..< ms.len.Mix:
-      if j.int mod PollRate == 0 and poll(pfd.addr, 1, 0) == 1: return
+      checkAndAdapt(j.int)
       if (let m = match(ms[j].ix.int); m.ix != badIx):
         ms[w] = m; w = w + 1.Mix
     ms.setLen w.int
   else:                                 # query shrank: filter all `it()`
     ms.setLen 0
     for i in 0 ..< itA.len:
-      if i mod PollRate == 0 and poll(pfd.addr, 1, 0) == 1: return
+      checkAndAdapt(i)
       let m = match(i)
       if m.ix != badIx: ms.add m
   if doSort: msSort()   # Early returns block doing a sort which will be unused
@@ -444,7 +450,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
 proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
-    term='\n', delim=dlm0, quit="", buf=4096, TmOut=50, keep="", print="",
+    term='\n', delim=dlm0, quit="", buf=4096, TmOut=16, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
@@ -475,7 +481,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
   "buf"   : "bytes for stdin read buffer",
-  "TmOut" : "UI timeout in milliseconds (50ms=~20fps)",
+  "TmOut" : "UI timeout in milliseconds (16 ms =~ 60fps)",
   "keep"  : "Eg `-klibvip.so:cdable` ptr,len->cint==1",
   "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
