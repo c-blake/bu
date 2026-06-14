@@ -417,7 +417,10 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
-      of CtlG:  (while iFd >= 0: getData())
+      of CtlG: (while iFd >= 0:         # Let user halt ingest w/^C | another ^G
+                  getData(); let p = TPollfd(fd: tFd, events: POLLIN.cshort)
+                  if (poll(p.addr,1,0)==1)and(let k=iK.getKey;k in {CtlG,CtlC}):
+                    break)              # All other keys are *ignored*
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
       of AltEnt:return (true , (if ms.len>0: ms[pick].ix.int else: -1))
