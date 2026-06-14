@@ -176,8 +176,8 @@ proc getKey(ik: var string): Key =              # partial key
     ik.add getc()                               #..Num(MSBs in 1st byte).
   return Norm
 
-var qi: string   ; var qs, qis: seq[string]     # Tri-gram idx may be better
-var sx, si: SkipTable; var sqs, sqi: seq[SkipTable]
+var qi: string       ; var qs, qis: seq[string] # 6) MATCH INPUT DATA
+var sx, si: SkipTable; var sqs, sqi: seq[SkipTable] # Tri-gram idx may be better
 var everIs = false    # Let insens-finders be fast w/sens not pay double D[] mem
 const badIx = uint32.high
 proc qUp =
@@ -189,10 +189,7 @@ proc DiUp =                             # Update case-folded version if everIs
     Di.setLen D.len; copyMem Di[DiLen0].addr, D[DiLen0].addr, D.len - DiLen0
     for c in DiLen0 ..< Di.len: Di[c] = Di[c].toLowerAscii
 
-proc bySizeInpOrder(a, b: Match): int = # 6) SORTER - MATCH SIZE, THEN INP IDX
-  let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
-
-proc match(k: int): Match =             # 7) MATCH INPUT DATA
+proc match(k: int): Match =
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
   if q.len == 0: result.ix = k.uint32; return #TODO .size?
   var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
@@ -210,11 +207,16 @@ proc match(k: int): Match =             # 7) MATCH INPUT DATA
       result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
       result.mch.b = uint32(j - itA[k] + q.len - 1)
       s.a = j + q.len
-  result.size = if doSort: result.mch.len.float32/sLen else: 1
+  result.size = result.mch.len.float32/sLen
   result.ix = k.uint32
 
+proc msSort() =              # 7) SORT MATCHES; Should maybe become adix/nsort
+  if doSort: ms.sort proc(a, b: Match): int = # Descend sizeFrac, Ascend InpIx
+    let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
+  else: ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix)
+
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
-  let wake = want>0 and iFd>=0
+  let wake = want>0 and iFd>=0          # 8) IO/Filter Engine(to EndOf filterQuit
   var fds = [TPollfd(fd: tFd, events: POLLIN.cshort),
              TPollfd(fd: (if wake: iFd else: -1), events: POLLIN.cshort)]
   let tmo = if wake: cint(tmOut.tv_usec div 1000) else: -1.cint
@@ -256,7 +258,7 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  if ms.len > msLen0 and doSort: ms.sort bySizeInpOrder
+  if ms.len > msLen0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
 
 const PollRate = 8192 #[ This is a PLACE HOLDER. To conserve CPU in syscall
 overhead, should call epochTime, estimate match checking rate..somehow (EWMA,
@@ -278,9 +280,9 @@ proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
       if i mod PollRate == 0 and poll(pfd.addr, 1, 0) == 1: return
       let m = match(i)
       if m.ix != badIx: ms.add m
-  if doSort: ms.sort bySizeInpOrder
+  if doSort: msSort()   # Early returns block doing a sort which will be unused
 
-proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 8) OK MATCH NAVIGATION
+proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 9) OK MATCH NAVIGATION
   for j in yO.int ..< ms.len:   # Collect up to `h` indices from `yO` to show
     if result[1].len < h:
       let ix = ms[j].ix.int
@@ -326,7 +328,7 @@ proc goUp(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
 const esc: array[char, char] = block:
   var a: array[char, char]; a['\a']='a'; a['\b']='b'; a['\t']='t'; a['\n']='n'
   a['\v']='v'; a['\f']='f'; a['\r']='r'; a['\\']='\\'; a # Leave Esc-seqs alone
-proc put1(l,s:string; hL=false,j=Mix(-1),eol=true)= # 9) RENDERING
+proc put1(l,s:string; hL=false,j=Mix(-1),eol=true)= # 10) RENDERING
   var used = 0; var mOn = false         # Calc. max l.printedLen @parseIn?
   if hL: putp ats['c'][0]
   if dlm != dlm0 or l.len > 0:
@@ -377,7 +379,7 @@ proc putH(h: int) =
   else: put1 "", "No Room For Help", eol=false
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
-proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
+proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
   var (doFilt, qGrew) = (true, false)
   var jC = q.len                        # cursor as byte index into q[]
@@ -405,7 +407,7 @@ proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
     let q0 = q
     if tReady:                          # terminal input (priority)
       case iK.getKey #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
-      of CtlO:  doSort = not doSort; doFilt = true # List parameter
+      of CtlO: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
@@ -440,7 +442,7 @@ proc tui(alt=false): (bool, int) =      # 10) MAIN TERMINAL USER-INTERFACE
     elif dReady:                        # data input (not done if viewport full)
       getData(); doFilt = pick.int < 0 and itA.len > 0
     (if doIs: everIs = true); if q != q0: qUp()
-
+# 12) Command-Line Interface
 proc vip(n=9, alt=false, inSen=false, root=false, exact=false, sort=false,
     term='\n', delim=dlm0, quit="", buf=4096, TmOut=50, keep="", print="",
     colors:seq[string] = @[], color:seq[string] = @[], qs: seq[string]): int =
