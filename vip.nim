@@ -57,7 +57,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   okx: ExtTest          # An external test function return 1 to for ok/keep
   prn: ExtPrint         # An external fn to format labels
   Buf = 4096  # Stdin Buffer Size; Lets user balance produce-consume aggression
-  tmOut = Timeval(tv_sec: 0.Time, tv_usec: 40_000.Suseconds) # UI timeout
+  tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
   scr: seq[Key]
   sk = 0                # index into above `scr`
 when defined bench:
