@@ -457,14 +457,14 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       getData(); doFilt = pick.int < 0 and itA.len > 0
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
-proc vip(n=9,alt=false,inSen=false,root=false,exact=false,sort=false,term='\n',
+proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
  delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",print="",
  colors: seq[string] = @[], color: seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   when defined bench: t0 = epochTime()
   var i: int; var ex = false
-  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
-  dlm = delim; doIs=inSen; doRoot=root; doXact=exact; if doIs: everIs = true
+  uH = n - 1; q = qs.join(" "); qUp(); doSort = order; Buf = buf; trm = term
+  dlm = delim; doIs=inSen; doRoot=root; doXact=eXact; if doIs: everIs = true
   scr = script; tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
   if keep.len  > 0: okx = cast[ExtTest](keep.loadSym)   # Maybe Load Plug-In
@@ -483,8 +483,8 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
-  "exact" : "exact substring (vs. 'space is wild'); Ctrl-X",
-  "sort"  : "sort by match score,not input order; Ctrl-O",
+  "eXact" : "exact substring (vs. 'space is wild'); Ctrl-X",
+  "order" : "order by match score,not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
@@ -495,4 +495,4 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
-  qtext choice match label"""}, short={"color": 'c', "script": 'S'}
+  qtext choice match label"""}, short={"color":'c', "eXact":'x', "script":'S'}
