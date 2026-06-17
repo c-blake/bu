@@ -282,14 +282,14 @@ proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
   if result[1] > 0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
 
 when not declared epochTime: import std/times #Here since posix.Time also exists
-proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
+proc filterQuit(qGrew=false): bool =    # Filter read-so-far using curr `q`->ms
   DiUp()                                # Need before any loop of match() calls
   var pollRate = 128                    # Self-calibrate: start small, grow up
   var t0 = epochTime()
   let pfd = TPollfd(fd: tFd, events: POLLIN.cshort)
   template checkAndAdapt(j: int) =
     if j mod pollRate == 0 and j > 0:
-      if poll(pfd.addr, 1, 0) == 1: return  # Keypress: abandon, will redo
+      if poll(pfd.addr, 1, 0) == 1: return false # Keypress: abandon, will redo
       let t1 = epochTime()
       let rate = j.float/((t1 - t0)*1e6)              # <item/usec> *from start*
       pollRate = int(rate*tmOut.tv_usec.float/2)      # target tmOut/2
@@ -308,6 +308,7 @@ proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
       let m = match(i)
       if m.ix != badIx: ms.add m
   if doSort: msSort()   # Early returns block doing a sort which will be unused
+  true
 
 proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 9) OK MATCH NAVIGATION
   for j in yO.int ..< ms.len:   # Collect up to `h` indices from `yO` to show
@@ -415,8 +416,8 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   while true:
     let h = min(uH, pH); iK.setLen 0
     if doFilt:
-      filterQuit(qGrew); qGrew = false; want = want.max(h - ms.len); stale=true
-      if ms.len>0: doFilt=false; pick=0.Mix.first; yO=0.Mix.max(pick); visIx=0
+      let d=filterQuit(qGrew); qGrew=false; want=want.max(h-ms.len); stale=true
+      if d and ms.len>0:doFilt=false;pick=0.Mix.first;yO=0.Mix.max(pick);visIx=0
     if stale:
       putp cursor_invisible, fatal=false
       putp carriage_return; putp clr_eos
