@@ -438,6 +438,14 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
               elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
               else: NoBind              # Nim needs a value; Really no-op here.
+    template fastEOF =                  # Let user halt ingest w/^C | ^G | ^F
+      let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
+      while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
+        let (newRows, _) = getData()
+        if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
+        if poll(p.addr, 1, 0)==1 and (let k = iK.getKey; k in {CtlF,CtlG,CtlC}):
+          break                         # Other keys ignored; Human must halt!
+      if ms.len > 0: goHm; goUp yO, pick, visIx, h, true # Navigate to end, too
     if key != NoBind or iK.len > 0:     # terminal input (priority)
       stale = true    # ANY KEY => stale => redraw
       case key       #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
@@ -445,15 +453,8 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
-      of CtlF:  doF    = not doF   ; usrNav = false
-      of CtlG:                          # Let user halt ingest w/^C | another ^G
-        let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
-        while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
-          let (newRows, _) = getData()
-          if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
-          if poll(p.addr, 1, 0) == 1 and (let k = iK.getKey; k in {CtlG, CtlC}):
-            break                       # Other keys ignored; Human must halt!
-        if ms.len > 0: goHm; goUp yO, pick, visIx, h, true
+      of CtlF:  doF    = not doF   ; usrNav = false; (if doF: fastEOF)
+      of CtlG:  fastEOF
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return(false,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
       of AltEnt:return(true ,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
