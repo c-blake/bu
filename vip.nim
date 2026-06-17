@@ -243,9 +243,9 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
     result[2] = true
 
 var O = 0                               # Offset in D of current row
-proc getData: int =                     # Read, Parse rows, Match & maybe Sort
+proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
   DiUp()                                # Need before any loop of match() calls
-  let msLen0 = ms.len                   # Split buf to lines w/carry & update ms
+  let (nIt0,msLen0) = (itA.len, ms.len) # Split buf to lines w/carry & update ms
   template maybeFrameAndAdd(nR: int) =
     if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
       var added = true
@@ -272,8 +272,9 @@ proc getData: int =                     # Read, Parse rows, Match & maybe Sort
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  result = ms.len - msLen0
-  if result > 0 and doSort: msSort()    # Slow O(n^2 lg n) but users may want
+  result[0] = itA.len - nIt0
+  result[1] = ms.len - msLen0
+  if result[1] > 0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
 
 when not declared epochTime: import std/times #Here since posix.Time also exists
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
@@ -402,46 +403,49 @@ proc putH(h: int) =
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
-  var (doFilt, qGrew, usrNav) = (true, false, false)
+  var (doFilt, qGrew, usrNav, stale) = (true, false, false, true)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
   want = min(uH, pH)
   while true:
     let h = min(uH, pH); iK.setLen 0
     if doFilt:
-      filterQuit(qGrew); qGrew = false; want = want.max(h - ms.len)
+      filterQuit(qGrew); qGrew = false; want = want.max(h - ms.len); stale=true
       if ms.len>0: doFilt=false; pick=0.Mix.first; yO=0.Mix.max(pick); visIx=0
-    putp cursor_invisible, fatal=false
-    putp carriage_return; putp clr_eos
-    let den = (if doSort: "%" else: "/") & $itA.len & # /x denominator w/status
-      (if doIs:"-" else:" ")&(if doXact:"x" else:" ")&(if doRoot:"^" else:" ")
-    let hdr = ats['h'][0] & align($ms.len, den.len - 3) & den & ats['h'][1]
-    put1 hdr, ats['q'][0] & q & ats['q'][1]
-    putN(yO, pick)
+    if stale:
+      putp cursor_invisible, fatal=false
+      putp carriage_return; putp clr_eos
+      let den = (if doSort: "%" else: "/") & $itA.len & # /x denominator w/status
+        (if doIs:"-" else:" ")&(if doXact:"x" else:" ")&(if doRoot:"^" else:" ")
+      let hdr = ats['h'][0] & align($ms.len, den.len - 3) & den & ats['h'][1]
+      put1 hdr, ats['q'][0] & q & ats['q'][1]
+      putN(yO, pick)
+      putp carriage_return                          # Position cursor on qry line
+      let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
+      if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
+      putp cursor_normal, fatal=false; oFlush()
+      stale = false
     if doF and not wrFin: want = want.max(1)      # wake->true while input lives
-    putp carriage_return                          # Position cursor on qry line
-    let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
-    if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
-    putp cursor_normal, fatal=false; oFlush()
     when defined bench: (if t1 == 0 and (wrFin or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
-    if winch: sigWinCh = 0; getTermSize(); continue
+    if winch: sigWinCh = 0; stale = true; getTermSize(); continue
     if not tReady and not dReady: continue        # pure timeout: no redraw
     let q0 = q
     let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
               elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
               else: NoBind              # Nim needs a value; Really no-op here.
     if key != NoBind or iK.len > 0:     # terminal input (priority)
+      stale = true    # ANY KEY => stale => redraw
       case key       #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
       of CtlO: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
-      of CtlF: doF = not doF; usrNav = false
+      of CtlF:  doF    = not doF   ; usrNav = false
       of CtlG:                          # Let user halt ingest w/^C | another ^G
         let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
         while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
-          let newMs = getData()
+          let (_, newMs) = getData()
           if wrFin or (not isPipe and newMs==0): break # wrDone|file gave no new
           if poll(p.addr, 1, 0) == 1 and (let k = iK.getKey; k in {CtlG, CtlC}):
             break                       # Other keys ignored; Human must halt!
@@ -474,11 +478,12 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of Norm:   q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
     if dReady:                          # data input (not done if viewport full)
-      let newMs = getData()                           # Maybe now have items..
+      let (nRow, nMs) = getData()       # Maybe now have items..
+      stale = stale or nRow != 0
       doFilt = doFilt or pick.int < 0 and itA.len > 0 #..but had no pick.
-      if doF and newMs > 0 and not usrNav: # Snap to new data unless usr mid-Nav
+      if doF and nMs > 0 and not usrNav: # Snap to new data unless usr mid-Nav
         goHm; goUp yO,pick,visIx, h,true   # Same as End key
-      elif newMs==0 and not tReady: continue # Got bytes but no new rows
+      elif nMs==0 and not tReady: usrNav = false; continue # rows but no match
     usrNav = false                      # reset each tick
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
