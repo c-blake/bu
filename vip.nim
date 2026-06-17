@@ -265,13 +265,16 @@ proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
     D.setLen N + n; let m = N + n       # Parse rows
     while (O < m and (let p = cmemchr(D[O].addr, trm, csize_t(m - O)); p!=nil)):
       maybeFrameAndAdd(p -! D[O].addr); O = p -! D[0].addr + 1
-  else:                                 # True EOF; Handle any trailing data
-    if isPipe: wrFin = true
-    if N > O:                           # At most 1 row by construction
-      D.setLen N                        # Right-size D[]
-      if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
-      maybeFrameAndAdd(D.len - O)
-    else: D.setLen N                    # Nothing to do but right-size D[]
+  else:                                 # n==0: no data available right now
+    if isPipe:                          # Only pipes give reliable, permanent
+      wrFin = true                      #..EOF signals, once the writer closes.
+      if N > O:                         # @most 1 trailing unterminated row
+        D.setLen N                      # Right-size D[] (undo speculative grow)
+        if D[^1] != trm: D.add trm      # Force term if have any data
+        maybeFrameAndAdd(D.len - O - nT)# nR excludes the synthetic trm
+        O = D.len                       # Advance past it; never reparse
+      else: D.setLen N                  # Nothing to do but right-size D[]
+    else: D.setLen N # REG file: EOF-for-now isn't EOF-forever; Never force-trm
   result[0] = itA.len - nIt0
   result[1] = ms.len - msLen0
   if result[1] > 0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
