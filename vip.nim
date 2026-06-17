@@ -441,9 +441,9 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
             break                       # Other keys ignored; Human must halt!
         if ms.len > 0: goHm; goUp yO, pick, visIx, h, true
       of CtlL:  getTermSize()                      # Viewport parameter
-      of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
-      of AltEnt:return (true , (if ms.len>0: ms[pick].ix.int else: -1))
-      of CtlC:  return (true , -1)
+      of Enter: return(false,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
+      of AltEnt:return(true ,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
+      of CtlC:  return(true , -1)      # 3 exits, here & above 2
       of CtlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
       of LnUp:      usrNav=true; goUp yO,pick,visIx, h,true  # LIST NAVIGATION (
       of LnDn,CtlI: usrNav=true; goDn yO,pick,visIx, h,true
@@ -491,8 +491,8 @@ proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
   try    : tInit alt; (ex, i) = tui(alt)                # Run the TUI
   finally: tRestore alt
   when defined bench: tFd.write $int((t1 - t0)*1e6)&" usec to EOF"&"\n"
-  if not ex: echo it(i)                                 # Exit: Normal, ^C, alt
-  elif i == -1: echo (if quit.len>0: quit else: q); return 1 # ^C
+  if i == -1: echo (if quit.len>0: quit else: q); return 1 # ^C
+  elif not ex: echo it(i)                               # Exit: Normal, ^C, alt
   elif dlm==dlm0: echo it(i); return 2      # No inner row structure
   else: echo D[labA[i]..itB(i)]; return 2   # Caller can ${out#*$dlm} or etc.
 
