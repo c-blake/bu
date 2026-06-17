@@ -216,17 +216,18 @@ proc match(k: int): Match =
   result.size = result.mch.len.float32/sLen
   result.ix = k.uint32
 
-proc msSort() =              # 7) SORT MATCHES; Should maybe become adix/nsort
+proc msSort() =                 # 7) SORT MATCHES;Should maybe become adix/nsort
   if doSort: ms.sort proc(a, b: Match): int = # Descend sizeFrac, Ascend InpIx
     let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
   else: ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix)
 
+var wrFin = false               # 8) IO/Filter Engine; To end of filterQuit
 let isPipe = (block:                    # True if EOF is a permanent condition
   var s: Stat; discard fstat(iFd, s); S_ISFIFO(s.st_mode) or S_ISCHR(s.st_mode))
-var wrFin = false                       # read(iFd)==0 happened (writer gone)
 
+#NOTE: IF viewport ends w/EOF THEN tmOut-poll loop is needed to know if need IO.
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
-  let wake=(want>0 or doF)and not wrFin # 8) IO/Filter Engine;ToEndOf filterQuit
+  let wake=(want>0 or doF)and not wrFin # wrFin is read(iFd)==0 happened
   var fds= [TPollfd(fd: tFd, events: POLLIN.cshort),
             TPollfd(fd: (if wake and isPipe:iFd else: -1),events:POLLIN.cshort)]
   let tmo = cint(if wake: tmOut.tv_usec div 1000 elif sk < scr.len: 0 else: -1)
@@ -345,7 +346,7 @@ proc goUp(yO, pick: var Mix; visIx: var int; h: int; wrap=false) =
     if wrap:
       pick = last(Mix(ms.len - 1)); visIx = min(h, ms.len) - 1; yO = pick
       for _ in 1..<h: (let newYO = yO.prev; if newYO != Mix(-2): yO = newYO)
-      want = 0 # suppress getData post wrap; User is navigating, not following
+      want = 0                  # Suppress getData post wrap
     return
   pick = prv
   if visIx > 0: visIx -= 1
@@ -407,7 +408,7 @@ proc putH(h: int) =
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
-  var (doFilt, qGrew, usrNav, stale) = (true, false, false, true)
+  var (doFilt, qGrew, stale) = (true, false, true)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
   want = min(uH, pH)
@@ -441,7 +442,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     template fastEOF =                  # Let user halt ingest w/^C | ^G | ^F
       let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
       while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
-        let (newRows, _) = getData()
+        let (newRows, _) = getData()    #NOTE: ONLY place ^C stays in `vip`
         if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
         if poll(p.addr, 1, 0)==1 and (let k = iK.getKey; k in {CtlF,CtlG,CtlC}):
           break                         # Other keys ignored; Human must halt!
@@ -453,19 +454,19 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
-      of CtlF:  doF    = not doF   ; usrNav = false; (if doF: fastEOF)
-      of CtlG:  fastEOF
+      of CtlF:  doF    = not doF   ; (if doF: fastEOF) # For this&below sigwinch
+      of CtlG:  fastEOF                                #..ignored;Do manual CtlL
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return(false,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
       of AltEnt:return(true ,(if pick.int in 0..<ms.len:ms[pick].ix.int else: -1))
       of CtlC:  return(true , -1)      # 3 exits, here & above 2
       of CtlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-      of LnUp:      usrNav=true; goUp yO,pick,visIx, h,true  # LIST NAVIGATION (
-      of LnDn,CtlI: usrNav=true; goDn yO,pick,visIx, h,true
-      of PgUp:  usrNav=true; (for _ in 1..h: goUp yO,pick,visIx, h,false)
-      of PgDn:  usrNav=true; (for _ in 1..h: goDn yO,pick,visIx, h,false)
-      of Home:  usrNav=true; goHm       #^^^ Ok to mv visIx to top/bot(pg)?
-      of End:   usrNav=true; goHm;goUp yO,pick,visIx, h,true # LIST NAVIGATION )
+      of LnUp:      goUp yO,pick,visIx, h,true  # LIST NAVIGATION (
+      of LnDn,CtlI: goDn yO,pick,visIx, h,true
+      of PgUp:  (for _ in 1..h: goUp yO,pick,visIx, h,false)
+      of PgDn:  (for _ in 1..h: goDn yO,pick,visIx, h,false)
+      of Home:  goHm       #^^^ Ok to mv visIx to top/bot(pg)?
+      of End:   goHm;goUp yO,pick,visIx, h,true # LIST NAVIGATION )
       of CtlA:  jC = 0                  # Qry Bulk NavEdit: ^A=Start,^E=End
       of CtlE:  jC = q.len              # Ensure jC byte idx ends @EndOf UChar
       of CtlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
@@ -486,10 +487,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       let (nRow, nMs) = getData()       # Maybe now have items..
       stale = stale or nRow != 0
       doFilt = doFilt or pick.int < 0 and itA.len > 0 #..but had no pick.
-      if doF and nMs > 0 and not usrNav: # Snap to new data unless usr mid-Nav
-        goHm; goUp yO,pick,visIx, h,true   # Same as End key
-      elif nMs==0 and not tReady: usrNav = false; continue # rows but no match
-    usrNav = false                      # reset each tick
+      if doF and nMs > 0: goHm; goUp yO,pick,visIx, h,true # New data; Snap2 End
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
 proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
