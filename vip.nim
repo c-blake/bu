@@ -26,7 +26,7 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key=enum CtlO,CtlI,CtlT,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LineUp,LineDn,PgUp,
+  Key=enum CtlO,CtlI,CtlT,CtlF,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LnUp,LnDn,PgUp,
    PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,CtlX,Norm,NoBind
   Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
   Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
@@ -50,8 +50,8 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   labA: seq[int]        #   Label offs into D[] (label.b = itA[] - nD)
   ms: seq[Match]        # Matches against current query (of what has been read)
   q, D, Di: string      # Running query, user data, maybe .lowerAscii user data
-  iFd = 0.cint          # Stdin; -1 once true EOF seen (writing process died)
-  doSort, doIs, doRoot, doXact: bool # SortBy MchSzFrac,InSensitive/Beg/Xact Mch
+  iFd = 0.cint          # Always Stdin; `wrFin` says if pipe writer finished
+  doSort,doIs,doRoot,doXact,doF:bool # SortByMchSzFrac,InSensitv/Beg/Xact,follow
   trm, dlm: char        # Optional label-value delimiter; dlm0 => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   okx: ExtTest          # An external test function return 1 to for ok/keep
@@ -136,13 +136,13 @@ proc Kay(k: Key, s: string): K = result.key = k; result.str = s; result.tio = -1
 proc Tio(k: Key, i: cint)  : K = result.key = k; result.tio = i
 var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtlC  ,VINTR ),Tio(CtlZ,VSUSP),
-  Cap(LineUp,"kcuu1"),Kay(LineUp,"\x10"),Kay(LineUp,"\eOA"),
-  Cap(LineDn,"kcud1"),Kay(LineDn,"\x0E"),Kay(LineDn,"\eOB"),Kay(CtlG, "\x07"),
+  Cap(LnUp  ,"kcuu1"),Kay(LnUp  ,"\x10"),Kay(LnUp  ,"\eOA"),Kay(CtlF, "\x06"),
+  Cap(LnDn  ,"kcud1"),Kay(LnDn  ,"\x0E"),Kay(LnDn  ,"\eOB"),Kay(CtlG, "\x07"),
   Cap(PgUp  ,"kpp"  ),Kay(PgUp  ,"\eu" ),   # v<--- Alternate Dn,Hm,End bindings
   Cap(PgDn  ,"knp"  ),Kay(PgDn  ,"\x16"),Kay(PgDn  ,"\ed" ),
   Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End , "\ee"),
   Kay(CtlA  ,"\x01" ),Kay(CtlE  ,"\x05"),Kay(CtlU  ,"\x15"),Kay(CtlK, "\v" ),
-  Cap(Right ,"kcuf1"),Kay(Right ,"\x06"),Kay(Right ,"\eOC"),
+  Cap(Right ,"kcuf1"),Kay(Right ,"\eOC"),
   Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"), # Ctl[QSMWY\]^_]
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
   Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(CtlX  ,"\x18"),Kay(NoBind, "")]
@@ -217,10 +217,14 @@ proc msSort() =              # 7) SORT MATCHES; Should maybe become adix/nsort
     let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
   else: ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix)
 
+let isPipe = (block:                    # True if EOF is a permanent condition
+  var s: Stat; discard fstat(iFd, s); S_ISFIFO(s.st_mode) or S_ISCHR(s.st_mode))
+var wrFin = false                       # read(iFd)==0 happened (writer gone)
+
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
-  let wake = want>0 and iFd>=0          # 8) IO/Filter Engine(to EndOf filterQuit
-  var fds = [TPollfd(fd: tFd, events: POLLIN.cshort),
-             TPollfd(fd: (if wake: iFd else: -1), events: POLLIN.cshort)]
+  let wake=(want>0 or doF)and not wrFin # 8) IO/Filter Engine;ToEndOf filterQuit
+  var fds= [TPollfd(fd: tFd, events: POLLIN.cshort),
+            TPollfd(fd: (if wake and isPipe:iFd else: -1),events:POLLIN.cshort)]
   let tmo = cint(if wake: tmOut.tv_usec div 1000 elif sk < scr.len: 0 else: -1)
   setSigWinCh true
   let nReady = poll(fds[0].addr, 2, tmo)
@@ -232,9 +236,11 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   result[1] = nReady > 0 and (fds[0].revents and POLLIN.cshort) != 0
   result[2] = nReady > 0 and wake and
     (fds[1].revents and (POLLIN.cshort or POLLHUP.cshort or POLLERR.cshort))!=0
+  if wake and not isPipe and nReady == 0: # timeout on regular file: try read
+    result[2] = true
 
 var O = 0                               # Offset in D of current row
-proc getData =                          # Read, Parse rows, Match & maybe Sort
+proc getData: int =                     # Read, Parse rows, Match & maybe Sort
   DiUp()                                # Need before any loop of match() calls
   let msLen0 = ms.len                   # Split buf to lines w/carry & update ms
   template maybeFrameAndAdd(nR: int) =
@@ -254,13 +260,14 @@ proc getData =                          # Read, Parse rows, Match & maybe Sort
     while (O < m and (let p = cmemchr(D[O].addr, trm, csize_t(m - O)); p!=nil)):
       maybeFrameAndAdd(p -! D[O].addr); O = p -! D[0].addr + 1
   else:                                 # True EOF; Handle any trailing data
-    iFd = -1
+    if isPipe: wrFin = true
     if N > O:                           # At most 1 row by construction
       D.setLen N                        # Right-size D[]
       if N>0 and D[^1]!=trm: D.add trm  # Force term if have any data
       maybeFrameAndAdd(D.len - O)
     else: D.setLen N                    # Nothing to do but right-size D[]
-  if ms.len > msLen0 and doSort: msSort() # Slow O(n^2 lg n) but users may want
+  result = ms.len - msLen0
+  if result > 0 and doSort: msSort()    # Slow O(n^2 lg n) but users may want
 
 when not declared epochTime: import std/times #Here since posix.Time also exists
 proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
@@ -380,16 +387,16 @@ proc putH(h: int) =
     put1 "", "^O OrdMch,Inp ^T      ToggleInsen  ^X eXact"
     put1 "", "^R RootedMchs Alt-ENT WholeRowX2  ^C/^Z Usual"
     put1 "", "ListNavigate  TAB(Arrow|Pg)(Up|Dn)Home|End"
-    put1 "", "      Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
+    put1 "", "^F folw Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
     put1 "", "QueryEdit    ArrowLeft/Right Backspace Delete"
-    put1 "", "^G EOF ^L Redo ^A Beg ^E End ^K RKill ^U LNix"
+    put1 "", "^G EOF ^L ReDo ^A Beg ^E End ^K RKill ^U LNix"
     put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md.", eol=false
   else: put1 "", "No Room For Help", eol=false
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
 proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var yO, pick: Mix; var visIx: int     # yO = Origin/Offset
-  var (doFilt, qGrew) = (true, false)
+  var (doFilt, qGrew, usrNav) = (true, false, false)
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
   want = min(uH, pH)
@@ -405,13 +412,15 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     let hdr = ats['h'][0] & align($ms.len, den.len - 3) & den & ats['h'][1]
     put1 hdr, ats['q'][0] & q & ats['q'][1]
     putN(yO, pick)
+    if doF and not wrFin: want = want.max(1)      # wake->true while input lives
     putp carriage_return                          # Position cursor on qry line
     let jCtot = hdr.printedLen + q[0..<jC].printedLen # right_cursor treats 0 as
     if jCtot > 0: putp tparm1(parm_right_cursor, jCtot.cint) #..1=>only mv if>0.
     putp cursor_normal, fatal=false; oFlush()
-    when defined bench: (if t1==0 and (iFd < 0 or want == 0): t1 = epochTime())
+    when defined bench: (if t1 == 0 and (wrFin or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; getTermSize(); continue
+    if not tReady and not dReady: continue        # pure timeout: no redraw
     let q0 = q
     let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
               elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
@@ -422,21 +431,26 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
-      of CtlG: (while iFd >= 0:         # Let user halt ingest w/^C | another ^G
-                  getData(); let p = TPollfd(fd: tFd, events: POLLIN.cshort)
-                  if (poll(p.addr,1,0)==1)and(let k=iK.getKey;k in {CtlG,CtlC}):
-                    break)              # Other keys ignored; Human must halt!
+      of CtlF: doF = not doF; usrNav = false
+      of CtlG:                          # Let user halt ingest w/^C | another ^G
+        let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
+        while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
+          let newMs = getData()
+          if wrFin or (not isPipe and newMs==0): break # wrDone|file gave no new
+          if poll(p.addr, 1, 0) == 1 and (let k = iK.getKey; k in {CtlG, CtlC}):
+            break                       # Other keys ignored; Human must halt!
+        if ms.len > 0: goHm; goUp yO, pick, visIx, h, true
       of CtlL:  getTermSize()                      # Viewport parameter
       of Enter: return (false, (if ms.len>0: ms[pick].ix.int else: -1)) #3 exits
       of AltEnt:return (true , (if ms.len>0: ms[pick].ix.int else: -1))
       of CtlC:  return (true , -1)
       of CtlZ:  tRestore alt; discard kill(getpid(), SIGTSTP); tInit alt
-      of LineUp:      goUp yO,pick,visIx, h,true   # LIST NAVIGATION (
-      of LineDn,CtlI: goDn yO,pick,visIx, h,true
-      of PgUp:  (for _ in 1..h: goUp yO,pick,visIx, h,false) #Ok to mv visIx to
-      of PgDn:  (for _ in 1..h: goDn yO,pick,visIx, h,false) #..top/bot(page)?
-      of Home:  goHm
-      of End:   goHm; goUp yO,pick,visIx, h,true   # LIST NAVIGATION )
+      of LnUp:      usrNav=true; goUp yO,pick,visIx, h,true  # LIST NAVIGATION (
+      of LnDn,CtlI: usrNav=true; goDn yO,pick,visIx, h,true
+      of PgUp:  usrNav=true; (for _ in 1..h: goUp yO,pick,visIx, h,false)
+      of PgDn:  usrNav=true; (for _ in 1..h: goDn yO,pick,visIx, h,false)
+      of Home:  usrNav=true; goHm       #^^^ Ok to mv visIx to top/bot(pg)?
+      of End:   usrNav=true; goHm;goUp yO,pick,visIx, h,true # LIST NAVIGATION )
       of CtlA:  jC = 0                  # Qry Bulk NavEdit: ^A=Start,^E=End
       of CtlE:  jC = q.len              # Ensure jC byte idx ends @EndOf UChar
       of CtlK:  q.delete jC ..< q.len; doFilt = true         # ^K=Kill RHS
@@ -453,8 +467,13 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
                    q.delete slice; jC -= slice.len; doFilt = true)
       of Norm:   q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
-    elif dReady:                        # data input (not done if viewport full)
-      getData(); doFilt = pick.int < 0 and itA.len > 0
+    if dReady:                          # data input (not done if viewport full)
+      let newMs = getData()                           # Maybe now have items..
+      doFilt = doFilt or pick.int < 0 and itA.len > 0 #..but had no pick.
+      if doF and newMs > 0 and not usrNav: # Snap to new data unless usr mid-Nav
+        goHm; goUp yO,pick,visIx, h,true   # Same as End key
+      elif newMs==0 and not tReady: continue # Got bytes but no new rows
+    usrNav = false                      # reset each tick
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
 proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
