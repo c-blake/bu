@@ -248,14 +248,17 @@ proc getData: int =                     # Read, Parse rows, Match & maybe Sort
   let msLen0 = ms.len                   # Split buf to lines w/carry & update ms
   template maybeFrameAndAdd(nR: int) =
     if nR > int(dlm != dlm0):           # Do not admit empty `label&row`
+      var added = true
       if dlm != dlm0:                   # Maybe split line into (label, thing)
         if (let p = cmemchr(D[O].addr, dlm, nR.csize_t); p != nil):
           okS.add 0u8; itA.add O + (p -! D[O].addr) + nD; labA.add O
+        else: added = false             # Corrupt row/no delimiter
       else:
         okS.add 0u8; itA.add O
-      Dused = O + nR
-      let m = if q.len>0: match(itA.len-1) else:(1,uint32(itA.len-1),1u32..0u32)
-      if m.ix != badIx: ms.add m
+      if added:
+        Dused = O + nR
+        let m = if q.len>0:match(itA.len-1)else:(1,uint32(itA.len-1),1u32..0u32)
+        if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
   let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
   if n > 0:                             # EOF: flush carry then close
