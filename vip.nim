@@ -59,7 +59,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
   okx: ExtTest          # An external test function return 1 to for ok/keep
   prn: ExtPrint         # An external fn to format labels
-  Buf = 4096  # Stdin Buffer Size; Lets user balance produce-consume aggression
+  Buf = 16384  # Stdin Buffer Size; Lets user balance produce-consume aggression
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
   scr: seq[Key]
   sk = 0                # index into above `scr`
@@ -175,7 +175,7 @@ proc getKey(ik: var string): Key =              # partial key
   if ik.len > 1 and ik[0] == '\e' and (ik[1] == '[' or ik[1] == 'O'):
     var c = ik[^1]      # EscSeq of unsupported key being read. Discard rest
     while c < '@' or c > '~': c = getc()
-    return NoBind
+    return NoBind       # NOTE: manual Esc-Then-Key likely swallows Esc; Shrug
   if (ik[0].uint and 0xC0) != 0xC0:             # NOT start of UTF8
     return if ik[0] >= ' ' and ik[0] <= '~': Norm else: NoBind
   while ((ik[0].int shl ik.len) and 0x80) != 0: # Finish 1 whole UTF8 char len==
@@ -449,8 +449,8 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of CtlG:                          # Let user halt ingest w/^C | another ^G
         let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
         while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
-          let (_, newMs) = getData()
-          if wrFin or (not isPipe and newMs==0): break # wrDone|file gave no new
+          let (newRows, _) = getData()
+          if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
           if poll(p.addr, 1, 0) == 1 and (let k = iK.getKey; k in {CtlG, CtlC}):
             break                       # Other keys ignored; Human must halt!
         if ms.len > 0: goHm; goUp yO, pick, visIx, h, true
