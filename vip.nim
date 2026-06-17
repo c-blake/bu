@@ -18,7 +18,9 @@ impC carriage_return; impC parm_up_cursor; impC parm_right_cursor; impC clr_eos
 impC enter_ca_mode; impC exit_ca_mode; impC cursor_invisible; impC cursor_normal
 impC keypad_xmit; impC keypad_local
 const SIGWINCH = 28.cint                # Nim stdlib ~ woefully Windows-centric
-var POSIX_VDISABLE {.header: "term.h", importc: "_POSIX_VDISABLE" .}: cchar
+var VDISCARD {.importc, header: "<termios.h>".}: cint # not in Nim stdlib
+var PC_VDISABLE {.importc: "_PC_VDISABLE", header: "<unistd.h>".}: cint
+let VDISABLE = fpathconf(tFd, PC_VDISABLE).char
 proc tcap(cap: string): string =        # termcap/curses convenience wraps
   let s = tigetstr(cap.cstring)
   if cast[int](s) != -1 and not s.isNil:
@@ -110,6 +112,7 @@ proc setSigWinCh(enable: bool) =        # SIGNALS
 proc getTermSize() =
   let f=[tFd.int]; tW=f.terminalWidthIoctl; tH=f.terminalHeightIoctl; pH=tH - 1
 
+
 proc tInit(alt=false) =                 # INIT
   discard tcGetAttr(tFd, tio.addr)
   var na = tio                          # N)ew A)ttributes
@@ -117,7 +120,7 @@ proc tInit(alt=false) =                 # INIT
   na.c_lflag = na.c_lflag and not (ISIG or ICANON or ECHO or IEXTEN)
   na.c_cc[VTIME] = chr(0)               # == POSIX_VDISABLE
   na.c_cc[VMIN] = chr(1)
-  na.c_cc[13] = POSIX_VDISABLE          # VDISCARD missing in Nim stdlib
+  na.c_cc[VDISCARD] = VDISABLE
   discard tcSetAttr(tFd, TCSANOW, na.addr)
   getTermSize()
   putp keypad_xmit, fatal=false
@@ -161,7 +164,7 @@ proc getKey(ik: var string): Key =              # partial key
       inc i; let k = Ks[i]
       if k.tio >= 0:
         if ik.len == 1 and tio.c_cc[k.tio] == ik[0] and
-           tio.c_cc[k.tio] != POSIX_VDISABLE: return k.key
+           tio.c_cc[k.tio] != VDISABLE: return k.key
         continue
       if not k.str.startsWith(ik): continue     # Cannot match this `k`
       if ik.len == k.str.len: return k.key      # Matches exactly
