@@ -289,7 +289,7 @@ proc filterQuit(qGrew=false) =  # Filter read-so-far using current query `q->ms`
     if j mod pollRate == 0 and j > 0:
       if poll(pfd.addr, 1, 0) == 1: return  # Keypress: abandon, will redo
       let t1 = epochTime()
-      let rate = pollRate.float/((t1 - t0)*1e6)       # <item/usec> *from start*
+      let rate = j.float/((t1 - t0)*1e6)              # <item/usec> *from start*
       pollRate = int(rate*tmOut.tv_usec.float/2)      # target tmOut/2
       pollRate = max(128, min(pollRate, 1 shl 16))    # clamp to sane range
       t0 = t1
