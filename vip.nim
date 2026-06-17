@@ -44,7 +44,8 @@ proc `[]=`(x: var seq[Match], j: Mix, m: Match) = x[j.int] = m
 const dlm0 = 'a'        # a)bsent delim spec & pretty useless `char` for that
 const nD=1; const nT=1  # Delimiter & Terminator always 1 byte for now
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
-  tW,tH,pH,uH,want,Dused:int #T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,need
+  tW,tH,pH,uH,Dused:int #T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,D[]used
+  want: int             # SINGLE COUPLER BETWEEN UI NEED, IO WAKE & INGESTION
   tio: Termios          # Terminal IO State
   sigWinCh: Sig_atomic  # Flag saying WinCh was delivered
   itA: seq[int]         # 3 Parallel arrays: Item offs into D[]; len() for .len
