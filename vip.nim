@@ -414,13 +414,12 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var iK: string
   want = min(uH, pH)
   template fastEOF =                    # Let user halt ingest w/^C | ^G | ^F
-    let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
+    let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for human halts!
     while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
       let (newRows, _) = getData()      #NOTE: ONLY place ^C stays in `vip`
       if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
-      if poll(p.addr, 1, 0)==1 and (let k = iK.getKey; k in {CtlF,CtlG,CtlC}):
-        break                           # Other keys ignored; Human must halt!
-    if ms.len > 0: goHm; goUp yO, pick, visIx, h, true # Navigate to end, too
+      if poll(p.addr,1,0)==1 and (let k=iK.getKey;k in {CtlF,CtlG,CtlC}): break
+    if ms.len > 0: goHm; goUp yO, pick, visIx, h, true; doFilt=false # Nav2end
   while true:
     let h = min(uH, pH); iK.setLen 0
     if doFilt:
@@ -443,7 +442,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     when defined bench: (if t1 == 0 and (wrFin or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; stale = true; getTermSize(); continue
-    if not tReady and not dReady: continue        # pure timeout: no redraw
+    if not tReady and not dReady and sk >= scr.len: continue # pureTmOut;No draw
     let q0 = q
     let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
               elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
