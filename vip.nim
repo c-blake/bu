@@ -63,7 +63,6 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
   scr: seq[Key]
   sk = 0                # index into above `scr`
-when defined bench: import std/times; var t0=0.0; var t1=0.0
 proc itB(i: int): int =
   if i==itA.len-1: Dused-nT elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
 proc labB(i: int): int   = itA[i]-nD-1
@@ -438,7 +437,6 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       putp cursor_normal, fatal=false; oFlush()
       stale = false
     if doF and not wrFin: want = want.max(1)      # wake->true while input lives
-    when defined bench: (if t1 == 0 and (wrFin or want == 0): t1 = epochTime())
     let (winch, tReady, dReady) = ioCheck()
     if winch: sigWinCh = 0; stale = true; getTermSize(); continue
     if not tReady and not dReady and sk >= scr.len: continue # pureTmOut;No draw
@@ -493,7 +491,6 @@ proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
  delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",print="",
  colors: seq[string] = @[], color: seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
-  when defined bench: t0 = epochTime()
   var i: int; var ex = false
   uH = n - 1; q = qs.join(" "); qUp(); doSort = order; Buf = buf; trm = term
   dlm = delim; doIs=inSen; doRoot=root; doXact=eXact; if doIs: everIs = true
@@ -503,7 +500,6 @@ proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
   if print.len > 0: prn = cast[ExtPrint](print.loadSym) # Maybe Load Plug-In
   try    : tInit alt; (ex, i) = tui(alt)                # Run the TUI
   finally: tRestore alt
-  when defined bench: tFd.write $int((t1 - t0)*1e6)&" usec to EOF"&"\n"
   if i == -1: echo (if quit.len>0: quit else: q); return 1 # ^C
   elif not ex: echo it(i)                               # Exit: Normal, ^C, alt
   elif dlm==dlm0: echo it(i); return 2      # No inner row structure
