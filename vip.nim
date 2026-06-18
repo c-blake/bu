@@ -63,8 +63,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
   scr: seq[Key]
   sk = 0                # index into above `scr`
-when defined bench:
-  import std/times; var t0, t1: float
+when defined bench: import std/times; var t0=0.0; var t1=0.0
 proc itB(i: int): int =
   if i==itA.len-1: Dused-nT elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
 proc labB(i: int): int   = itA[i]-nD-1
