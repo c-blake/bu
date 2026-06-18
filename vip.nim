@@ -413,6 +413,14 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   var jC = q.len                        # cursor as byte index into q[]
   var iK: string
   want = min(uH, pH)
+  template fastEOF =                    # Let user halt ingest w/^C | ^G | ^F
+    let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
+    while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
+      let (newRows, _) = getData()      #NOTE: ONLY place ^C stays in `vip`
+      if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
+      if poll(p.addr, 1, 0)==1 and (let k = iK.getKey; k in {CtlF,CtlG,CtlC}):
+        break                           # Other keys ignored; Human must halt!
+    if ms.len > 0: goHm; goUp yO, pick, visIx, h, true # Navigate to end, too
   while true:
     let h = min(uH, pH); iK.setLen 0
     if doFilt:
@@ -440,16 +448,8 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     let key = if sk<scr.len: (let k = scr[sk]; inc sk; k) # Do script pre-getKey
               elif tReady: iK.getKey    # Norm&NoBind are UNSCRIPTABLE (Need iK)
               else: NoBind              # Nim needs a value; Really no-op here.
-    template fastEOF =                  # Let user halt ingest w/^C | ^G | ^F
-      let p = TPollfd(fd: tFd, events: POLLIN.cshort) # watch tty for aborts
-      while isPipe and not wrFin or not isPipe:  # Drain if inp live|unread
-        let (newRows, _) = getData()    #NOTE: ONLY place ^C stays in `vip`
-        if wrFin or (not isPipe and newRows==0): break # wrDone | nothing new
-        if poll(p.addr, 1, 0)==1 and (let k = iK.getKey; k in {CtlF,CtlG,CtlC}):
-          break                         # Other keys ignored; Human must halt!
-      if ms.len > 0: goHm; goUp yO, pick, visIx, h, true # Navigate to end, too
     if key != NoBind or iK.len > 0:     # terminal input (priority)
-      stale = true    # ANY KEY => stale => redraw
+      stale = true      # ANY KEY => stale => redraw
       case key       #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
       of CtlO: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
