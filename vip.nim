@@ -1,5 +1,5 @@
 import std/[syncio, posix, terminal, strutils, algorithm, sets], posix/termios
-import cligen/[sysUt, osUt, mslice, textUt, humanUt] # ~Erlandsson pick
+import cligen/[sysUt, osUt, mslice, textUt, humanUt] # Moved by ~Erlandsson pick
 {.passl: "-lncurses".}                  # 0) C-LEVEL CURSES SET UP
 when defined linux: {.passl: "-ltinfo".}
 proc tigetstr(capCode: cstring): cstring                  {.header:"curses.h".}
