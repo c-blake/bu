@@ -1,4 +1,4 @@
-import std/[os, posix, strformat]       # Nim program to measure Resource Usage
+import std/[os,posix,envvars,strformat] # Nim program to measure Resource Usage
 when not declared(stderr): import std/syncio
 
 import std/[macros, strutils]           # Some formats want no leading spaces
@@ -14,6 +14,7 @@ template r(nm): untyped = ruV.`ru nm`   # Abbreviate field access
 var oh0, oh1, t0, t1: Timespec          # For timing overhead & timing itself
 var e0 = "\e[1;3m"                      # ANSI SGR color escape for bold-italic
 var e1 = "\e[m"                         # Turn off colors
+let ofd = getEnv("O", "2").parseInt
 
 var fWrap, fH, fTm, fIO, fSwSh, fComm, fPlain, fUnWrp: bool #Flags: See below
 const use = """Usage:
@@ -30,7 +31,8 @@ No options => as if -hit; else selected subset.  Flags all in arg 1 & mean:
   u  u)nwrapped output with field labels (to get fields by column, e.g. awk)
 `man getrusage` | `man time` give more details on the various stats this small
 Nim program can print.  You can put options in the `RU` environment variable.
-Compared to time(1), this is higher precision with more controlled units."""
+Compared to time(1), this is higher precision with more controlled units.
+EnVar $O = output file descriptor, 2 by default."""
 
 proc parseArg(arg1: string) =
   fWrap  = 'w' in arg1
@@ -129,7 +131,7 @@ proc report(sno: cint) {.noconv.} =     # handlers get passed the signal number
     if fComm: s.add &"{gap}{nsg} {msn} {mrc} "
     s.add '\n'
   # 1 write+immediate exit ensures 1 print EVEN IF sig delivered DURING report 0
-  exitnow(if write(2, s[0].addr, s.len) == s.len: st.WEXITSTATUS else: 99)
+  exitnow(if write(ofd.cint, s[0].addr, s.len)==s.len: st.WEXITSTATUS else: 99)
 
 let argc {.importc: "cmdCount".}: cint          # On POSIX, not a lib; importc
 let argv {.importc: "cmdLine".}: cstringArray   #..is both simpler & faster.
