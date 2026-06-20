@@ -64,10 +64,12 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 Like most other [`cligen`](https://github.com/c-blake/cligen) apps, you can
 set all those things in a config file|config directory like `~/.config/vip`.
 
-Textual User Interface:
+Textual/CL User Interface:
 ```
-Ctrl-O    Toggle Order By Match Size Fraction Mode (/|% in match count )
-Ctrl-T    Toggle Insensitive Case Mode   ( |- in query prompt)
+Ctrl-O    Toggle Order By Match Fraction Mode (/|% in match count)
+Ctrl-T    Toggle Insensitive Case Mode        (- in query prompt)
+Ctrl-R    Toggle rooted (prefix) mode         (^ in query prompt)
+Ctrl-X    Toggle eXact (space) match mode     (x in query prompt)
 Ctrl-L    Refresh
 ENTER     Emit Selected Item -> stdout; exit 0
 Alt-ENTER Emit Whole Row -> stdout    ; exit 2
