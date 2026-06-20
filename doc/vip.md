@@ -155,16 +155,13 @@ perception of "delay" tends to key off of instant appearance and bulk slowness.
 Set-up in (i7-6700k-noHT; frq f 17&&chrt/taskset cpu2 on zsh launcher, idle with
 noBrowser; tty=`st` w/16x30 cell):
 ```sh
-cd /dev/shm     # Avoid IO; Establish j & aliases; time less
-ru seq 0 9999999 >j
-ru less +G +q <j
-alias v='vip -T1'; alias c=clear
-alias vA='ru -t vip -T1 2>>vA'
+cd /dev/shm  # Avoid IO; Establish j & aliases; time less
+ru seq 0 9999999 >j; ru less +G +q <j; alias c=clear
+alias v='vip -T1'; alias vA='ru -t vip -T1 2>>vA'
 alias f='fzf --algo=v1 --no-sort --height=9'
 alias fA='ru -t fzf --algo=v1 --no-sort --height=9 2>>fA'
 alias s='sk --no-sort --height=9'
-alias sA='O=3 ru -t sk --no-sort --height=9'
-c
+alias sA='O=3 ru -t sk --no-sort --height=9'; c
 ```
 Set-up out (lightly reformatted):
 ```
@@ -172,18 +169,16 @@ TM  0.663017 wall  0.686996 usr  0.072293 sys  114.5 % 1.707 mxRM
 TM  3.940678 wall  3.788688 usr  0.134675 sys   99.6 % 78.531 mxRM
 <BLANK>
 ```
-Set-up in/out Terminal2 (may want `setopt InteractiveComments`):
+Set-up in Terminal2 (may want `setopt InteractiveComments`):
 ```sh
-xwininfo|grep Window.id # click-on-blank-terminal-to-get-id
-xwininfo: Window id: 0x600005 "d11"
+T1=$(xwininfo|grep 'Window id'|awk '{print $4}')
+export RESET=''         # for `tt`
 ```
 
 Measuring; T2 waits for 1st page draw to finish in T1 (cx=8 relates to datSz).
 2nd block waits for indication of all ready, in this case last "0" in
 "10000000/10000000" paints in some color:[^1]
 ```sh
-T1=0x600005     # from above xwininfo|grep Window.id
-export RESET=''
 (repeat 25 CMD=' c;v<j' cx=8 cy=1 tt $T1) >vI
 (repeat 25 CMD=' c;f<j' cx=2 cy=2 tt $T1) >fI
 (repeat 25 CMD=' c;s<j' cx=2 cy=2 tt $T1) >sI
