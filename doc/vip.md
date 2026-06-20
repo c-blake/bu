@@ -137,6 +137,48 @@ zle -N h-vip; bindkey '^R' h-vip                # Create & bind widget
 | -------------------------- | ------------------- |
 | ![Key Strokes](vipK.gif)   | ![Output](vipO.gif) |
 
+## Combining with `adix/util/lfreq` for frecent dir navigation
+
+You can easily roll your own system like https://github.com/agkozak/zsh-z or
+zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
+```sh
+chpwd() { pwd>>$ZDOTDIR/dirs }  # Must be LOCAL file & $#PWD < atomicWriteSz
+d-vip() { local dd=$(lfreq -o.9 -n-99999 -f@k<$z/dirs | vip -rq. "$BUFFER")
+  [ "$dd" != "." ] && cd "$dd"; unset dd; zle reset-prompt }
+zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
+```
+With something like that, `Alt-h` brings up a picker based on PWD history and
+you can start typing to get a selection, hit ENTER to `cd`.
+
+This `chpwd` relies upon atomicity of small writes to local files, but for me
+that limit is generously bigger than any directory full path in my life.  This
+matters since races for shared shells are easily imagined, eg. `for d in $many;
+(cd $d; short-running)` in one terminal with interactive `cd` in another.  If
+your pwd log is on NFS or something, you will want something fancier.
+
+For this application, since directory existence/permissions are so dynamic, it
+makes sense to not-present missing/blocked entries.  One can do all at once (eg.
+lfreq|[ft](ft.md) -edX|vip), but since *displayed lists are expected to be FAR
+SMALLER than input lists*, we can do much better by only validating entries "on
+demand" (like [demand paging](https://en.wikipedia.org/wiki/Demand_paging) or
+other [lazy loading](https://en.wikipedia.org/wiki/Lazy_loading) systems) *just
+prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
+general and other arbitrary user entry validation can be expensive I thought a
+plug-in/shlib solution best. So, installing a [libvip plug-in](../bu/libvip.nim)
+```sh
+nim c --app=lib -d=release -o=bu/libvip.so bu/libvip.nim &&
+  install -cm755 bu/libvip.so /usr/local/lib.
+```
+lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
+the current user can `cd` into "now".  This may sound pedantic, but it can
+elide a zillion stat()s some of which may even automount net FSes while also
+avoiding presenting the user with many "invalid right now" `cd` targets.
+
+Besides filesystem history, lazy, immediately pre-display validation also helps
+for other volatile/ephemeral system entities (processes to signal, containers,
+services) or remote/unreliable resources (SSH, cloud, network).  Any such can
+also benefit from this plug-in system.
+
 # Performance
 
 Functionality more than speed was my initial point in writing `vip`, but it's
@@ -204,48 +246,6 @@ gave `1.40299 ± 0.00033 sec` as a cross-check.  3.94/1.38=2.9X faster than
 `less` feels like a nice result (`vip` uses more space than `less`, for 8-byte
 row pointers & matches which depend on the initial/ongoing query).
 
-## Combining with `adix/util/lfreq` for frecent dir navigation
-
-You can easily roll your own system like https://github.com/agkozak/zsh-z or
-zoxide by adding these or similar to your `$ZDOTDIR/.zshrc`:
-```sh
-chpwd() { pwd>>$ZDOTDIR/dirs }  # Must be LOCAL file & $#PWD < atomicWriteSz
-d-vip() { local dd=$(lfreq -o.9 -n-99999 -f@k<$z/dirs | vip -rq. "$BUFFER")
-  [ "$dd" != "." ] && cd "$dd"; unset dd; zle reset-prompt }
-zle -N d-vip; bindkey '^[h' d-vip # Create & bind widget to Alt-h
-```
-With something like that, `Alt-h` brings up a picker based on PWD history and
-you can start typing to get a selection, hit ENTER to `cd`.
-
-This `chpwd` relies upon atomicity of small writes to local files, but for me
-that limit is generously bigger than any directory full path in my life.  This
-matters since races for shared shells are easily imagined, eg. `for d in $many;
-(cd $d; short-running)` in one terminal with interactive `cd` in another.  If
-your pwd log is on NFS or something, you will want something fancier.
-
-For this application, since directory existence/permissions are so dynamic, it
-makes sense to not-present missing/blocked entries.  One can do all at once (eg.
-lfreq|[ft](ft.md) -edX|vip), but since *displayed lists are expected to be FAR
-SMALLER than input lists*, we can do much better by only validating entries "on
-demand" (like [demand paging](https://en.wikipedia.org/wiki/Demand_paging) or
-other [lazy loading](https://en.wikipedia.org/wiki/Lazy_loading) systems) *just
-prior to rendering*.  Many might reach for a `vip --cdable`, but since `vip` is
-general and other arbitrary user entry validation can be expensive I thought a
-plug-in/shlib solution best. So, installing a [libvip plug-in](../bu/libvip.nim)
-```sh
-nim c --app=lib -d=release -o=bu/libvip.so bu/libvip.nim &&
-  install -cm755 bu/libvip.so /usr/local/lib.
-```
-lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
-the current user can `cd` into "now".  This may sound pedantic, but it can
-elide a zillion stat()s some of which may even automount net FSes while also
-avoiding presenting the user with many "invalid right now" `cd` targets.
-
-Besides filesystem history, lazy, immediately pre-display validation also helps
-for other volatile/ephemeral system entities (processes to signal, containers,
-services) or remote/unreliable resources (SSH, cloud, network).  Any such can
-also benefit from this plug-in system.
-
 # Related Work
 
 I am unsure there is any work prior to the 2004 Emacs `anything.el` now named
@@ -268,7 +268,7 @@ I'd expect there are dozens more projects.  Happy to list them here if told
 about them. `percol` is literally the only other tool I found which honored the
 original IO flow control idea of pipe back pressure - not reading more at the
 end of pipeline (TUI) than is necessary.  Back pressure can sometimes lighten
-total load by orders of magnitude, but its use of Python makes it quite slow.
+total load by orders of magnitude, but `percol`'s use of Python makes it slow.
 
 There was some historical Unix `vip` vi-like program, but it's not installed
 anywhere these days and 40+ years is long enough to recycle a name.
