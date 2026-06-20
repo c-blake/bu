@@ -240,7 +240,8 @@ repeat 10 CMD=' c;fA<j' cx=18 cy=7 tt $T1
 exec 3>>sA # sk lamely does not open /dev/tty
 repeat 10 CMD=' c;sA<j' cx=18 cy=7 RESET=' sleep 4' tt $T1
 ```
-Mildly reformatted output of `for f in *[IA];echo $f $(cstats q.75<$f)`:
+Mildly reformatted output of `for f in *[IA];echo $f $(cstats q.75<$f)` yield
+these ***BENCHMARK RESULTS***:
 ```
      InitQ3  AllReadyQ3  MaxRSAllReady
 vip  0.0243   1.3821      353712
