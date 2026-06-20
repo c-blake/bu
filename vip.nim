@@ -287,7 +287,7 @@ proc filterQuit(qGrew=false): bool =    # Filter read-so-far using curr `q`->ms
   let pfd = TPollfd(fd: tFd, events: POLLIN.cshort)
   template checkAndAdapt(j: int) =
     if j mod pollRate == 0 and j > 0:
-      if poll(pfd.addr, 1, 0) == 1: return false # Keypress: abandon, will redo
+      if poll(pfd.addr, 1, 0) == 1: return true  # Keypress: abandon, will redo
       let t1 = epochTime()
       let rate = j.float/((t1 - t0)*1e6)              # <item/usec> *from start*
       pollRate = int(rate*tmOut.tv_usec.float/2)      # target tmOut/2
@@ -306,7 +306,6 @@ proc filterQuit(qGrew=false): bool =    # Filter read-so-far using curr `q`->ms
       let m = match(i)
       if m.ix != badIx: ms.add m
   if doSort: msSort()   # Early returns block doing a sort which will be unused
-  true
 
 proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 9) OK MATCH NAVIGATION
   for j in yO.int ..< ms.len:   # Collect up to `h` indices from `yO` to show
@@ -421,8 +420,8 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
   while true:
     let h = min(uH, pH); iK.setLen 0
     if doFilt:
-      let d=filterQuit(qGrew); qGrew=false; want=want.max(h-ms.len); stale=true
-      if d and ms.len>0:doFilt=false;pick=0.Mix.first;yO=0.Mix.max(pick);visIx=0
+      doFilt=filterQuit(qGrew); qGrew=false; want=want.max(h-ms.len); stale=true
+      if ms.len > 0: pick = 0.Mix.first; yO = 0.Mix.max(pick); visIx = 0
     if stale:
       putp cursor_invisible, fatal=false
       putp carriage_return; putp clr_eos
@@ -481,10 +480,17 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       of Norm:   q.insert iK, jC; qGrew = true; jC += iK.len; doFilt = true
       of NoBind: putH(h); oFlush(); discard iK.getKey
     if dReady:                          # data input (not done if viewport full)
-      let (nRow, nMs) = getData()       # Maybe now have items..
-      stale = stale or nRow != 0
-      doFilt = doFilt or pick.int < 0 and itA.len > 0 #..but had no pick.
-      if doF and nMs > 0: goHm; goUp yO,pick,visIx, h,true # New data; Snap2 End
+      let pfd = TPollfd(fd: tFd, events: POLLIN.cshort) # Lim re-paint2userGiven
+      let tBudget = tmOut.tv_usec.float/1e6             #..interactivity timeout
+      var nRowT, nMsT: int; let t0 = epochTime()  # progress accounting
+      while true:
+        let (nRow, nMs) = getData()             # Maybe now have items..
+        nRowT += nRow; nMsT += nMs
+        if nMs > 0 or wrFin or nRow == 0: break # something to show or caught up
+        if epochTime() - t0 >= tBudget: break   # progress-report tick
+        if poll(pfd.addr, 1, 0) == 1: break     # key waiting - stop hoarding
+      stale = stale or nRowT != 0
+      if doF and nMsT>0: goHm; goUp yO,pick,visIx, h,true # New data; Snap2 End
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
 proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
