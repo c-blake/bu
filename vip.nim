@@ -518,7 +518,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "inSen" : "match query case-insensitively; Ctrl-I",
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
   "eXact" : "exact substring (vs. 'space is wild'); Ctrl-X",
-  "order" : "order by match score,not input order; Ctrl-O",
+  "order" : "order by match frac, not input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",

@@ -1,3 +1,10 @@
+# Summary
+
+`vip` is a small interactive line picker/filter in the spirit of `fzf`, but
+optimized for literal-substring workflows, streaming inputs, with scrutable
+scoring (match fraction) and last moment `.so`-extensible validation (to avoid
+very expensive validations).
+
 # Motivation / Background
 
 For a long time in Zsh, history-incremental-pattern-search-backward was bound to
@@ -41,7 +48,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -i, --inSen    bool    false match query case-insensitively; Ctrl-I
   -r, --root     bool    false root/anchor/^ match to record starts; Ctrl-R
   -x, --eXact    bool    false exact substring (vs. 'space is wild'); Ctrl-X
-  -o, --order    bool    false order by match score,not input order; Ctrl-O
+  -o, --order    bool    false order by match frac, not input order; Ctrl-O
   -t=, --term=   char    '\n'  input record terminator (vs. newline)
   -d=, --delim=  char    'a'   Pre-1st-THIS =Label; Post=AnItem;'a'=>absent
   -q=, --quit=   string  ""    value written upon quit (e.g. Ctrl-C)
@@ -171,7 +178,7 @@ nim c --app=lib -d=release -o=bu/libvip.so bu/libvip.nim &&
 ```
 lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
 the current user can `cd` into "now".  This may sound pedantic, but it can
-elide a zillion stat()s some of which may even automount net FSes while also
+elide a zillion stat()s some of which may even automount net FSes while still
 avoiding presenting the user with many "invalid right now" `cd` targets.
 
 Besides filesystem history, lazy, immediately pre-display validation also helps
