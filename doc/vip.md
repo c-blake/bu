@@ -73,7 +73,7 @@ Ctrl-X    Toggle eXact (space) match mode     (x in query prompt)
 Ctrl-L    Refresh
 ENTER     Emit Selected Item -> stdout; exit 0
 Alt-ENTER Emit Whole Row -> stdout    ; exit 2
-Ctrl-C    Quit Selection              ; exit 1
+Ctrl-C    Quit Selection; q -> stdout ; exit 1
 Ctrl-Z    Suspend Selection
 EOF ops
     Ctrl-G fast read & render to EOF
