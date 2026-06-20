@@ -14,18 +14,19 @@ So, I hunted around a bit & found a small, hackable 1000 line C program called
 [`pick`](https://github.com/mptre/pick), but it had like 11 problems.  It did
 the same kind of key1.\*key2 match as fzf (just too fuzzy for me), took over my
 whole terminal like less, didn't do colors, didn't have a case-(in)sensitive
-toggle, didn't report match or total counts, show its labels, or have a help
-screen.  Utf8 edits didn't work in my `st` terminal and it had a score function
-I couldn't reason about in the heat of a search, and did a poll system call
+toggle, didn't report match or total counts, show its labels, have a help screen
+have `less`-like pipe back pressure (like percol) or less-like FG-EOF tools.
+Utf8 edits didn't work in my `st` terminal and it also had a score function I
+found hard to reason about in the heat of a search, and did a poll system call
 every 50 items which seemed excessive.
 
 Enough seemed wrong/missing/not what I wanted that rather than patch the C, I
-re-wrote the whole thing in Nim (only 302 lines + 10 screen, 14 CLI help),
-calling out to [`cligen`](https://github.com/c-blake/cligen) for some rich text
-stuff and then added/amended all that stuff to make `vip`.  So, now I have a
-tool about 1% `fzf` scale with functionality more tuned to my wants (i.e. >100%
-of my needs).  I am still thinking about best UI designs here (see Future Work),
-but this seems a more useful platform for experiments.
+re-wrote the whole thing in Nim (only 500 lines or so), calling out to
+[`cligen`](https://github.com/c-blake/cligen) for some rich text stuff and then
+added/amended all that stuff to make `vip`.  So, now I have a tool about 2%
+`fzf` scale with functionality more tuned to my wants (>100% of my needs).  I am
+still thinking about best UI designs here (see Future Work), but this seems a
+more useful platform for experiments.
 
 # Usage
 
@@ -35,22 +36,23 @@ Command-Line Interface:
 
 vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 
-  -n=, --n=     int     9     max number of terminal rows to use
-  -a, --alt     bool    false use the alternate screen buffer
-  -i, --inSen   bool    false match query case-insensitively; Ctrl-I
-  -r, --root    bool    false root/anchor/^ match to record starts; Ctrl-R
-  -e, --exact   bool    false exact substring (vs. 'space is wild'); Ctrl-X
-  -s, --sort    bool    false sort by match score,not input order; Ctrl-O
-  -t=, --term=  char    '\n'  input record terminator (vs. newline)
-  -d=, --delim= char    'a'   Pre-1st-THIS =Label; Post=AnItem;'a'=>absent
-  -q=, --quit=  string  ""    value written upon quit (e.g. Ctrl-C)
-  -b=, --buf=   int     4096  bytes for stdin read buffer
-  -T=, --TmOut= int     50    UI timeout in milliseconds (50ms=~20fps)
-  -k=, --keep=  string  ""    Eg -klibvip.so:cdable ptr,len->cint==1
-  -p=, --print= string  ""    Eg -plibvip.so:zxhPrint (ou,mxOu,i,nI)->nO
-  --colors=     strings {}    colorAliases;Syntax: NAME = ATTR1 ATTR2..
-  -c=, --color= strings {}    ;-separated on/off attrs for UI elements:
-                                qtext choice match label
+  -n=, --n=      int     9     max number of terminal rows to use
+  -a, --alt      bool    false use the alternate screen buffer
+  -i, --inSen    bool    false match query case-insensitively; Ctrl-I
+  -r, --root     bool    false root/anchor/^ match to record starts; Ctrl-R
+  -x, --eXact    bool    false exact substring (vs. 'space is wild'); Ctrl-X
+  -o, --order    bool    false order by match score,not input order; Ctrl-O
+  -t=, --term=   char    '\n'  input record terminator (vs. newline)
+  -d=, --delim=  char    'a'   Pre-1st-THIS =Label; Post=AnItem;'a'=>absent
+  -q=, --quit=   string  ""    value written upon quit (e.g. Ctrl-C)
+  -S=, --script= Keys    {}    initial script of key enums; E.g. CtlG
+  -b=, --buf=    int     16384 bytes for stdin read buffer
+  -T=, --TmOut=  int     16    UI timeout in milliseconds (16 ms =~ 60fps)
+  -k=, --keep=   string  ""    Eg -klibvip.so:cdable ptr,len->cint==1
+  -p=, --print=  string  ""    Eg -plibvip.so:zxhPrint (ou,mxOu,i,nI)->nO
+  --colors=      strings {}    colorAliases;Syntax: NAME = ATTR1 ATTR2..
+  -c=, --color=  strings {}    ;-separated on/off attrs for UI elements:
+                                 qtext choice match label
 ```
 Like most other [`cligen`](https://github.com/c-blake/cligen) apps, you can
 set all those things in a config file|config directory like `~/.config/vip`.
@@ -60,10 +62,13 @@ Textual User Interface:
 Ctrl-O    Toggle Order By Match Size Fraction Mode (/|% in match count )
 Ctrl-T    Toggle Insensitive Case Mode   ( |- in query prompt)
 Ctrl-L    Refresh
-ENTER     Pick Selected Item
-Alt-ENTER Pick Label For Item
-Ctrl-C    Quit Selection
+ENTER     Emit Selected Item -> stdout; exit 0
+Alt-ENTER Emit Whole Row -> stdout    ; exit 2
+Ctrl-C    Quit Selection              ; exit 1
 Ctrl-Z    Suspend Selection
+EOF ops
+    Ctrl-G fast read & render to EOF
+    Ctrl-F toggle follow-mode
 List Navigation
     ArrowUp/Down|TAB Up&Down 1-item
     PageUp/PageDn    Up&Down 1 Page   Also Esc-Alt-u/d
@@ -84,7 +89,7 @@ A very simple one: `seq 1 9999|vip`
 Slightly more complex (and good for testing all the features) is (in Zsh,
 though adapting to your own shell should not be hard):
 ```zsh
-(for a in {a..c};{for n in {1..3};{for b in {A..C};echo $a$n$b} })
+(for a in {a..c};{for n in {1..3};{for b in {A..C};echo $a$n$b} })|vip
 ```
 
 ## Command Finding
@@ -134,38 +139,74 @@ zle -N h-vip; bindkey '^R' h-vip                # Create & bind widget
 
 # Performance
 
-The main optimizations here are the basic flow of `pick`, using `cligen/[mfile,
-mslice]`, not sorting at startup with no query, and not bulk-lower-casing until
-requested.  Speed was never The Point in my writing `vip` since my personal use
-cases are literally 100X smaller than the below 22e6 test and my list gen is
-already over 4X slower than `vip`.  I just thought I should check that it wasn't
-"too slow for big sets" & was pleasantly surprised.
+Functionality more than speed was my initial point in writing `vip`, but it's
+also true that it compares very favorably to popular competitors.  `vip`'s main
+optimization is respecting pipe back pressure like `less` & `percol`, but bulk
+loading is also fast.  My personal use cases are literally 100X smaller than the
+below 10e6 test and my usual list gens are already over 4X slower than `vip`.
 
-Timing TUIs is *not* easy. So, I just did something very approximate.  For all 4
-of these, I just waited until visual presentation happened & hit ENTER.  I think
-I got within 200ms from the CPU %.  Measurements are from an Intel i7-6700k on a
-local X11 `st` terminal with march=native (& its equivalents) compilation.  22
-million was chosen to be about 1 second or a ballpark limit of my patience:
+Timing UIs is tricky and there is little standard.  The measures I devised are
+close to what human users would actually experience (up to HW variability), and
+reproducible for me, but are X11 specific and use a custom-patched [xdotool](
+https://github.com/jordansissel/xdotool/pull/516) & `tt` script.  My initial
+interest was two times: launch-latency & bulk/EOF latency since my subjective
+perception of "delay" tends to key off of instant appearance and bulk slowness.
+
+Set-up in (i7-6700k-noHT; frq f 17&&chrt/taskset cpu2 on zsh launcher, idle with
+noBrowser; tty=`st` w/16x30 cell):
 ```sh
-t=/dev/shm/j
-seq 1 22000000 >$t      # This is 187 MB; All progs memory use kinda sux
-vip<$t  # Time: 0.474 (u) + 0.483 (s)=1.160 (82%) mxRSS 1523 MiB
-pick<$t # Time: 1.327 (u) + 0.705 (s)=2.234 (90%) mxRSS 1439 MiB
-fzf<$t  # Time: 2.110 (u) + 0.873 (s)=2.326 (128%) mxRSS 1503 MiB
-sk<$t   # Time: 35.078 (u) + 8.085 (s)=13.325 (323%) mxRSS 7755 MiB
+cd /dev/shm     # Avoid IO; Establish j & aliases; time less
+ru seq 0 9999999 >j
+ru less +G +q <j
+alias v='vip -T1'; alias c=clear
+alias vA='ru -t vip -T1 2>>vA'
+alias f='fzf --algo=v1 --no-sort --height=9'
+alias fA='ru -t fzf --algo=v1 --no-sort --height=9 2>>fA'
+alias s='sk --no-sort --height=9'
+alias sA='O=3 ru -t sk --no-sort --height=9'
+c
 ```
-The same basic set up but this time pressing "123456" while waiting for the
-output each time gives an edge to `fzf` with 8.8 sec vs `vip` 13.7 (seemingly
-from `fzf` multi-core use):
+Set-up out (lightly reformatted):
+```
+TM  0.663017 wall  0.686996 usr  0.072293 sys  114.5 % 1.707 mxRM
+TM  3.940678 wall  3.788688 usr  0.134675 sys   99.6 % 78.531 mxRM
+<BLANK>
+```
+Set-up in/out Terminal2 (may want `setopt InteractiveComments`):
 ```sh
-t=/dev/shm/j
-seq 1 22000000 >$t      # This is 187 MB; All progs memory use kinda sux
-vip<$t  # Time: 9.100 (u) + 1.715 (s)=13.722 (78%) mxRSS 2195 MiB
-pick<$t # Time: 16.313 (u) + 1.306 (s)=23.453 (75%) mxRSS 1519 MiB
-fzf<$t  # Time: 13.879 (u) + 1.857 (s)=8.824 (178%) mxRSS 3527 MiB
-sk<$t   # Time: 1:08.51 (u) + 9.522 (s)=25.092 (310%) mxRSS 9693 MiB
+xwininfo|grep Window.id # click-on-blank-terminal-to-get-id
+xwininfo: Window id: 0x600005 "d11"
 ```
-So, as usual, YMMV a lot (though `sk` seems generically resource inefficient).
+
+Measuring; T2 waits for 1st page draw to finish in T1 (cx=8 relates to datSz).
+2nd block waits for indication of all ready, in this case last "0" in
+"10000000/10000000" paints in some color:[^1]
+```sh
+T1=0x600005     # from above xwininfo|grep Window.id
+export RESET=''
+(repeat 25 CMD=' c;v<j' cx=8 cy=1 tt $T1) >vI
+(repeat 25 CMD=' c;f<j' cx=2 cy=2 tt $T1) >fI
+(repeat 25 CMD=' c;s<j' cx=2 cy=2 tt $T1) >sI
+export HASH=-H7104152060715438494   # "0" in bold-dark-orange
+repeat 10 CMD=' c;vA -SCtlG<j' cx=17 cy=0 tt $T1
+export HASH=-H3267786399163127930   # for "0" in odd yellow
+repeat 10 CMD=' c;fA<j' cx=18 cy=7 tt $T1
+exec 3>>sA # sk lamely does not open /dev/tty
+repeat 10 CMD=' c;sA<j' cx=18 cy=7 RESET=' sleep 4' tt $T1
+```
+Mildly reformatted output of `for f in *[IA];echo $f $(cstats q.75<$f)`:
+```
+     InitQ3  AllReadyQ3  MaxRSAllReady
+vip  0.0243   1.3821      353712
+fzf  0.1125   6.3000      676048
+sk   1.2250  23.880      2457288
+```
+
+As usual, YMMV a lot.  Stylized conclusions at this 10e6 scale: fzf-0.73.1 tends
+to use 4..5X more wall & CPU time, 2X the space.  skim-4.6.1 tends to use 50X &
+17x the wall & CPU, 7X the space.  `(repeat 25 ru -t vip -SCtlG -SEnter <j)`
+gave `1.40299 ± 0.00033 sec` as a cross-check.  3.94/1.38=2.9X faster than
+`less` feels like a nice result (`vip` uses more space than `less`, dep on q).
 
 ## Combining with `adix/util/lfreq` for frecent dir navigation
 
@@ -228,7 +269,10 @@ to not validate everything all at once.
 approach that in said purity allows preserving Zsh syntax highlighting is
 [hsmw-highlight](https://github.com/zdharma-continuum/history-search-multi-word).
 I'd expect there are dozens more projects.  Happy to list them here if told
-about them.
+about them. `percol` is literally the only other tool I found which honored the
+original IO flow control idea of pipe back pressure - not reading more at the
+end of pipeline (TUI) than is necessary.  Back pressure can sometimes lighten
+total load by orders of magnitude, but its use of Python makes it quite slow.
 
 There was some historical Unix `vip` vi-like program, but it's not installed
 anywhere these days and 40+ years is long enough to recycle a name.
@@ -237,3 +281,14 @@ anywhere these days and 40+ years is long enough to recycle a name.
 
 Maybe a multi-select mode and maybe more pattern dialects than (in)sensitive
 substrings or calling out to an arbitrary command like grep for filtering.
+More likely generalize to multi-column/multi-pane model with a typed schema (at
+least numeric/date & string) with <=>etc operators for numeric columns (as this
+entire space is really an adaptation of the query-by-example nugget within
+pattern matching syntaxes) and ^Q emitting some awk/py/jq expression.
+
+[^1]: If you are trying to run this benchmark, both your colors & fonts are very
+unlikely to match my own. So, your hash will differ.  How I got these hashes was
+by running `sh -x =tt` to see the `-i` expression, then clearing and doing a
+manual run in T1 with `xrd <that_-i_expr> -H1 -v 2>h` in T2, then finding the
+target hash value (cross checking with `xm -c <same-i_expr>` that target region
+for change was what I wanted).  Clunky but it works.
