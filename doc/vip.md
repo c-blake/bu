@@ -242,19 +242,17 @@ repeat 10 CMD=' c;sA<j' cx=18 cy=7 RESET=' sleep 4' tt $T1
 ```
 Mildly reformatted output of `for f in *[IA];echo $f $(cstats q.75<$f)` yield
 these ***BENCHMARK RESULTS***:
-```
-     InitQ3  AllReadyQ3  MaxRSAllReady
-vip  0.0243   1.3821      353712
-fzf  0.1125   6.3000      676048
-sk   1.2250  23.880      2457288
-```
+| Tool  | **InitQ3** | **AllReadyQ3** | **MaxRSAllReady** |
+|------:|-----------:|---------------:|------------------:|
+| vip   | 0.0243     | 1.3821         | 353712            |
+| fzf   | 0.1125     | 6.3000         | 676048            |
+| sk    | 1.2250     | 23.880         | 2457288           |
 
-As usual, YMMV a lot.  Stylized conclusions at this 10e6 scale: fzf-0.73.1 tends
-to use 4..5X more wall & CPU time, 2X the space.  skim-4.6.1 tends to use 50X &
-17x the wall & CPU, 7X the space.  `(repeat 25 ru -t vip -SCtlG -SEnter <j)`
-gave `1.40299 ± 0.00033 sec` as a cross-check.  3.94/1.38=2.9X faster than
-`less` feels like a nice result (`vip` uses more space than `less`, for 8-byte
-row pointers & matches which depend on the initial/ongoing query).
+As usual, YMMV a lot.  Stylized conclusions at this 10e6 scale: **fzf-0.73.1
+tends to use 4..5X more wall & CPU time, 2X the space**.  **skim-4.6.1 tends to
+use 50X & 17x the wall & CPU, 7X the space**.[^2] 3.94/1.38 = **2.9X faster than
+`less`** also feels like a nice result (`vip` uses more space than `less`, for
+8-byte row pointers & matches which depend on the initial/ongoing query).
 
 # Related Work
 
@@ -299,3 +297,6 @@ by running `sh -x =tt` to see the `-i` expression, then clearing and doing a
 manual run in T1 with `xrd <that_-i_expr> -H1 -v 2>h` in T2, then finding the
 target hash value (cross checking with `xm -c <same-i_expr>` that target region
 for change was what I wanted).  Clunky but it works.
+
+[^2]: `(repeat 25 ru -t vip -SCtlG -SEnter <j)` gave `1.40299 ± 0.00033 sec` as
+a cross-check.
