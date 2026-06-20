@@ -261,8 +261,9 @@ capable BUT needs `emacs` AND I could find no public turn-key solution.  So, you
 still must add your own partial/windowed eval maybe using async/volatile sources
 to not validate everything all at once.
 
-[percol](https://github.com/mooz/percol) also mentions zaw & peco and a pure Zsh
-approach that in said purity allows preserving Zsh syntax highlighting is
+[percol](https://github.com/mooz/percol) also mentions
+[zaw](https://github.com/zsh-users/zaw) & [peco ](https://github.com/peco/peco)
+& a pure Zsh approach that allows preserving Zsh syntax highlights is
 [hsmw-highlight](https://github.com/zdharma-continuum/history-search-multi-word).
 I'd expect there are dozens more projects.  Happy to list them here if told
 about them. `percol` is literally the only other tool I found which honored the
