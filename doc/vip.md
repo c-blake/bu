@@ -179,7 +179,7 @@ nim c --app=lib -d=release -o=bu/libvip.so bu/libvip.nim &&
   install -cm755 bu/libvip.so /usr/local/lib.
 ```
 lets you later do `lfreq...|vip -klibvip.so:cdable` to only display items that
-the current user can `cd` into "now".  This may sound pedantic, but it can
+the current user can `cd` into "now".  This may sound pedantic **BUT** it can
 elide a zillion stat()s some of which may even automount net FSes while still
 avoiding presenting the user with many "invalid right now" `cd` targets.
 
