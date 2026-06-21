@@ -195,7 +195,7 @@ proc DiUp =                             # Update case-folded version if everIs
 
 proc match(k: int): Match =
   result.ix = badIx; result.mch = uint32.high .. 0u32 # bad | .a > .b => NoMatch
-  if q.len == 0: result.ix = k.uint32; return #TODO .size?
+  if q.len == 0: result.ix = k.uint32; return
   var s = Slice[int](a: itA[k], b: itB(k)); let sLen = s.len.float32
   if doXact:
       let j = if doIs: si.find(Di, qi, s.a, s.b)
@@ -211,13 +211,12 @@ proc match(k: int): Match =
       result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
       result.mch.b = uint32(j - itA[k] + q.len - 1)
       s.a = j + q.len
-  result.size = result.mch.len.float32/sLen
+  result.size = -result.mch.len.float32/sLen # '-' => descending by size frac
   result.ix = k.uint32
 
 proc msSort() =                 # 7) SORT MATCHES;Should maybe become adix/nsort
-  if doSort: ms.sort proc(a, b: Match): int = # Descend sizeFrac, Ascend InpIx
-    let c = cmp(b.size, a.size); (if c == 0: cmp(a.ix, b.ix) else: c)
-  else: ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix)
+  if doSort: ms.sort proc(a, b: Match): int = cmp(a.size, b.size) # STABLE sort
+  else     : ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix) # ONLY by Ascend RowIx
 
 var wrFin = false               # 8) IO/Filter Engine; To end of filterQuit
 let isPipe = (block:                    # True if EOF is a permanent condition
