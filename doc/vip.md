@@ -299,4 +299,9 @@ target hash value (cross checking with `xm -c <same-i_expr>` that target region
 for change was what I wanted).  Clunky but it works.
 
 [^2]: `(repeat 25 ru -t vip -SCtlG -SEnter <j)` gave `1.40299 ± 0.00033 sec` as
-a cross-check.
+a cross-check.  Median(q.5) & 1st quartile (q.25) numbers cluster more closely:
+vip 0.02324 ini 1.383 bulk; fzf 0.0534 ini 6.278 bulk; sk 0.648 ini 23.704 bulk.
+vip 0.02181 ini 1.382 bulk; fzf 0.0237 ini 6.241 bulk; sk 0.166 ini 23.646 bulk,
+but the `vip` being "much faster & lower variability" theme remains the same.
+As with my first evaluation of `skim` (version 0.16.1), it seems by far the most
+wasteful of resources for compiled programs I found.
