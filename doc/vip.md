@@ -251,8 +251,8 @@ these ***BENCHMARK RESULTS*** (seconds & kilobytes):
 As usual, YMMV a lot.  Stylized conclusions at this 10e6 scale: **fzf-0.73.1
 tends to use 4..5X more wall & CPU time, 2X the space**.  **skim-4.6.1 tends to
 use 50X & 17X the wall & CPU, 7X the space**.[^2] 3.94/1.38 = **2.9X faster than
-`less`** also feels like a nice result (`vip` uses more space than `less`, for
-8-byte row pointers & matches which depend on the initial/ongoing query).
+`less-704`** also feels like a nice result (`vip` uses more space than `less`,
+for 8-byte row pointers & matches which depend on the initial/ongoing query).
 
 # Related Work
 
