@@ -214,9 +214,10 @@ proc match(k: int): Match =
   result.size = -result.mch.len.float32/sLen # '-' => descending by size frac
   result.ix = k.uint32
 
-proc msSort() =                 # 7) SORT MATCHES;Should maybe become adix/nsort
-  if doSort: ms.sort proc(a, b: Match): int = cmp(a.size, b.size) # STABLE sort
-  else     : ms.sort proc(a, b: Match): int = cmp(a.ix, b.ix) # ONLY by Ascend RowIx
+# 7) SORT MATCHES;`filterQuit` makes `ms` in ix-order&ONLY..
+proc msSort() =                 #..flip(sz,ix)v.(ix)=>STABLE 1-field sorts ok.
+  if doSort: ms.sort proc(a, b: Match): int = cmp(a.size, b.size)
+  else     : ms.sort proc(a, b: Match): int = cmp(a.ix  , b.ix  )
 
 var wrFin = false               # 8) IO/Filter Engine; To end of filterQuit
 let isPipe = (block:                    # True if EOF is a permanent condition
