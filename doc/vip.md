@@ -288,7 +288,8 @@ this could mean *MANY* things - at least, but not limited to: A) initial render
 B) response to initial keypress C) bulk readiness D) computer/user-mental action
 to issue/update query/visually identify results { possibly comparing to complex
 syntax, e.g. rx } E) UI responsiveness during various fiddling F) end-to-end
-selection including all of the above.  D/E/F can become *very* individual.
+selection including all of the above G) total CPU|IO load incurred vs space vs
+latency.  D/E/F can become *very* individual.
 
 [^2]: If you are trying to run this benchmark, both your colors & fonts are very
 unlikely to match my own. So, your hash will differ.  How I got these hashes was
