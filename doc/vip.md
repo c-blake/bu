@@ -190,18 +190,17 @@ also benefit from this plug-in system.
 
 # Performance
 
-Functionality more than speed was my initial point in writing `vip`, but it's
-also true that it compares very favorably to popular competitors.  `vip`'s main
-optimization is respecting pipe back pressure like `less` & `percol`, but bulk
-loading is also fast.  My personal use cases are literally 100X smaller than the
-below 10e6 test and my usual list gens are already over 4X slower than `vip`.
+Functionality more than speed was my initial point in writing `vip`, but it also
+compares favorably to popular competitors.  `vip`'s main optimization is
+respecting pipe back pressure like `less` & `percol`, but bulk loading is also
+fast.
 
 Timing UIs is tricky and there is little standard.  The measures I devised are
 close to what human users would actually experience (up to HW variability), and
 reproducible for me, but are X11 specific and use a custom-patched [xdotool](
 https://github.com/jordansissel/xdotool/pull/516) & `tt` script.  My initial
 interest was two times: launch-latency & bulk/EOF latency since my subjective
-perception of "delay" tends to key off of instant appearance and bulk slowness.
+perception of "delay" tends to key off of ready appearance & bulk slowness.[^0]
 
 Set-up in (i7-6700k-noHT; frq f 17&&chrt/taskset cpu2 on zsh launcher, idle with
 noBrowser; tty=`st` w/16x30 cell):
@@ -290,6 +289,13 @@ More likely generalize to multi-column/multi-pane model with a typed schema (at
 least numeric/date & string) with <=>etc operators for numeric columns (as this
 entire space is really an adaptation of the query-by-example nugget within
 pattern matching syntaxes) and ^Q emitting some awk/py/jq expression.
+
+[^0]: It is common to hear people call these things "fast" on Inet forums, but
+this could mean *MANY* things - at least, but not limited to: A) initial render
+B) response to initial keypress C) bulk readiness D) user-mental action to
+issue/update query/visually find results { possibly comparing to complex syntax,
+e.g. rx } E) UI responsiveness during various fiddling F) end-to-end selection
+including all of the above.  D/E/F can become very individual.
 
 [^1]: If you are trying to run this benchmark, both your colors & fonts are very
 unlikely to match my own. So, your hash will differ.  How I got these hashes was
