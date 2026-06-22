@@ -22,9 +22,9 @@ So, I hunted around a bit & found a small, hackable 1000 line C program called
 the same kind of key1.\*key2 match as fzf (just too fuzzy for me), took over my
 whole terminal like `less`, didn't do colors, didn't have a case-(in)sensitive
 toggle, didn't report match or total counts, show its labels, have a help screen
-have `less`-like pipe back pressure (like percol) or less-like FG-EOF tools.
+have `less`-like pipe back pressure (like `percol`) or less-like FG-EOF tools.
 Utf8 edits didn't work in my `st` terminal and it also had a score function I
-found hard to reason about in the heat of a search, and did a poll system call
+found hard to reason about in the heat of a search, and did a `poll` system call
 every 50 items which seemed excessive.
 
 Enough seemed wrong/missing/not what I wanted that rather than patch the C, I
