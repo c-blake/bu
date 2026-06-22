@@ -530,4 +530,6 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
-  qtext choice match label"""}, short={"color":'c', "eXact":'x', "script":'S'}
+ Header Qtext       Choice Match      Label
+ bold  WHITEon_blue inv  YELLOWon_red italic"""},
+    short={"color":'c', "eXact":'x', "script":'S'}

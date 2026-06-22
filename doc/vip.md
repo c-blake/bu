@@ -191,6 +191,13 @@ flow in input-order (stable sort).  That's it.  I'm not sure it is the easiest
 to drive in the heat of a search, but it's very simple to explain.  Personally,
 the query itself seems to matter more than sorting for fast human selection.
 
+## Color-adjustments
+
+`vip` uses [color
+specifications](https://github.com/c-blake/cligen/wiki/Text-Attributes-supported-in-Config-files)
+like all `cligen` utilities.  E.g. to change the header row to bright cyan FG:
+  `seq 1 99|vip -c 'h CYAN;-fg'`.  You can put such in `~/.config/vip`.
+
 # Performance
 
 Lazy evaluation (like `less` & `percol`) more than raw speed was a main point in
