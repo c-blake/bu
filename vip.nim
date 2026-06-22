@@ -28,7 +28,7 @@ proc tcap(cap: string): string =        # termcap/curses convenience wraps
 proc tparm1(cap: cstring; a: cint): cstring = tparm(cap, a, 0,0,0,0, 0,0,0,0)
 
 type                    # 1) TYPES; Main Logic is here to end of `proc vpick`.
-  Key=enum CtlO,CtlI,CtlT,CtlF,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LnUp,LnDn,PgUp,
+  Key=enum CtlS,CtlI,CtlT,CtlF,CtlG,CtlL,Enter,AltEnt,CtlC,CtlZ,LnUp,LnDn,PgUp,
    PgDn,Home,End,CtlA,CtlE,CtlU,CtlK,Right,Left,Del,BkSpc,CtlR,CtlX,Norm,NoBind
   Match = tuple[size: float32; ix: uint32; mch: Slice[uint32]] # 16B
   Mix = distinct int    # `j/y` ms Idx; `i` itA idx; `c/x` = trmCol; `r`=trmRow
@@ -115,7 +115,7 @@ proc getTermSize() =
 proc tInit(alt=false) =                 # INIT
   discard tcGetAttr(tFd, tio.addr)
   var na = tio                          # N)ew A)ttributes
-  na.c_iflag = na.c_iflag or ICRNL      # map CR to NL
+  na.c_iflag=(na.c_iflag or ICRNL)and not(IXON or IXOFF) #CR->\n;No ^S^Q flowCtl
   na.c_lflag = na.c_lflag and not (ISIG or ICANON or ECHO or IEXTEN)
   na.c_cc[VTIME] = chr(0)               # == POSIX_VDISABLE
   na.c_cc[VMIN] = chr(1)
@@ -136,7 +136,7 @@ type K = tuple[key: Key; cap,str: string; tio: cint] # 5) KEY PRESS HANDLING
 proc Cap(k: Key, s: string): K = result.key = k; result.cap = s; result.tio = -1
 proc Kay(k: Key, s: string): K = result.key = k; result.str = s; result.tio = -1
 proc Tio(k: Key, i: cint)  : K = result.key = k; result.tio = i
-var Ks = [Kay(CtlO, "\x0F"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
+var Ks = [Kay(CtlS, "\x13"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Kay(Enter ,"\n"   ),Kay(AltEnt,"\e\n"),Tio(CtlC  ,VINTR ),Tio(CtlZ,VSUSP),
   Cap(LnUp  ,"kcuu1"),Kay(LnUp  ,"\x10"),Kay(LnUp  ,"\eOA"),Kay(CtlF, "\x06"),
   Cap(LnDn  ,"kcud1"),Kay(LnDn  ,"\x0E"),Kay(LnDn  ,"\eOB"),Kay(CtlG, "\x07"),
@@ -394,7 +394,7 @@ proc putN(yO, pick: Mix) =              # put1 pH times from `itA`
 
 proc putH(h: int) =
   if h >= 6: # Stay <= 45 col for small terminal windows like phones
-    put1 "", "^O OrdMch,Inp ^T      ToggleInsen  ^X eXact"
+    put1 "", "^S SortToggle ^T      ToggleInsen  ^X eXact"
     put1 "", "^R RootedMchs Alt-ENT WholeRowX2  ^C/^Z Usual"
     put1 "", "ListNavigate  TAB(Arrow|Pg)(Up|Dn)Home|End"
     put1 "", "^F folw Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
@@ -446,7 +446,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
     if key != NoBind or iK.len > 0:     # terminal input (priority)
       stale = true      # ANY KEY => stale => redraw
       case key       #Parts List,View,Mch params,Exits,ListNav,Bulk+1@TmQNavEdit
-      of CtlO: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
+      of CtlS: (doSort = not doSort;msSort();goHm) # List parameter Manipulation
       of CtlT:  doIs   = not doIs  ; doFilt = true # Toggle case-sensitiveMatch
       of CtlR:  doRoot = not doRoot; doFilt = true # Toggle match-root/anchor
       of CtlX:  doXact = not doXact; doFilt = true # Toggle match-root/anchor
@@ -493,12 +493,12 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       if doF and nMsT>0: goHm; goUp yO,pick,visIx, h,true # New data; Snap2 End
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
-proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,order=false,term='\n',
+proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,sort=false,term='\n',
  delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",print="",
  colors: seq[string] = @[], color: seq[string] = @[], qs: seq[string]): int =
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i: int; var ex = false
-  uH = n - 1; q = qs.join(" "); qUp(); doSort = order; Buf = buf; trm = term
+  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
   dlm = delim; doIs=inSen; doRoot=root; doXact=eXact; if doIs: everIs = true
   scr = script; tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
@@ -518,7 +518,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "inSen" : "match query case-insensitively; Ctrl-I",
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
   "eXact" : "exact substring (vs. 'space is wild'); Ctrl-X",
-  "order" : "order by match frac, not input order; Ctrl-O",
+  "sort"  : "sort by match frac not by input order; Ctrl-O",
   "term"  : "input record terminator (vs. newline)",
   "delim" : "Pre-1st-*THIS* =Label; Post=AnItem;'a'=>absent",
   "quit"  : "value written upon quit (e.g. Ctrl-C)",
