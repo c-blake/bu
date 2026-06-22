@@ -181,6 +181,16 @@ for other volatile/ephemeral system entities (processes to signal, containers,
 services) or remote/unreliable resources (SSH, cloud, network).  Any such can
 also benefit from this plug-in system.
 
+## Match-fraction sorting
+
+I'm aware people can/do/will argue about match ranking for eternity, but `vip`
+was partly written to have a very understandable one and to *not* default to it.
+You can see it in action with: `seq 9999 -1 0|vip -sn35 -SCtlG -SLnDn 12`.  The
+top match is the whole row.  High fraction smaller matches follow.  Tied fracs
+flow in input-order (stable sort).  That's it.  I'm not sure it is the easiest
+to drive in the heat of a search, but it's very simple to explain.  Personally,
+the query itself seems to matter more than sorting for fast human selection.
+
 # Performance
 
 Lazy evaluation (like `less` & `percol`) more than raw speed was a main point in
