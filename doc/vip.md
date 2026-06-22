@@ -1,8 +1,8 @@
 # Summary
 
 `vip` is a small interactive line picker/filter in the spirit of `fzf`, but
-optimized for literal-substring workflows, streaming inputs, with scrutable
-scoring (match fraction) and last moment `.so`-extensible validation (to avoid
+optimized for literal-substring workflows, *truly* stream-friendly pipelines,
+with simple match-fraction scoring & lazy `.so`-extensible validation (avoids
 very expensive validations).
 
 # Motivation / Background
