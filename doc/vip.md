@@ -59,7 +59,8 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
   -p=, --print=  string  ""    Eg -plibvip.so:zxhPrint (ou,mxOu,i,nI)->nO
   --colors=      strings {}    colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}    ;-separated on/off attrs for UI elements:
-                                 qtext choice match label
+                                Header Qtext       Choice Match      Label
+                                bold  WHITEon_blue inv  YELLOWon_red italic
 ```
 Like most other [`cligen`](https://github.com/c-blake/cligen) apps, you can
 set all those things in a config file|config directory like `~/.config/vip`.
