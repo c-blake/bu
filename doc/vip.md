@@ -193,8 +193,8 @@ https://github.com/jordansissel/xdotool/pull/516) & `tt` script.  My initial
 interest was two times: launch-latency & bulk/EOF latency since my subjective
 perception of "delay" tends to key off of ready appearance & bulk slowness.[^1]
 
-Set-up in (i7-6700k-noHT; frq f 17&&chrt/taskset cpu2 on zsh launcher, idle with
-noBrowser; tty=`st` w/16x30 cell):
+Set-up in (i7-6700k-NoHT, low noise zsh launcher, idle w/no browser; tty=`st`
+w/16x30 cell):
 ```sh
 cd /dev/shm  # Avoid IO; Establish j & aliases; time less
 ru seq 0 9999999 >j; ru less +G +q <j; alias c=clear
