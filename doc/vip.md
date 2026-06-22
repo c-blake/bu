@@ -20,7 +20,7 @@ narrow-as-you-go ideas was piqued.
 So, I hunted around a bit & found a small, hackable 1000 line C program called
 [`pick`](https://github.com/mptre/pick), but it had like 11 problems.  It did
 the same kind of key1.\*key2 match as fzf (just too fuzzy for me), took over my
-whole terminal like less, didn't do colors, didn't have a case-(in)sensitive
+whole terminal like `less`, didn't do colors, didn't have a case-(in)sensitive
 toggle, didn't report match or total counts, show its labels, have a help screen
 have `less`-like pipe back pressure (like percol) or less-like FG-EOF tools.
 Utf8 edits didn't work in my `st` terminal and it also had a score function I
