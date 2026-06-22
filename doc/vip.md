@@ -200,7 +200,7 @@ close to what human users would actually experience (up to HW variability), and
 reproducible for me, but are X11 specific and use a custom-patched [xdotool](
 https://github.com/jordansissel/xdotool/pull/516) & `tt` script.  My initial
 interest was two times: launch-latency & bulk/EOF latency since my subjective
-perception of "delay" tends to key off of ready appearance & bulk slowness.[^0]
+perception of "delay" tends to key off of ready appearance & bulk slowness.[^1]
 
 Set-up in (i7-6700k-noHT; frq f 17&&chrt/taskset cpu2 on zsh launcher, idle with
 noBrowser; tty=`st` w/16x30 cell):
@@ -227,7 +227,7 @@ export RESET=''         # for `tt`
 
 Measuring; T2 waits for 1st page draw to finish in T1 (cx=8 relates to datSz).
 2nd block waits for indication of all ready, in this case last "0" in
-"10000000/10000000" paints in some color:[^1]
+"10000000/10000000" paints in some color:[^2]
 ```sh
 (repeat 25 CMD=' c;v<j' cx=8 cy=1 tt $T1) >vI
 (repeat 25 CMD=' c;f<j' cx=2 cy=2 tt $T1) >fI
@@ -249,7 +249,7 @@ these ***BENCHMARK RESULTS*** (seconds & kilobytes):
 
 As usual, YMMV a lot.  Stylized conclusions at this 10e6 scale: **fzf-0.73.1
 tends to use 4..5X more wall & CPU time, 2X the space**.  **skim-4.6.1 tends to
-use 50X & 17X the wall & CPU, 7X the space**.[^2] 3.94/1.38 = **2.9X faster than
+use 50X & 17X the wall & CPU, 7X the space**.[^3] 3.94/1.38 = **2.9X faster than
 `less-704`** also feels like a nice result (`vip` uses more space than `less`,
 for 8-byte row pointers & matches which depend on the initial/ongoing query).
 
@@ -290,21 +290,21 @@ least numeric/date & string) with <=>etc operators for numeric columns (as this
 entire space is really an adaptation of the query-by-example nugget within
 pattern matching syntaxes) and ^Q emitting some awk/py/jq expression.
 
-[^0]: It is common to hear people call these things "fast" on Inet forums, but
+[^1]: It is common to hear people call these things "fast" on Inet forums, but
 this could mean *MANY* things - at least, but not limited to: A) initial render
 B) response to initial keypress C) bulk readiness D) user-mental action to
 issue/update query/visually find results { possibly comparing to complex syntax,
 e.g. rx } E) UI responsiveness during various fiddling F) end-to-end selection
 including all of the above.  D/E/F can become very individual.
 
-[^1]: If you are trying to run this benchmark, both your colors & fonts are very
+[^2]: If you are trying to run this benchmark, both your colors & fonts are very
 unlikely to match my own. So, your hash will differ.  How I got these hashes was
 by running `sh -x =tt` to see the `-i` expression, then clearing and doing a
 manual run in T1 with `xrd <that_-i_expr> -H1 -v 2>h` in T2, then finding the
 target hash value (cross checking with `xm -c <same-i_expr>` that target region
 for change was what I wanted).  Clunky but it works.
 
-[^2]: `(repeat 25 ru -t vip -SCtlG -SEnter <j)` gave `1.40299 ± 0.00033 sec` as
+[^3]: `(repeat 25 ru -t vip -SCtlG -SEnter <j)` gave `1.40299 ± 0.00033 sec` as
 a cross-check.  Median(q.5) & 1st quartile (q.25) numbers cluster more closely:
 vip 0.02324 ini 1.383 bulk; fzf 0.0534 ini 6.278 bulk; sk 0.648 ini 23.704 bulk.
 vip 0.02181 ini 1.382 bulk; fzf 0.0237 ini 6.241 bulk; sk 0.166 ini 23.646 bulk,
