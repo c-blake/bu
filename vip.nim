@@ -145,7 +145,7 @@ var Ks = [Kay(CtlS, "\x13"), Kay(CtlI, "\t"), Kay(CtlL, "\f"),
   Cap(Home  ,"khome"),Kay(Home  ,"\eh" ),Cap(End   ,"kend"),Kay(End , "\ee"),
   Kay(CtlA  ,"\x01" ),Kay(CtlE  ,"\x05"),Kay(CtlU  ,"\x15"),Kay(CtlK, "\v" ),
   Cap(Right ,"kcuf1"),Kay(Right ,"\eOC"),
-  Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"), # Ctl[QSMWY\]^_]
+  Cap(Left  ,"kcub1"),Kay(Left  ,"\x02"),Kay(Left  ,"\eOD"), # Ctl[MOQWY\]^_]
   Kay(BkSpc ,"\x7F" ),Kay(BkSpc ,"\b"  ),Cap(Del  ,"kdch1"),Kay(Del ,"\x04"),
   Kay(CtlT  ,"\x14" ),Kay(CtlR  ,"\x12"),Kay(CtlX  ,"\x18"),Kay(NoBind, "")]
 for k in mitems Ks:     # Populate Cp capability slots
