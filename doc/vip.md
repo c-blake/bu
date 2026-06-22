@@ -272,11 +272,11 @@ to not validate everything all at once.
 [zaw](https://github.com/zsh-users/zaw) & [peco ](https://github.com/peco/peco)
 & a pure Zsh approach that allows preserving Zsh syntax highlights is
 [hsmw-highlight](https://github.com/zdharma-continuum/history-search-multi-word).
-I'd expect there are dozens more projects.  Happy to list them here if told
-about them. `percol` is literally the only other tool I found which honored the
-original IO flow control idea of pipe back pressure - not reading more at the
-end of pipeline (TUI) than is necessary.  Back pressure can sometimes lighten
-total load by orders of magnitude, but `percol`'s use of Python makes it slow.
+I expect there are dozens more projects.  Happy to list them here if told.
+`percol` is the only other tool I found honoring the original IO flow control
+idea of back pressure giving pipes their name - not reading more than needed at
+the end of pipeline (TUI).  This move can sometimes lighten total load by orders
+of magnitude, but `percol`'s use of Python makes it slow.
 
 There was some historical Unix `vip` vi-like program, but it's not installed
 anywhere these days and 40+ years is long enough to recycle a name.
