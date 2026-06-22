@@ -394,13 +394,14 @@ proc putN(yO, pick: Mix) =              # put1 pH times from `itA`
 
 proc putH(h: int) =
   if h >= 6: # Stay <= 45 col for small terminal windows like phones
+    putp carriage_return
     put1 "", "^S SortToggle ^T      ToggleInsen  ^X eXact"
     put1 "", "^R RootedMchs Alt-ENT WholeRowX2  ^C/^Z Usual"
     put1 "", "ListNavigate  TAB(Arrow|Pg)(Up|Dn)Home|End"
     put1 "", "^F folw Esc-|Alt-u,d,h,e for PgUp,Dn,Home,End"
     put1 "", "QueryEdit    ArrowLeft/Right Backspace Delete"
     put1 "", "^G EOF ^L ReDo ^A Beg ^E End ^K RKill ^U LNix"
-    put1 "", "OTHER KEYS EXIT THIS HELP; See bu/doc/vip.md.", eol=false
+    put1 "", "OTHER KEYS EXIT THIS HELP;See bu/doc/vip.md.", eol=false
   else: put1 "", "No Room For Help", eol=false
 
 proc isContin(c: char): bool = (c.uint and 0xC0) == 0x80 # UTF8 continuationByte
