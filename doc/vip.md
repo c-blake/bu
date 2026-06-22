@@ -304,4 +304,14 @@ vip 0.02324 ini 1.383 bulk; fzf 0.0534 ini 6.278 bulk; sk 0.648 ini 23.704 bulk.
 vip 0.02181 ini 1.382 bulk; fzf 0.0237 ini 6.241 bulk; sk 0.166 ini 23.646 bulk,
 but the `vip` being "much faster & lower variability" theme remains the same.
 As with my first evaluation of `skim` (version 0.16.1), it seems by far the most
-wasteful of resources for compiled programs I found.
+wasteful of resources for compiled programs I tried.  Since benches of one's fav
+X can animate, a low noise Linux environ was got via `c=/sys/devices/system/cpu;
+echo 1 >$c/intel_pstate/no_turbo; cs=$c/cpu0/cpufreq/scaling_; echo 17|tee
+${cs}max_freq ${cs}_min_freq; cpupower frequency-set -g performance`.
+`turbostat -i 0.001` confirmed Bzy_MHz pinned at 800.  Ran launcher in `$T1`
+with `chrt 99 taskset -c 2 env -i HOME=...  PATH=...  LOGNAME=... TERM=...
+DISPLAY=... zsh -l`.  All 3 programs are dynamically linked; `vip` has 8 maps to
+fzf's 3 & sk's 5 (so a static link would improve `vip` the most).  Latencies had
+significant time series alternation for fzf & trends for sk (broadening taskset
+may help), but there was far less time-structure in bulk times.  TLDR, I tried
+to be careful and headliner perf conclusions seem robust.
