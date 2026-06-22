@@ -64,7 +64,7 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 Like most other [`cligen`](https://github.com/c-blake/cligen) apps, you can
 set all those things in a config file|config directory like `~/.config/vip`.
 
-Textual/CL User Interface:
+Textual/CL User Interface (in TUI shown by `Ctrl-[MOQWY\]^_`):
 ```
 Ctrl-S    Toggle Sort Match Fraction Mode ; /|% in match count
 Ctrl-T    Toggle Insensitive Case Mode    ; - in query prompt
