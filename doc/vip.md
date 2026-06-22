@@ -183,12 +183,11 @@ also benefit from this plug-in system.
 
 # Performance
 
-Functionality more than speed was my initial point in writing `vip`, but it also
-compares favorably to popular competitors.  `vip`'s main optimization is to
-respect pipe back pressure like `less & percol`, but bulk loading is also fast.
-Timing UIs is tricky and there is little standard.  Measures I devised are close
-to what human users would actually experience (up to HW variability), and
-reproducible for me, but are X11 specific and use a custom-patched [xdotool](
+Lazy evaluation (like `less` & `percol`) more than raw speed was a main point in
+writing `vip`, but it compares favorably to popular competitors.  Timing UIs is
+tricky & there is little standard.  Measures I devised are close to what human
+users would actually experience (up to HW variability), and reproducible for me,
+but are X11 specific and use a custom-patched [xdotool](
 https://github.com/jordansissel/xdotool/pull/516) & `tt` script.  My initial
 interest was two times: launch-latency & bulk/EOF latency since my subjective
 perception of "delay" tends to key off of ready appearance & bulk slowness.[^1]
