@@ -291,12 +291,11 @@ anywhere these days and 40+ years is long enough to recycle a name.
 
 # Future Work
 
-Maybe a multi-select mode and maybe more pattern dialects than (in)sensitive
-substrings or calling out to an arbitrary command like grep for filtering.
-More likely generalize to multi-column/multi-pane model with a typed schema (at
-least numeric/date & string) with <=>etc operators for numeric columns (as this
-entire space is really an adaptation of the query-by-example nugget within
-pattern matching syntaxes) and ^Q emitting some awk/py/jq expression.
+Maybe a multi-select mode and maybe more pattern dialects.  More likely, pan
+left & right for long rows & generalize to multi-column/multi-pane model with a
+typed schema (at least numeric/date & string) with <=>etc operators for numeric
+columns (as this entire space is really an adaptation of the query-by-example
+nugget within pattern matching syntaxes) and ^Q emitting some awk/py/jq expr.
 
 [^1]: It is common to hear people call these things "fast" on Inet forums, but
 this could mean *MANY* things - at least, but not limited to: A) initial render
