@@ -20,7 +20,6 @@ proc toDef(fields, delim, genF: string): string =
 proc orD(s, default: string): string =  # little helper for accumulating params
   if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 
-
 const es: seq[string] = @[]; proc jn(sq: seq[string]): string = sq.join("\n")
 proc rp(prelude=es, vars=es, begin=es, match="",where="true", stmts:seq[string],
         epilog=es, delim="white", fields="", MaxCols=0, genF="$1", input="",
