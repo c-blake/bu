@@ -90,24 +90,24 @@ proc setAts(color: seq[string]) =       # defaults, config, cmdLine -> ats
 
 var oBuf: array[1024,char]; var oUsed=0 # 3) BUFFERED TERMINAL OUTPUT
 proc oFlush() =
-  if write(tFd, oBuf[0].addr, oUsed)<0 and sigWinCh==0.Sig_atomic: quit "putc",1
+  if tFd.write(oBuf[0].addr,oUsed)<0 and sigWinCh==0.Sig_atomic:quit "putc",125
   oUsed = 0
 proc putc(c: char) {.noconv.} =                 # Call back for curses output..
   if oUsed == oBuf.sizeof: oFlush()
   oBuf[oUsed] = c; inc oUsed
 proc putp(capability: cstring; fatal=true) =    #..And our own `putp` wrapper.
   if tputs(capability, 1.cint, cast[pointer](putc)) == cint(-1) and fatal:
-    quit astToStr(capability) & ": unknown terminfo capability", 1
+    quit astToStr(capability) & ": unknown terminfo capability", 125
 proc putp(capability: string; fatal=true) = putp capability.cstring
 
 proc getc(): char =                     # 4) TERMINAL INPUT,SIGNALS,INIT,RESTORE
-  if read(tFd, result.addr, 1) < 0 and sigWinCh==0.Sig_atomic: quit "getc", 1
+  if read(tFd, result.addr, 1) < 0 and sigWinCh==0.Sig_atomic: quit "getc", 125
 
 proc handle_sigwinch(sig: cint){.noconv.} = sigWinCh = Sig_atomic(sig==SIGWINCH)
 proc setSigWinCh(enable: bool) =        # SIGNALS
   var sa = Sigaction(sa_handler: (if enable: handle_sigwinch else: SIG_IGN))
   discard sigemptyset(sa.sa_mask)
-  if sigaction(SIGWINCH, sa, nil) == -1: quit "sigaction: SIGWINCH", 1
+  if sigaction(SIGWINCH, sa, nil) == -1: quit "sigaction: SIGWINCH", 125
 
 proc getTermSize() =
   let f=[tFd.int]; tW=f.terminalWidthIoctl; tH=f.terminalHeightIoctl; pH=tH - 1
@@ -223,6 +223,9 @@ proc msSort() =                 #..flip(sz,ix)v.(ix)=>STABLE 1-field sorts ok.
 var wrFin = false               # 8) IO/Filter Engine; To end of filterQuit
 let isPipe = (block:                    # True if EOF is a permanent condition
   var s: Stat; discard fstat(iFd, s); S_ISFIFO(s.st_mode) or S_ISCHR(s.st_mode))
+# We're now main iFd reader=>Stop inherited O_NONBLOCK from spurious EAGAIN's.
+if (let fl = fcntl(iFd, F_GETFL); fl != -1 and (fl and O_NONBLOCK) != 0):
+  discard fcntl(iFd, F_SETFL, fl and not O_NONBLOCK)
 
 #NOTE: IF viewport ends w/EOF THEN tmOut-poll loop is needed to know if need IO.
 proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
@@ -236,7 +239,7 @@ proc ioCheck(): (bool, bool, bool) =    # (winch, tty ready, input ready)
   if sigWinCh.bool: return (true, false, false)
   if nReady < 0:
     if errno == EINTR: return (false, false, false)
-    else: quit "poll errno (" & $errno & ")", 1
+    else: quit "poll errno (" & $errno & ")", 125
   result[1] = nReady > 0 and (fds[0].revents and POLLIN.cshort) != 0
   result[2] = nReady > 0 and wake and
     (fds[1].revents and (POLLIN.cshort or POLLHUP.cshort or POLLERR.cshort))!=0
@@ -267,7 +270,10 @@ proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
     while (O < m and (let p = cmemchr(D[O].addr, trm, csize_t(m - O)); p!=nil)):
       maybeFrameAndAdd(p -! D[O].addr); O = p -! D[0].addr + 1
   else:                                 # n==0: no data available right now
-    if isPipe:                          # Only pipes give reliable, permanent
+    if n < 0:
+      if errno == EINTR: D.setLen N     # Sig-interrupted; Retry next getData
+      else: quit "read errno (" & $errno & ")", 125
+    elif isPipe:                        # Only pipes give reliable, permanent
       wrFin = true                      #..EOF signals, once the writer closes.
       if N > O:                         # @most 1 trailing unterminated row
         D.setLen N                      # Right-size D[] (undo speculative grow)
