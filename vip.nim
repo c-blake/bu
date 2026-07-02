@@ -17,9 +17,9 @@ template impC(name) {.dirty.} =         # Define some constants from curses lib
 impC carriage_return; impC parm_up_cursor; impC parm_right_cursor; impC clr_eos
 impC enter_ca_mode; impC exit_ca_mode; impC cursor_invisible; impC cursor_normal
 impC keypad_xmit; impC keypad_local
-const SIGWINCH = 28.cint                # Nim stdlib ~ woefully Windows-centric
-var VDISCARD {.importc, header: "<termios.h>".}: cint # not in Nim stdlib
-var PC_VDISABLE {.importc: "_PC_VDISABLE", header: "<unistd.h>".}: cint
+var SIGWINCH {.importc, header: "signal.h".}: cint  # not in Nim stdlib
+var VDISCARD {.importc, header: "termios.h".}: cint # not in Nim stdlib
+var PC_VDISABLE {.importc: "_PC_VDISABLE", header: "unistd.h".}: cint
 let VDISABLE = fpathconf(tFd, PC_VDISABLE).char
 proc tcap(cap: string): string =        # termcap/curses convenience wraps
   let s = tigetstr(cap.cstring)
@@ -64,7 +64,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
   scr: seq[Key]
   sk = 0                # index into above `scr`
-proc itB(i: int): int =
+proc itB(i: int): int = # Nim-`Slice.[ab]` like accessors for "lab:it\n"
   if i==itA.len-1: Dused-nT elif dlm!=dlm0: labA[i+1]-nD-1 else: itA[i+1]-nT-1
 proc labB(i: int): int   = itA[i]-nD-1
 proc it(i: int): string  = D[itA[i]..itB(i)]
@@ -185,7 +185,7 @@ var qi: string       ; var qs, qis: seq[string] # 6) MATCH INPUT DATA
 var sx, si: SkipTable; var sqs, sqi: seq[SkipTable] # Tri-gram idx may be better
 var everIs = false    # Let insens-finders be fast w/sens not pay double D[] mem
 const badIx = uint32.high
-proc qUp =
+proc qUp =            # Convention: xUp to update after x changes
   sx = q.initSkipTable; qi = q.toLowerAscii; si = qi.initSkipTable
   qs = q.split  ; sqs.setLen 0; for Q in qs : sqs.add Q.initSkipTable
   qis = qi.split; sqi.setLen 0; for Q in qis: sqi.add Q.initSkipTable
@@ -294,9 +294,9 @@ proc filterQuit(qGrew=false): bool =    # Filter read-so-far using curr `q`->ms
       pollRate = int(rate*tmOut.tv_usec.float/2)      # target tmOut/2
       pollRate = max(128, min(pollRate, 1 shl 16))    # clamp to sane range
       t0 = t1
-  if qGrew:                             # Thin already matched list for speed
+  if qGrew:                             # query grew more selective.  So,..
     var w = 0.Mix; for j in 0.Mix ..< ms.len.Mix:
-      checkAndAdapt(j.int)
+      checkAndAdapt(j.int)              #..thin already matched list for speed.
       if (let m = match(ms[j].ix.int); m.ix != badIx):
         ms[w] = m; w = w + 1.Mix
     ms.setLen w.int
@@ -377,8 +377,8 @@ proc put1(l,s:string; hL=false,j=Mix(-1),eol=true)= # 10) RENDERING
     used += w
   if mOn: putp ats['m'][1]
   if eol: (for _ in 1 .. tW - used: putc ' ') # Want whole terminal row highlit
-  if hL: putp ats['c'][1]
-
+  if hL: putp ats['c'][1]               # This proc line-wraps not \n to advance
+                                        #..(to inverse whole selected rows).
 var ls=newStringOfCap(640); ls.setLen 1 # Label String buffer; Ensure realized
 proc putN(yO, pick: Mix) =              # put1 pH times from `itA`
   let h = min(uH, pH)
@@ -509,7 +509,7 @@ proc vip(n=7.125, alt=false, inSen=false,root=false,eXact=false, sort=false,
   try    : tInit alt; (ex, i) = tui(alt)                # Run the TUI
   finally: tRestore alt
   if i == -1: echo (if quit.len>0: quit else: q); return 1 # ^C
-  elif not ex: echo it(i)                               # Exit: Normal, ^C, alt
+  elif not ex: echo it(i)                   # Exit: Normal, ^C, alt; Fallthrough
   elif dlm==dlm0: echo it(i); return 2      # No inner row structure
   else: echo D[labA[i]..itB(i)]; return 2   # Caller can ${out#*$dlm} or etc.
 
