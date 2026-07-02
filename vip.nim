@@ -316,12 +316,12 @@ proc collect(yO: Mix, h: int): (int, seq[(Mix, int)]) = # 9) OK MATCH NAVIGATION
       result[0] = ix + 1
     else: return
 
-proc first(j0: Mix): Mix =      # Get index of first valid >= i0 or -2
+proc first(j0: Mix): Mix =      # Index of first valid >=i0; -2:invalid;-1:unset
   for j in j0.int ..< ms.len: (if ms[j].ix.int.ok: return j.Mix)
   return Mix(-2)
 proc next(j:Mix): Mix = (if j.int in -1..ms.len-2: first(j+1.Mix) else: Mix(-2))
 
-proc last(j0: Mix): Mix =       # Get index of last valid <= i0 or -2
+proc last(j0: Mix): Mix =       # Index of last valid <= i0; -2:invalid;-1:unset
   for j in countdown(j0.int, 0, 1): (if ms[j].ix.int.ok: return j.Mix)
   return Mix(-2)
 proc prev(j:Mix): Mix = (if j.int in +1..ms.len: last(j-1.Mix) else: Mix(-2))
