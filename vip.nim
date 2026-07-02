@@ -58,7 +58,7 @@ var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
   doSort,doIs,doRoot,doXact,doF:bool # SortByMchSzFrac,InSensitv/Beg/Xact,follow
   trm, dlm: char        # Optional label-value delimiter; dlm0 => none
   ats: array[char, (string, string)] # Text Attrs; COULD index by enum instead.
-  okx: ExtTest          # An external test function return 1 to for ok/keep
+  okx: ExtTest          # An external test function return 1 for ok/keep
   prn: ExtPrint         # An external fn to format labels
   Buf = 16384  # Stdin Buffer Size; Lets user balance produce-consume aggression
   tmOut = Timeval(tv_sec: 0.Time, tv_usec: 16_000.Suseconds) # UI timeout
@@ -205,13 +205,13 @@ proc match(k: int): Match =
       result.mch.a = min(result.mch.a.int, j - itA[k]).uint32 # j - itA?
       result.mch.b = uint32(j - itA[k] + q.len - 1)
   else:
-    for c, q in qs:
+    for c, Q in qs:
       let j = if doIs: sqi[c].find(Di, qis[c], s.a, s.b)
               else   : sqs[c].find(D , qs[c] , s.a, s.b)
       if j < 0 or (doRoot and c==0 and j != s.a): return
       result.mch.a = min(result.mch.a.int, j - itA[k]).uint32
-      result.mch.b = uint32(j - itA[k] + q.len - 1)
-      s.a = j + q.len
+      result.mch.b = uint32(j - itA[k] + Q.len - 1)
+      s.a = j + Q.len
   result.size = -result.mch.len.float32/sLen # '-' => descending by size frac
   result.ix = k.uint32
 
@@ -265,12 +265,12 @@ proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
         if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
   let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
-  if n > 0:                             # EOF: flush carry then close
+  if n > 0:
     D.setLen N + n; let m = N + n       # Parse rows
     while (O < m and (let p = cmemchr(D[O].addr, trm, csize_t(m - O)); p!=nil)):
       maybeFrameAndAdd(p -! D[O].addr); O = p -! D[0].addr + 1
-  else:                                 # n==0: no data available right now
-    if n < 0:
+  else:                                 # n<=0: No data available *right now*
+    if n < 0:                           # Some error
       if errno == EINTR: D.setLen N     # Sig-interrupted; Retry next getData
       else: quit "read errno (" & $errno & ")", 125
     elif isPipe:                        # Only pipes give reliable, permanent
@@ -504,7 +504,7 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
 proc vip(n=7.125, alt=false, inSen=false,root=false,eXact=false, sort=false,
  term='\n',delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",
  print="",colors:seq[string]= @[], color:seq[string]= @[], qs:seq[string]):int=
-  ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
+  ##`vip` parses stdin rows, does TUI incremental-interactive pick, emits a row.
   var i: int; var ex = false
   nF = n; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
   dlm = delim; doIs=inSen; doRoot=root; doXact=eXact; if doIs: everIs = true

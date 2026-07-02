@@ -41,7 +41,7 @@ Command-Line Interface:
 ```
   vip [optional-params] initial query strings to interactively edit
 
-vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
+vip parses stdin rows, does TUI incremental-interactive pick, emits a row.
 
   -n=, --n=      float   7.125 max num tty rows to use; frac => heightFrac
   -a, --alt      bool    false use the alternate screen buffer
