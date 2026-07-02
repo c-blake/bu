@@ -43,7 +43,7 @@ Command-Line Interface:
 
 vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 
-  -n=, --n=      int     9     max number of terminal rows to use
+  -n=, --n=      float   7.125 max num tty rows to use; frac => heightFrac
   -a, --alt      bool    false use the alternate screen buffer
   -i, --inSen    bool    false match query case-insensitively; Ctrl-I
   -r, --root     bool    false root/anchor/^ match to record starts; Ctrl-R

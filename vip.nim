@@ -44,6 +44,7 @@ proc `[]=`(x: var seq[Match], j: Mix, m: Match) = x[j.int] = m
 const dlm0 = 'a'        # a)bsent delim spec & pretty useless `char` for that
 const nD=1; const nT=1  # Delimiter & Terminator always 1 byte for now
 var                     # 2) GLOBAL VARIABLES; NiceToHighLight: .*# [0-9A]).*$
+  nF = 7.125            # Actually use max(int part, fractionalPart*termHeight)
   tW,tH,pH,uH,Dused:int #T)ermW)idth,H)eight,P)ick=avail-QryLine,U)seH,D[]used
   want: int             # SINGLE COUPLER BETWEEN UI NEED, IO WAKE & INGESTION
   tio: Termios          # Terminal IO State
@@ -110,7 +111,7 @@ proc setSigWinCh(enable: bool) =        # SIGNALS
 
 proc getTermSize() =
   let f=[tFd.int]; tW=f.terminalWidthIoctl; tH=f.terminalHeightIoctl; pH=tH - 1
-
+  uH = max(nF.int, ((nF - nF.int.float)*tH.float + 0.5).int) - 1
 
 proc tInit(alt=false) =                 # INIT
   discard tcGetAttr(tFd, tio.addr)
@@ -494,12 +495,12 @@ proc tui(alt=false): (bool, int) =      # 11) MAIN TERMINAL USER-INTERFACE
       if doF and nMsT>0: goHm; goUp yO,pick,visIx, h,true # New data; Snap2 End
     (if doIs: everIs = true); if q != q0: qUp()
 # 12) Command-Line Interface
-proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,sort=false,term='\n',
- delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",print="",
- colors: seq[string] = @[], color: seq[string] = @[], qs: seq[string]): int =
+proc vip(n=7.125, alt=false, inSen=false,root=false,eXact=false, sort=false,
+ term='\n',delim=dlm0,quit="",script: seq[Key] = @[],buf=16384,TmOut=16,keep="",
+ print="",colors:seq[string]= @[], color:seq[string]= @[], qs:seq[string]):int=
   ## `vip` parses stdin lines, does TUI incremental-interactive pick, emits 1.
   var i: int; var ex = false
-  uH = n - 1; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
+  nF = n; q = qs.join(" "); qUp(); doSort = sort; Buf = buf; trm = term
   dlm = delim; doIs=inSen; doRoot=root; doXact=eXact; if doIs: everIs = true
   scr = script; tmOut.tv_usec = Suseconds(TmOut*1000)
   colors.textAttrRegisterAliases; color.setAts          # colors => aliases, ats
@@ -514,7 +515,7 @@ proc vip(n=9,alt=false,inSen=false,root=false,eXact=false,sort=false,term='\n',
 
 when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "qs"    : "*initial query strings to interactively edit*",
-  "n"     : "max number of terminal rows to use",
+  "n"     : "max num tty rows to use; frac => heightFrac",
   "alt"   : "use the alternate screen buffer",
   "inSen" : "match query case-insensitively; Ctrl-I",
   "root"  : "root/anchor/^ match to record starts; Ctrl-R",
