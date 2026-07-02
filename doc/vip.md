@@ -45,10 +45,10 @@ vip parses stdin lines, does TUI incremental-interactive pick, emits 1.
 
   -n=, --n=      float   7.125 max num tty rows to use; frac => heightFrac
   -a, --alt      bool    false use the alternate screen buffer
-  -i, --inSen    bool    false match query case-insensitively; Ctrl-I
+  -i, --inSen    bool    false match query case-insensitively; Ctrl-T
   -r, --root     bool    false root/anchor/^ match to record starts; Ctrl-R
   -x, --eXact    bool    false exact substring (vs. 'space is wild'); Ctrl-X
-  -o, --order    bool    false order by match frac, not input order; Ctrl-O
+  -s, --sort     bool    false sort by match frac not by input order; Ctrl-S
   -t=, --term=   char    '\n'  input record terminator (vs. newline)
   -d=, --delim=  char    'a'   Pre-1st-THIS =Label; Post=AnItem;'a'=>absent
   -q=, --quit=   string  ""    value written upon quit (e.g. Ctrl-C)
