@@ -138,7 +138,7 @@ proc align(input="-", delim=",", maxCol=0, prLen=f, aSet = @["d0-9"],
     rows.add if mf.mem.isNil: line.dup else: line # Split fastEnough2save `line`
   if rows.len == 0: return 2            # No non-empty lines; DONE; (Likely err)
   for cm in cms.mitems:                 # Accumulate B)efore&A)fter C)har widths
-    cm.w = max(cm.w, cm.bc + cm.ac)
+    cm.w.maxEq cm.bc + cm.ac
   if origin >= 0:                       # PASS2a: PRINT FORMATTED METADATA
     for j in 0..<m:                     # Print numeric column headers
       if j != 0: outu sepOut
