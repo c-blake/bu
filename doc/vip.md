@@ -56,7 +56,7 @@ vip parses stdin rows, does TUI incremental-interactive pick, emits a row.
   -b=, --buf=    int     16384 bytes for stdin read buffer
   -T=, --TmOut=  int     16    UI timeout in milliseconds (16 ms =~ 60fps)
   -k=, --keep=   string  ""    Eg -klibvip.so:cdable ptr,len->cint==1
-  -p=, --print=  string  ""    Eg -plibvip.so:zxhPrint (ou,mxOu,i,nI)->nO
+  -p=, --print=  string  ""    Eg -plibvip.so:ehPrint (ou,mxOu,i,nI)->nO
   --colors=      strings {}    colorAliases;Syntax: NAME = ATTR1 ATTR2..
   -c=, --color=  strings {}    ;-separated on/off attrs for UI elements:
                                 Header Qtext       Choice Match      Label

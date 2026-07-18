@@ -535,7 +535,7 @@ when isMainModule:import cligen; include cligen/mergeCfgEnv; dispatch vip,help={
   "buf"   : "bytes for stdin read buffer",
   "TmOut" : "UI timeout in milliseconds (16 ms =~ 60fps)",
   "keep"  : "Eg `-klibvip.so:cdable` ptr,len->cint==1",
-  "print" : "Eg `-plibvip.so:zxhPrint` (ou,mxOu,i,nI)->nO",
+  "print" : "Eg `-plibvip.so:ehPrint` (ou,mxOu,i,nI)->nO",
   "colors": "colorAliases;Syntax: NAME = ATTR1 ATTR2..",
   "color":""";-separated on/off attrs for UI elements:
  Header Qtext       Choice Match      Label
