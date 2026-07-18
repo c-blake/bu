@@ -261,7 +261,8 @@ proc getData: (int, int) =              # Read, Parse rows, matches & maybe Sort
         okS.add 0u8; itA.add O
       if added:
         Dused = O + nR
-        let m = if q.len>0:match(itA.len-1)else:(1,uint32(itA.len-1),1u32..0u32)
+        let m = if q.len > 0: ((if doIs: DiUp()); match(itA.len - 1))
+                else        : (1, uint32(itA.len - 1), 1u32..0u32)
         if m.ix != badIx: ms.add m
   var N = D.len; D.setLen N + Buf       # Nim has fast, constant time allocator
   let n = read(iFd, D[N].addr, Buf)     # So, just grow and read right into D[]
