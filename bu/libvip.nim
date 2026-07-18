@@ -49,7 +49,7 @@ proc cdable*(path: pointer, nPath: clong): cint {.noconv,exportc,dynlib.} =
   discard close(fd)
   cint(fd != -1)
 
-##[ This is an example 3-theme external formatter I use for Zxh history entries
+##[ This is an example 3-theme external formatter I use for EH history entries
 (for me have msec resolution times, durations & a "total exit status"). ]##
 import cligen/mslice, std/[envvars, times, strformat]
 let (vc, day) = ("TERM".getEnv=="linux", "LC_THEME".getEnv=="lightBG")
@@ -59,7 +59,7 @@ var (R, Y, G, C, B, M, N) = # R)ed Y)ellow G)reen C)yan B)lue M)agen N)ormal
   else    : ("91"  , "93"  , "38;2;40;255;160", "96"  , "94"  , "95"  , "39")
 R = &"\e[{R}m"; Y = &"\e[{Y}m"; G = &"\e[{G}m"; C = &"\e[{C}m"; B = &"\e[{B}m"
 M = &"\e[{M}m"; N = &"\e[{N}m"; let now = epochTime()
-proc zxhPrint*(o: pointer,nO: clong; i: pointer,nI: clong):
+proc ehPrint*(o: pointer,nO: clong; i: pointer,nI: clong):
     clong {.noconv,exportc,dynlib.} = ## ". epochTm Dur xSt^A" -> "664s 19.8 1"
   const m=60.0; const h=3600.0; const d=24*h  ; const w=7*d     # Time units
   const tW=4*w; const tD=100*h; const tH=100*m; const tM=1000.0 # Threshs 4units
