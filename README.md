@@ -36,6 +36,8 @@ only tools, but some may be more cross-platform.
 
 [fpr - File Pages Resident reporting utility like fincore](doc/fpr.md)
 
+[mova — move that remains atomic across EXDEV, but may fail with ENOSPC](doc/mova.md)
+
 # File Time Related (When)
 
 [cbtm - Back up & restore new Linux b-time stamps (creation/birth)](doc/cbtm.md)

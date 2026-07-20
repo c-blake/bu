@@ -18,6 +18,7 @@ when defined(Windows):
 # "rr",         # Mostly a short alias for rm -rf but also faster
 # "dups",       # Fast finder of exact duplicate files
   "fpr",        # File Pages Resident reporting utility like fincore
+# "mova",       # move that remains atomic across EXDEV, but may fail with ENOSPC
 
 # "cbtm",       # Back up & restore new Linux b-time stamps (creation/birth)
 # "dirt",       # Recursively set dir time stamp to oldest of members
@@ -102,6 +103,7 @@ else:
   "rr",         # Mostly a short alias for rm -rf but also faster
   "dups",       # Fast finder of exact duplicate files
   "fpr",        # File Pages Resident reporting utility like fincore
+  "mova",       # move that remains atomic across EXDEV, but may fail with ENOSPC
 
   "cbtm",       # Back up & restore new Linux b-time stamps (creation/birth)
   "dirt",       # Recursively set dir time stamp to oldest of members
