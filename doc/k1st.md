@@ -14,7 +14,10 @@ and to allow any strictly delimited columns.
 The reason this mattered to me was the particular 4X was from 500 ms to 125 ms
 in the context of my new "infinite Zsh history" `vip` viewing.  This timescale
 for me was from very noticeable to barely noticeable.  It might not be noticed
-by many people but for long-time experience with instant Ctrl-R.
+by many people but for long-time experience with instant Ctrl-R.  Further, `vip`
+has since grown lazy/incremental ingestion which lowers latency for entry points
+that match a lot of items.  Even so, `k1st` is yet another demonstration of nice
+`adix/oats` technology.
 
 # Usage
 ```
