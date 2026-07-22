@@ -263,12 +263,16 @@ for 8-byte row pointers & matches which depend on the initial/ongoing query).
 
 # Related Work
 
-I am unsure there is any work prior to the 2004 Emacs `anything.el` now named
+Query-by-example for substring data itself is as old as all substring search
+algorithms -- just usually embedded within some kind of pattern syntax.  I am
+unsure there is any work prior to the 2004 Emacs `anything.el` now named
 [`Helm`](https://github.com/emacs-helm/helm) or the C
 [`canything`](https://github.com/keiji0/canything) named after it.  I didn't
 look very hard.  1970s & 1980s HCI folks seem likely culprits to have originated
 the basic idea of narrow-a-dynamic-list-as-you-go, much as they did hypertext.
-Tamas Patrovics surely knows more.  Someone should ask him for background.
+Tamas Patrovics may know more.  Someone should ask him for background.  If I had
+to guess from my own memory, I might think the earliest library card catalogue
+system TUIs of the 1970s or 1980s might have had this.
 
 I haven't used it myself, but Helm `filtered-candidate-transformer` (circa 2011)
 *can* do lazy pre-display validation. It may be the only similar tool to be
@@ -284,7 +288,8 @@ I expect there are dozens more projects.  Happy to list them here if told.
 `percol` is the only other tool I found honoring the original IO flow control
 idea of back pressure giving pipes their name - not reading more than needed at
 the end of pipeline (TUI).  This move can sometimes lighten total load by orders
-of magnitude, but `percol`'s use of Python makes it slow.
+of magnitude, but `percol`'s use of Python makes it slow, and its lazy impl is
+also quite entwined with its pure Python-hood.
 
 There was some historical Unix `vip` vi-like program, but it's not installed
 anywhere these days and 40+ years is long enough to recycle a name.
