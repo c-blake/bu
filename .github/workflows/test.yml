@@ -15,17 +15,22 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-        nim-version:
-          - 'stable'
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            nim-version: 'stable'
+          - os: macos-14
+            arch: arm64
+            nim-version: 'stable'
+          - os: macos-15-intel
+            arch: x86_64
+            nim-version: 'stable'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install OpenSSL (macOS)
         if: runner.os == 'macOS'
         run: |
-          if [ "$(uname -m)" = "x86_64" ]; then
+          if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
             /usr/local/bin/brew install openssl
             echo "NIM_PASSL=--passL:-L/usr/local/opt/openssl@3/lib" >> $GITHUB_ENV
           else
