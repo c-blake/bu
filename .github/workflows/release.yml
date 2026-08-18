@@ -40,9 +40,7 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nimble-
         if: runner.os != 'Windows'
 
-      # use prebuilt macos from homebrew for now, then switch
-      # to `nim-lang/setup-nimble-action`
-      - uses: georgelemon/setup-nim-action@master
+      - uses: nim-lang/setup-nimble-action
         with:
           nim-version: ${{ env.NIM_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}

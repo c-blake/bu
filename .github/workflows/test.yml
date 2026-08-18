@@ -28,9 +28,7 @@ jobs:
           brew install openssl
           echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
 
-      # use prebuilt macos from homebrew for now, then switch
-      # to `nim-lang/setup-nimble-action`
-      - uses: georgelemon/setup-nim-action@master
+      - uses: nim-lang/setup-nimble-action
         with:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
