@@ -4,7 +4,7 @@ import std/[os, posix, strutils, sets, tables, hashes, algorithm],
   cligen/[procpool,mfile,mslice,fileUt,strUt, osUt,posixUt,sysUt, dents,statx]
 
 proc SHA256(i: pointer, n: uint64, o: pointer) {.importc.}
-when defined osx:
+when defined(osx) and defined(sslSearch): # SSL was a multiVsn for a long time
   const so = static:
     var r = ""
     for i in countdown(99, 1):
