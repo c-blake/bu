@@ -3,10 +3,16 @@ include cligen/unsafeAddr
 import std/[os, posix, strutils, sets, tables, hashes, algorithm],
   cligen/[procpool,mfile,mslice,fileUt,strUt, osUt,posixUt,sysUt, dents,statx]
 
-{.passl: "-lcrypto".}
-
 proc SHA256(i: pointer, n: uint64, o: pointer) {.importc.}
-
+when defined(osx) and defined(sslSearch): # SSL was a multiVsn for a long time
+  const so = static:
+    var r = ""
+    for i in countdown(99, 1):
+      let f = "/usr/lib/libcrypto." & $i & ".dylib"
+      if f.fileExists: r = f; break
+    r
+  {.passl: so.}
+else: {.passl: "-lcrypto".}
 proc secureHash(x: openArray[char]): array[32, char] =
   SHA256 x[0].unsafeAddr, x.len.uint64, result[0].addr
 
