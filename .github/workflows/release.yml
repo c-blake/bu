@@ -40,7 +40,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: nimble install -y --depsOnly
-      - run: nimble build -y
+      - run: nimble build -d:release --out:bin -y
 
       - name: Create artifact
         shell: bash
@@ -51,10 +51,10 @@ jobs:
           assets="${{ env.APP_NAME }}_$(echo "$suffix" | tr '[:upper:]' '[:lower:]')"
           mkdir -p "dist/$assets"
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cp bin/clue.exe LICENSE README.md "dist/$assets/"
+            cp bin/*.exe LICENSE README.md "dist/$assets/"
             (cd dist && 7z a "$assets.zip" "$assets")
           else
-            cp bin/clue LICENSE README.md "dist/$assets/"
+            cp bin/* LICENSE README.md "dist/$assets/"
             (cd dist && tar czf "$assets.tar.gz" "$assets")
           fi
 
