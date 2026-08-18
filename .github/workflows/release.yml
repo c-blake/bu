@@ -25,7 +25,10 @@ jobs:
 
       - name: Install OpenSSL (macOS)
         if: runner.os == 'macOS'
-        run: brew install openssl
+        run: |
+          brew install openssl
+          echo "LDFLAGS=-L$(brew --prefix openssl)/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$(brew --prefix openssl)/include" >> $GITHUB_ENV
 
       - name: Cache nimble
         id: cache-nimble
@@ -42,7 +45,8 @@ jobs:
         with:
           nim-version: ${{ env.NIM_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
+      
+      # - run: nimble install nimble # should install latest nimble instead of buggy nimble v0.22.2 that is shipped with nim 2.2.10
       - run: nimble install -y --depsOnly
       - run: nimble build -d:release --out:bin -y
 

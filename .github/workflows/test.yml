@@ -25,7 +25,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install OpenSSL (macOS)
         if: runner.os == 'macOS'
-        run: brew install openssl
+        run: |
+          brew install openssl
+          echo "LDFLAGS=-L$(brew --prefix openssl)/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$(brew --prefix openssl)/include" >> $GITHUB_ENV
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ matrix.nim-version }}
