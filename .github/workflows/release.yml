@@ -26,8 +26,13 @@ jobs:
       - name: Install OpenSSL (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install openssl
-          echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
+          if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
+            /usr/local/bin/brew install openssl
+            echo "NIM_PASSL=--passL:-L/usr/local/opt/openssl@3/lib" >> $GITHUB_ENV
+          else
+            brew install openssl
+            echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
+          fi
 
       - name: Cache nimble
         id: cache-nimble
