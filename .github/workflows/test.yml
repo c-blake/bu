@@ -28,7 +28,7 @@ jobs:
           brew install openssl
           echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
 
-      - uses: nim-lang/setup-nimble-action
+      - uses: nim-lang/setup-nimble-action@v1
         with:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}

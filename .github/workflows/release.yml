@@ -40,7 +40,7 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nimble-
         if: runner.os != 'Windows'
 
-      - uses: nim-lang/setup-nimble-action
+      - uses: nim-lang/setup-nimble-action@v1
         with:
           nim-version: ${{ env.NIM_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
