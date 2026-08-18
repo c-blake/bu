@@ -48,7 +48,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       
       - run: nimble install -y --depsOnly
-      - run: nimble build -d:release --out:bin -y $NIM_PASSL
+      - run: nimble build -d:release --out:./bin/ -y $NIM_PASSL
         shell: bash
 
       - name: Create artifact
@@ -63,7 +63,9 @@ jobs:
             cp bin/*.exe LICENSE README.md "dist/$assets/"
             (cd dist && 7z a "$assets.zip" "$assets")
           else
-            cp bin/* LICENSE README.md "dist/$assets/"
+            find . -maxdepth 1 -type f -perm -u+x -exec cp {} "dist/$assets/" \;
+            find ./bu -maxdepth 1 -type f -perm -u+x -exec cp {} "dist/$assets/" \;
+            cp LICENSE README.md "dist/$assets/"
             (cd dist && tar czf "$assets.tar.gz" "$assets")
           fi
 
