@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
+  pull_request:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nim-version:
+          - 'stable'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: ${{ matrix.nim-version }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nimble install -Y
+      - run: nimble test
