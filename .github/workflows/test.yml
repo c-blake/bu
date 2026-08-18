@@ -23,6 +23,9 @@ jobs:
           - 'stable'
     steps:
       - uses: actions/checkout@v3
+      - name: Install OpenSSL (macOS)
+        if: runner.os == 'macOS'
+        run: brew install openssl
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ matrix.nim-version }}
