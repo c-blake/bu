@@ -27,11 +27,12 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install openssl
-          echo "LDFLAGS=-L$(brew --prefix openssl)/lib" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I$(brew --prefix openssl)/include" >> $GITHUB_ENV
+          echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nimble install -Y
-      - run: nimble test
+      - run: nimble install -Y $NIM_PASSL
+        shell: bash
+      - run: nimble test $NIM_PASSL
+        shell: bash
