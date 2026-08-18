@@ -28,7 +28,7 @@ jobs:
         run: |
           brew install openssl
           echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
-      - uses: jiro4989/setup-nim-action@v2
+      - uses: georgelemon/setup-nim-action@master # jiro4989/setup-nim-action@v2 # georgelemon/setup-nim-action@master for getting the prebuilt from homebrews
         with:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
