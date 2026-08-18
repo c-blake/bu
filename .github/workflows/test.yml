@@ -1,0 +1,43 @@
+name: test
+on:
+  push:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
+  pull_request:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        nim-version:
+          - 'stable'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install OpenSSL (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          if [ "$(uname -m)" = "x86_64" ]; then
+            /usr/local/bin/brew install openssl
+            echo "NIM_PASSL=--passL:-L/usr/local/opt/openssl@3/lib" >> $GITHUB_ENV
+          else
+            brew install openssl
+            echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
+          fi
+
+      - uses: nim-lang/setup-nimble-action@v1
+        with:
+          nim-version: ${{ matrix.nim-version }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nimble install -Y $NIM_PASSL
+        shell: bash
+      - run: nimble test $NIM_PASSL
+        shell: bash

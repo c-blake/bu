@@ -1,0 +1,105 @@
+name: release
+on:
+  push:
+    tags:
+      - '*.*.*'
+  workflow_dispatch:
+env:
+  APP_NAME: 'bu'
+  NIM_VERSION: '2.2.10'
+
+jobs:
+  build-artifact:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: macos-14
+            arch: arm64
+          - os: macos-15-intel
+            arch: x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenSSL (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
+            /usr/local/bin/brew install openssl
+            echo "NIM_PASSL=--passL:-L/usr/local/opt/openssl@3/lib" >> $GITHUB_ENV
+          else
+            brew install openssl
+            echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
+          fi
+
+      - name: Cache nimble
+        id: cache-nimble
+        uses: actions/cache@v4
+        with:
+          path: ~/.nimble
+          key: ${{ runner.os }}-${{ runner.arch }}-nim-${{ env.NIM_VERSION }}-nimble-${{ hashFiles('**/*.nimble', '**/nimble.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-nim-${{ env.NIM_VERSION }}-nimble-
+            ${{ runner.os }}-${{ runner.arch }}-nimble-
+        if: runner.os != 'Windows'
+
+      - uses: nim-lang/setup-nimble-action@v1
+        with:
+          nim-version: ${{ env.NIM_VERSION }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - run: nimble install -y --depsOnly
+      - run: nimble build -d:release --out:./bin/ -y $NIM_PASSL
+        shell: bash
+
+      - name: Create artifact
+        shell: bash
+        run: |
+          os="${{ runner.os }}"
+          arch="${{ matrix.arch }}"
+          suffix="$os${arch:+-$arch}"
+          assets="${{ env.APP_NAME }}_$(echo "$suffix" | tr '[:upper:]' '[:lower:]')"
+          mkdir -p "dist/$assets"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cp bin/*.exe LICENSE README.md "dist/$assets/"
+            (cd dist && 7z a "$assets.zip" "$assets")
+          else
+            find . -maxdepth 1 -type f -perm -u+x -exec cp {} "dist/$assets/" \;
+            find ./bu -maxdepth 1 -type f -perm -u+x -exec cp {} "dist/$assets/" \;
+            cp LICENSE README.md "dist/$assets/"
+            (cd dist && tar czf "$assets.tar.gz" "$assets")
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/*
+
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    needs:
+      - build-artifact
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: artifact-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes "Release" \
+            --draft=false \
+            --prerelease=false \
+            dist/*.tar.gz dist/*.zip
