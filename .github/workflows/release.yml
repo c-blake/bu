@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nimble-
         if: runner.os != 'Windows'
 
-      - uses: nim-lang/setup-nimble-action@v1
+      - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: ${{ env.NIM_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
