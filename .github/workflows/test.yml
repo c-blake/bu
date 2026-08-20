@@ -38,7 +38,7 @@ jobs:
             echo "NIM_PASSL=--passL:-L$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
           fi
 
-      - uses: nim-lang/setup-nimble-action@v1
+      - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
