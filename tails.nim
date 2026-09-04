@@ -137,14 +137,16 @@ proc nToFit(height, nH1, nH, nF: int): int =
 
 proc tails(head=NRow(), tail=NRow(), bytes=false, outMax=0, follow=false,
            divide="--", header: seq[string] = @[], quiet=false, verbose=false,
-           ird='\n', eor='\n', sleepInterval=0.25, delimit="", Count=0,
-           plain=false, paths: seq[string]): int =
+           ird='\n', eor='\n', zeroTerminated=false, sleepInterval=0.25,
+           delimit="", Count=0, plain=false, paths: seq[string]): int =
   ## Unify+enhance head/tail to emit/cut head/tail/both.  "/[n]" for `head/tail`
   ## infers numRows so `n`-file output fits in ${LC_LINES:-${LINES:-ttyHeight}}
   ## terminal rows.  "/" alone infers that `n`=numInputs.  `header`, `delimit` &
   ## `divide` all expand `lc` attrs like %[WHITE on_red].
   template hl(s: string): untyped = s.specifierHighlight({},plain,keepPct=false)
-  let paths = if paths.len > 0: paths else: @[""]
+  let ird     = if zeroTerminated: '\0' else: '\n'
+  let eor     = if zeroTerminated: '\0' else: '\n'
+  let paths   = if paths.len > 0: paths else: @[""]
   let divider = divide.hl & $eor; gDelimit = delimit.hl; gEOR = eor
   var head = head; var tail = tail
   let doHeaders = verbose or (not quiet and paths.len > 1)
@@ -257,6 +259,7 @@ when isMainModule:
     "verbose": "always print file name headers",
     "ird"    : "input record delimiter",
     "eor"    : "output end of row/record char",
+    "zero-terminated": "same as ird=eor='\\\\0'",
     "sleep-interval": "this many seconds between -f loops",
     "delimit": "if non-\"\" (eg. \"...\"), source switch\n" &
                "headers begin with THIS + `eor` when \n" &

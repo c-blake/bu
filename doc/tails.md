@@ -46,13 +46,12 @@ numRows so n-file output fits in ${LC_LINES:-${LINES:-ttyHeight}} terminal rows.
 "/" alone infers that n=numInputs.  header, delimit & divide all expand lc attrs
 like %[WHITE on_red].
 
-  -?, --help                            print this cligen-erated help
   -h=, --head=           int|/[n] 0     >0 emit | <0 cut this many @start
   -t=, --tail=           int|/[n] 0     >0 emit | <0 cut this many @end;
                                         Leading "+" => head = 1 - THIS.
+  -c, --bytes            bool     false head & tail are bytes not rows
   -o=, --outMax=         int      0     output max/atMost rows|bytes (>0)
   -f, --follow           bool     false output added data as files get it
-  -c, --bytes            bool     false head & tail are bytes not rows
   -d=, --divide=         string   "--"  separator, for non-contiguous case
   -H=, --header=         strings  {}    header formats (used cyclically);
                                         "" => n==> $1 <==n
@@ -60,6 +59,7 @@ like %[WHITE on_red].
   -v, --verbose          bool     false always print file name headers
   -i=, --ird=            char     '\n'  input record delimiter
   -e=, --eor=            char     '\n'  output end of row/record char
+  -z, --zero-terminated  bool     false same as ird=eor='\0'
   -s=, --sleep-interval= float    0.25  this many seconds between -f loops
   -D=, --delimit=        string   ""    if non-"" (eg. "..."), source switch
                                         headers begin with THIS + eor when 
