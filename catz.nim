@@ -18,6 +18,8 @@ const decs: seq[Decoder] = @[
   (".tbz"    , "BZ0"        , 0, @["bunzip", "-Q"]),
   (".bz2"    , "BZh"        , 0, @["bunzip2"]),
   (".tbz2"   , "BZh"        , 0, @["bunzip2"]),
+  (".bz3"    , "BZ3"        , 0, @["bunzip3"]),
+  (".tbz3"   , "BZ3"        , 0, @["bunzip3"]),
   (".lzo"    , "‰LZO"    , 0, @["lzop", "-df"]),
   (".toz"    , "‰LZO"    , 0, @["lzop", "-df"]),
   (".lz"     , "]\x00\x00"  , 0, @["lzmadec", "-cd"]),
