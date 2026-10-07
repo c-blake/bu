@@ -47,7 +47,7 @@ has evolved since then, but at the time it had (at least!) these problems:[^1]
    & "max" refer to aspects of the whole distribution of dt samples.  Unless you
    dig into ghub Issue threads, you may fairly think it means sqrt(sampleVar).
 
-For those who might thing "blah, blah..So, what?" here is a vignette showing
+For those who might think "blah, blah..So, what?" here is a vignette showing
 how at least hyperfine-1.11 (which has a time stamp of like 2023 for me) is
 ***6000 times*** less efficient than `tim` and how single digit microsecond
 errors are completely do-able: [^2]
