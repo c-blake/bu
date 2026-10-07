@@ -112,6 +112,8 @@ only tools, but some may be more cross-platform.
 
 [ndelta - Numerical difference between two reports utility](doc/ndelta.md)
 
+[nLoc - Measure normalized Lines of code](doc/nLoc.md)
+
 [tmpls - A fast string template interpolater](doc/tmpls.md)
 
 # Pipeline Calculation Tools

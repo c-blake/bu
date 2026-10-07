@@ -56,6 +56,7 @@ when defined(Windows):
   "widths",     # Compute & emit line widths/lengths | distro
 # "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
+  "nLoc",       # Measure normalized Lines of code
   "tmpls",      # A fast string template interpolater
 
   "topn",       # Fast, streaming 1-pass top-N over M columns
@@ -141,6 +142,7 @@ else:
   "widths",     # Compute & emit line widths/lengths | distro
   "jointr",     # Join strace "unfinished ..." with conclusion
   "ndelta",     # Numerical difference between two reports utility
+  "nLoc",       # Measure normalized Lines of code
   "tmpls",      # A fast string template interpolater
 
   "topn",       # Fast, streaming 1-pass top-N over M columns
