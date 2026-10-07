@@ -18,8 +18,8 @@ I am unsure "normalized code" is really a standard term in this space, but it
 makes sense to me.  Standardized evokes `go fmt` or `nimpretty`-like ideas.
 At least in the Nim world, normalized idents were a big thing for a long time.
 Nothing in this space is perfect or captures all (subjective?) biases well,
-but this at least seems better to me than "gzipped sizes" from (the shootout
-game)[https://en.wikipedia.org/wiki/The_Computer_Language_Benchmarks_Game].
+but this at least seems better to me than "gzipped sizes" from [the shootout
+game](https://en.wikipedia.org/wiki/The_Computer_Language_Benchmarks_Game).
 
 Nim, like python, has an "if/when main" notion.  This leads to one final wrinkle
 which is test/demo code at the end of library modules where it may be unfair to
