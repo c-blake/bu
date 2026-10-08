@@ -2,7 +2,7 @@ when not declared stdin: import std/syncio
 import std/[os, strutils] # Below needs path="$lib/.." in a .nims/.nim.cfg/etc.
 import compiler/[lexer, llstream, idents, options, pathutils, nimlexbase]
 
-type Drop = enum dComment="comment", dWhenMain="whenMain", dStrLit="strLit"
+type Drop = enum dComment="docComment", dWhen="when", dStrLit="strLit"
 type Tk = object
   typ: TokType
   line, col, endLine, endCol, indent: int
@@ -40,7 +40,7 @@ proc norm(d: set[Drop]; w, nm, src: string): seq[string] = # Return 1str/cntdLn
     let t = ts[i]
     var j = i + 1
     if t.indent >= 0: lineIndent = t.indent
-    if dWhenMain in d and t.typ == tkWhen and j < ts.len and ts[j].name == w:
+    if dWhen in d and t.typ==tkWhen and j<ts.len and w.len>0 and ts[j].name==w:
       var depth = 0     # Skip when stmt for test/demo code; Indent ignored in..
       while j < ts.len: #..[]s => lines like `2,3,4]` @col0 don't stop early.
         let u = ts[j]
@@ -56,8 +56,10 @@ proc norm(d: set[Drop]; w, nm, src: string): seq[string] = # Return 1str/cntdLn
     if dComment in d and t.typ == tkComment: continue
     let s = src[starts[t.line - 1] + t.col ..< starts[t.endLine - 1] + t.endCol]
     let txt=if dStrLit in d and t.typ in strs:s[0..<s.find('"')] & "\"\"" else:s
-    if t.line > pEndLine: result.add ' '.repeat(t.col) & txt  # new counted line
-    else: result[^1].add (if t.col > pEndCol: " " else: "") & txt
+    let ps = txt.splitLines   # multi-line token => 1 counted line per physical
+    if t.line > pEndLine: result.add ' '.repeat(t.col) & ps[0]  # new counted ln
+    else: result[^1].add (if t.col > pEndCol: " " else: "") & ps[0]
+    result.add ps[1..^1]
     pEndLine = t.endLine; pEndCol = t.endCol
 
 proc nLoc(drop: set[Drop]={}; `when`="isMainModule", showSrc=false,
@@ -67,7 +69,7 @@ proc nLoc(drop: set[Drop]={}; `when`="isMainModule", showSrc=false,
   ## `when isMainModule...` statements (or their elif/else chains).  Since it
   ## uses Nim compiler as a lib, string/char/raw/triple-quote/nested-comment
   ## lexing matches the compiler exactly.
-  let d = if drop.card > 0: drop else: {dComment, dStrLit, dWhenMain}
+  let d = if drop.card > 0: drop else: {dComment, dStrLit, dWhen}
   var total = 0
   for f in (if files.len == 0: @[""] else: files):
     let si = f.len == 0 # This was always a better idea than legal filename "-"
@@ -76,10 +78,10 @@ proc nLoc(drop: set[Drop]={}; `when`="isMainModule", showSrc=false,
     if showSrc: (for l in n: echo l)
     else: echo n.len, '\t', f
     total += n.len
-  if files.len > 1: echo total, "\ttotal"
+  if files.len > 1 and not showSrc: echo total, "\ttotal"
 
 when isMainModule: import cligen;include cligen/mergeCfgEnv;dispatch nLoc,help={
   "files"  : "files to measure; Empty string arg => stdin",
-  "drop"   : "`comment`, `strLit`, `whenMain`;{}=>ALL",
+  "drop"   : "`docComment`, `strLit`, `when`; {}=>ALL",
   "when"   : "root symbol for `when` branch drops",
   "showSrc": "emit normalized source, not line count"}

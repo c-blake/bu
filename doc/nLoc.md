@@ -37,8 +37,8 @@ isMainModule... statements (or their elif/else chains).  Since it uses Nim
 compiler as a lib, string/char/raw/triple-quote/nested-comment lexing matches
 the compiler exactly.
 
-  -d=, --drop=  set(Drop) {}             `comment`, `strLit`, `whenMain`;{}=>ALL
-  -w=, --when=  string    "isMainModule" root symbol for `when` branch drops
+  -d=, --drop=  set(Drop) {}             `docComment`, `strLit`, `when`; {}=>ALL
+  -w=, --when=  string    "isMainModule" root symbol for when branch drops
   -s, --showSrc bool      false          emit normalized source, not line count
 ```
 
