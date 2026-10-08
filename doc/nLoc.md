@@ -15,7 +15,7 @@ the same cannot always be said for documentation.  So, they are not good/bad
 together.  There are surely other reasons/arguments.
 
 I am unsure "normalized code" is really a standard term in this space, but it
-makes sense to me.  Standardized evokes `go fmt` or `nimpretty`-like ideas.
+makes sense to me.  "Standardized" evokes `go fmt` or `nimpretty`-like ideas.
 At least in the Nim world, normalized idents were a big thing for a long time.
 Nothing in this space is perfect or captures all (subjective?) biases well,
 but this at least seems better to me than "gzipped sizes" from [the shootout
@@ -37,7 +37,9 @@ isMainModule... statements (or their elif/else chains).  Since it uses Nim
 compiler as a lib, string/char/raw/triple-quote/nested-comment lexing matches
 the compiler exactly.
 
-  -s, --showSrc bool false emit normalized source, not line count
+  -d=, --drop=  set(Drop) {}             `comment`, `strLit`, `whenMain`;{}=>ALL
+  -w=, --when=  string    "isMainModule" root symbol for `when` branch drops
+  -s, --showSrc bool      false          emit normalized source, not line count
 ```
 
 No argument at all is the same as a first empty string argument.
@@ -115,4 +117,9 @@ let x = 3
 echo `a`
 let y = 5
 const k = "" & ""
+```
+
+..while this does the same, but leaves string literal bodies alone:
+```sh
+$ nLoc -s -d,=,c,w test.nim
 ```
