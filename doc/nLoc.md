@@ -24,8 +24,8 @@ game](https://en.wikipedia.org/wiki/The_Computer_Language_Benchmarks_Game).
 Nim, like python, has an "if/when main" notion.  This leads to one final wrinkle
 which is test/demo code at the end of library modules where it may be unfair to
 count that as library code rather than as lib documentation.  This program only
-handles lexical `when isMainModule ...` right now, not `when x and isMainModule`
-or `const foo = isMainModule and blah; when foo: ...` or other complex ideas.
+handles lexical `when SYMBOL ...` right now, not `when x and SYMBOL` or `const
+foo = SYMBOL and blah; when foo: ...` or other complex ideas/logics.
 
 # Usage
 ```
@@ -42,14 +42,16 @@ the compiler exactly.
   -s, --showSrc bool      false          emit normalized source, not line count
 ```
 
-No argument at all is the same as a first empty string argument.
+No argument at all is the same as a first empty string argument.  Modules which
+fail Nim's lexer also abort the entire run here (i.e. rest of `files`) (e.g.
+hard-TAB or other issues).
 
 # Example
 
 On itself:
 ```sh
 $ nLoc nLoc.nim
-65      nLoc.nim
+75      nLoc.nim
 ```
 
 or maybe (output elided):
@@ -119,7 +121,7 @@ let y = 5
 const k = "" & ""
 ```
 
-..while this does the same, but leaves string literal bodies alone:
+..while this does similar, but leaves string literal bodies alone:
 ```sh
 $ nLoc -s -d,=,d,w test.nim
 ```
