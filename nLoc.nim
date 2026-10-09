@@ -54,13 +54,17 @@ proc norm(d: set[Drop]; w, nm, src: string): seq[string] = # Return 1str/cntdLn
       continue
     inc i
     if dComment in d and t.typ == tkComment: continue
-    let s = src[starts[t.line - 1] + t.col ..< starts[t.endLine - 1] + t.endCol]
+    var s = src[starts[t.line - 1] + t.col ..< starts[t.endLine - 1] + t.endCol]
+    let n0 = s.len
+    if t.typ == tkComment: s = s.strip(leading=false)  # `##` eats its newline
     let txt=if dStrLit in d and t.typ in strs:s[0..<s.find('"')] & "\"\"" else:s
     let ps = txt.splitLines   # multi-line token => 1 counted line per physical
     if t.line > pEndLine: result.add ' '.repeat(t.col) & ps[0]  # new counted ln
     else: result[^1].add (if t.col > pEndCol: " " else: "") & ps[0]
     result.add ps[1..^1]
-    pEndLine = t.endLine; pEndCol = t.endCol
+    let eaten = s.len < n0    # Next token is then definitely on a new line
+    pEndLine = if eaten: t.line + ps.len - 1 else: t.endLine
+    pEndCol  = if eaten: int.high else: t.endCol
 
 proc nLoc(drop: set[Drop]={}; `when`="isMainModule", showSrc=false,
           files: seq[string]) =
