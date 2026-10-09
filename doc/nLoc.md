@@ -121,5 +121,5 @@ const k = "" & ""
 
 ..while this does the same, but leaves string literal bodies alone:
 ```sh
-$ nLoc -s -d,=,c,w test.nim
+$ nLoc -s -d,=,d,w test.nim
 ```
