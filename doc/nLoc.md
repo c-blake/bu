@@ -125,3 +125,27 @@ const k = "" & ""
 ```sh
 $ nLoc -s -d,=,d,w test.nim
 ```
+
+In a top-level bu/ checkout circa October 2026 one can see at a glance the best
+& worst in terms of either essential complexity or perhaps lack of abstraction:
+```sh
+nLoc *.nim|sort -n|align -dw + -|flow
+   6 tattr.nim          31 fsids.nim         47 topn.nim           93 tim.nim
+   8 ww.nim             32 cfold.nim         49 rp.nim             97 nrel.nim
+   9 wsz.nim            32 oft.nim           50 dirq.nim          105 zeh.nim
+  15 fage.nim           33 fread.nim         53 unfold.nim        107 etr.nim
+  15 keydowns.nim       34 cols.nim          54 ft.nim            118 mk1.nim
+  15 uce.nim            34 fpr.nim           57 mova.nim          120 dfr.nim
+  20 noc.nim            36 since.nim         59 k1st.nim          122 dups.nim
+  20 tmpls.nim          37 adorn.nim         59 thermctl.nim      122 ru.nim
+  21 notIn.nim          37 niom.nim          60 only.nim          142 align.nim
+  21 rr.nim             37 noa.nim           65 tw.nim            143 stripe.nim
+  21 sr.nim             39 lncs.nim          66 funnel.nim        150 edplot.nim
+  22 pid2.nim           40 holes.nim         68 memlat.nim        175 tails.nim
+  22 widths.nim         41 ndelta.nim        71 saft.nim          179 catz.nim
+  23 flow.nim           43 okpaths.nim       74 ac.nim            198 wgt.nim
+  24 newest.nim         44 crp.nim           74 cstats.nim        488 vip.nim
+  26 tslice.nim         44 dirt.nim          75 nLoc.nim         4553 total
+  29 jointr.nim         45 chom.nim          88 cbtm.nim         
+  30 fkindc.nim         46 wits.nim          93 du.nim           
+```
